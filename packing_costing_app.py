@@ -1,7 +1,10 @@
 import streamlit as st
 
+# Set up page configuration
+st.set_page_config(page_title="Packing Costing Document", page_icon="📄")
+
 # Title
-st.title("Packing Costing App")
+st.title("📦 Packing Costing App")
 
 # Step 01 - Inputs
 st.header("Step 01")
