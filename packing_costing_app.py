@@ -145,4 +145,5 @@ if bundling == "Yes":
 else:
     st.subheader("Move to Crate/Pallet Packing Directly")
 
-    Area Covered = =(2*((Bundle Width*Bundle Length)+(Bundle Height*Bundle Length)+(Bundle Width*Bundle Height)))/(1000^2)
+    Area_Covered =(2*((Bundle Width*Bundle Length)+(Bundle Height*Bundle Length)+(Bundle Width*Bundle Height)))/(1000^2)
+    st.write("**Area Covered (m²):**", round(Area_Covered, 4))
