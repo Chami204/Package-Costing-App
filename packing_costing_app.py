@@ -128,7 +128,7 @@ if bundling == "Yes":
     #choose Material for Bundle Wrap
     Material_for_bundle_wrap = st.selection("Material for Bundle Wrap",["Stretchwrap","Cardboard Wrapper","Cardboard Carton"])
 
-    Complete_Wrap_OR_Only_Sections = st.selection("Complete wrap OR Only Sections", ["Complete","Only Sections"]
+    Complete_Wrap_OR_Only_Sections = st.selection("Complete wrap OR Only Sections", ["Complete","Only Sections"])
         
 
 
