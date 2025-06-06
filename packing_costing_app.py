@@ -104,4 +104,26 @@ else:
 
 st.write("**Protective Tape Advice:**", protective_tape_advice)
 
+# Protective Tape (Rs/m²)
+if interleaving_material == "McFoam":
+    interleaving_cost = 51.00
+elif interleaving_material == "Craft Paper":
+    interleaving_cost = 34.65
+elif interleaving_material == "Protective Tape":
+    interleaving_cost = 100.65
+elif interleaving_material == "Stretchwrap":
+    interleaving_cost = 14.38
+else:
+    interleaving_cost = "Unknown"
 
+st.write("**Protective Tape Cost (Rs/m²):**", protective_Tape_advice)
+
+Protective Tape Cost = Surface Area (m²) * Protective Tape Cost (Rs/m²)
+
+=IF(B13="Yes","Define Bundle Stack","Move to Crate/Pallet Packing Directly")
+
+If Bundling == "Yes":
+    print "Define Bundle Stack"
+else:
+    print "Move to Crate/Pallet Packing Directly"
+    
