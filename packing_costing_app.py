@@ -82,3 +82,6 @@ else:
 
 st.write("**Cost of Interleaving Material (Rs/m²):**", interleaving_cost)
 
+#Interleaving Cost(Rs)
+Interleaving Cost = Surface Area (m²) * Cost of Interleaving Material (Rs/m²)
+
