@@ -1,13 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-# Load interleaving material cost data (simulating VLOOKUP)
-@st.cache_data
-def load_cost_data():
-    return pd.read_csv("interleaving_cost.csv")
-
-cost_data = load_cost_data()
-
 # Title
 st.title("Packing Costing App")
 
@@ -75,6 +68,17 @@ surface_area = (2 * ((W * L) + (H * L) + (W * H))) / (1000 ** 2)
 st.write("**Surface Area (m²):**", round(surface_area, 4))
 
 # Cost of Interleaving Material (simulate VLOOKUP)
-cost_lookup = cost_data.set_index("Material").to_dict()["Cost"]
-interleaving_cost = cost_lookup.get(interleaving_material, "Not Found")
-st.write("**Cost of Interleaving Material (per unit):**", interleaving_cost)
+# Cost of Interleaving Material (Rs/m²)
+if interleaving_material == "McFoam":
+    interleaving_cost = 51.00
+elif interleaving_material == "Craft Paper":
+    interleaving_cost = 34.65
+elif interleaving_material == "Protective Tape":
+    interleaving_cost = 100.65
+elif interleaving_material == "Stretchwrap":
+    interleaving_cost = 14.38
+else:
+    interleaving_cost = "Unknown"
+
+st.write("**Cost of Interleaving Material (Rs/m²):**", interleaving_cost)
+
