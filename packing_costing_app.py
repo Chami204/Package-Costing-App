@@ -48,7 +48,7 @@ Protective Tape - Customer Specified = st.selectbox(
     "Yes/No",
     options = ["Yes","No"]
 )
-
+bundling = st.selectbox("Bundling", ["Yes", "No"])
 
 
 
@@ -120,10 +120,52 @@ st.write("**Protective Tape Cost (Rs/m²):**", protective_Tape_advice)
 
 Protective Tape Cost = Surface Area (m²) * Protective Tape Cost (Rs/m²)
 
-=IF(B13="Yes","Define Bundle Stack","Move to Crate/Pallet Packing Directly")
+# Decision based on bundling
+if bundling == "Yes":
+    st.subheader("Define Bundle Stack")
 
-If Bundling == "Yes":
-    print "Define Bundle Stack"
+    # Get user inputs
+    num_rows = st.number_input("Number of Rows (Width direction)", min_value=1, step=1)
+    num_layers = st.number_input("Number of Layers (Height direction)", min_value=1, step=1)
+
+    # Bundle length input (from profile length, B6)
+    bundle_length = st.number_input("Profile Length (mm)", min_value=1, step=1)
+
+    # Choose profile dimension from options (C33 and C34)
+    profile_width_type = st.selectbox("Width Profile Type", ["W/mm", "H/mm"])
+    profile_height_type = st.selectbox("Height Profile Type", ["H/mm", "W/mm"])  # Flip intentionally to simulate Excel matching
+
+    # Define mapping for VLOOKUP-style profile values
+    profile_dimensions = {
+        "W/mm": st.session_state.get("W", 0),  # fallback if not previously set
+        "H/mm": st.session_state.get("H", 0)
+    }
+
+    # Calculate bundle dimensions
+    bundle_width = num_rows * profile_dimensions.get(profile_width_type, 0)
+    bundle_height = num_layers * profile_dimensions.get(profile_height_type, 0)
+
+    # Display calculated dimensions
+    st.subheader("Bundle Dimensions (mm):")
+    st.write(f"**Bundle Width:** {bundle_width}")
+    st.write(f"**Bundle Height:** {bundle_height}")
+    st.write(f"**Bundle Length:** {bundle_length}")
+
 else:
-    print "Move to Crate/Pallet Packing Directly"
-    
+    st.subheader("Move to Crate/Pallet Packing Directly")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
