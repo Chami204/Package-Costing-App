@@ -44,6 +44,14 @@ crate_pallet = st.selectbox(
     options=["Crate", "Pallet"]
 )
 
+Protective Tape - Customer Specified = st.selectbox(
+    "Yes/No",
+    options = ["Yes","No"]
+)
+
+
+
+
 # Outputs
 st.header("Outputs")
 
@@ -84,4 +92,16 @@ st.write("**Cost of Interleaving Material (Rs/m²):**", interleaving_cost)
 
 #Interleaving Cost(Rs)
 Interleaving Cost = Surface Area (m²) * Cost of Interleaving Material (Rs/m²)
+
+
+if Protective Tape - Customer Specified == "No":
+    if (fabricated == "Fabricated" and finish == "Mill Finish") or fabricated == "Just Cutting":
+        protective_tape_advice = "OK"
+    else:
+        protective_tape_advice = "Protective tape required to avoid rejects"
+else:
+    protective_tape_advice = ""
+
+st.write("**Protective Tape Advice:**", protective_tape_advice)
+
 
