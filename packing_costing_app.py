@@ -104,7 +104,7 @@ else:
 
 st.write("**Protective Tape Cost (Rs):**", round(protective_tape_cost, 2))
 
-# Decision based on bundling
+# Bundling Section
 if bundling == "Yes":
     st.subheader("Define Bundle Stack")
 
@@ -124,13 +124,11 @@ if bundling == "Yes":
         "W/mm": W,
         "H/mm": H
     }
-    
-    #choose Material for Bundle Wrap
-    Material_for_bundle_wrap = st.selection("Material for Bundle Wrap",["Stretchwrap","Cardboard Wrapper","Cardboard Carton"])
 
-    Complete_Wrap_OR_Only_Sections = st.selection("Complete wrap OR Only Sections", ["Complete","Only Sections"])
-        
+    # Choose Material for Bundle Wrap
+    material_for_bundle_wrap = st.selectbox("Material for Bundle Wrap", ["Stretchwrap", "Cardboard Wrapper", "Cardboard Carton"])
 
+    complete_or_section = st.selectbox("Complete wrap OR Only Sections", ["Complete", "Only Sections"])
 
     # Calculate bundle dimensions
     bundle_width = num_rows * profile_dimensions.get(profile_width_type, 0)
@@ -142,9 +140,10 @@ if bundling == "Yes":
     st.write(f"**Bundle Height:** {bundle_height:.2f} mm")
     st.write(f"**Bundle Length:** {bundle_length:.2f} mm")
 
-else:
-    st.subheader("Move to Crate/Pallet Packing Directly")
-
+    # Calculate area covered for bundling
     area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / (1000 ** 2)
     st.write("**Area Covered (m²):**", round(area_covered, 4))
 
+else:
+    st.subheader("Move to Crate/Pallet Packing Directly")
+    st.info("Bundle dimensions not defined. Please use crate/pallet info for further calculation.")
