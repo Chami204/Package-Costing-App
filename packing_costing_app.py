@@ -64,9 +64,9 @@ st.write("**Interleaving Material:**", interleaving_material)
 
 # Reject Check Message
 if finish == "Mill Finished" and interleaving_material == "Craft Paper":
-    message = "can cause rejects - go ahead with McFoam"
-else:
     message = "Okay"
+else:
+    message = "can cause rejects - go ahead with McFoam"
 
 st.write("**Check:**", message)
 
