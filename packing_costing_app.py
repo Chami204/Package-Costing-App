@@ -4,7 +4,7 @@ import streamlit as st
 st.title("Packing Costing App")
 
 # Step 01 - Inputs
-st.header("Step 01: User Inputs")
+st.header("Step 01")
 
 identification_no = st.text_input("Identification No.")
 
