@@ -97,7 +97,7 @@ st.write("**Protective Tape Advice:**", protective_tape_advice)
 # Protective Tape Cost (Rs/m²)
 protective_tape_rate = 100.65  # You may update this if dynamic
 
-if "Protective Tape" in protective_tape_advice:
+if protective_tape_advice == "Protective tape required to avoid rejects" or protective_tape_customer_specified == "Yes":
     protective_tape_cost = surface_area * protective_tape_rate
 else:
     protective_tape_cost = 0.0
