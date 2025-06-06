@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 
 # Title
 st.title("Packing Costing App")
@@ -16,7 +15,7 @@ L = st.number_input("L (mm)", min_value=0.0, format="%.2f")
 
 finish = st.selectbox(
     "Finish",
-    options=["Mill Finished", "Anodized", "Powder Coated", "Wood Finished"]
+    options=["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"]
 )
 
 fabricated = st.selectbox(
@@ -34,23 +33,14 @@ interleaving_required = st.selectbox(
     options=["Yes", "No"]
 )
 
-bundling = st.selectbox(
-    "Bundling",
+protective_tape_customer_specified = st.selectbox(
+    "Protective Tape - Customer Specified",
     options=["Yes", "No"]
 )
 
-crate_pallet = st.selectbox(
-    "Crate/ Palletizing",
-    options=["Crate", "Pallet"]
-)
-
-Protective Tape - Customer Specified = st.selectbox(
-    "Yes/No",
-    options = ["Yes","No"]
-)
 bundling = st.selectbox("Bundling", ["Yes", "No"])
 
-
+crate_pallet = st.selectbox("Crate/ Palletizing", ["Crate", "Pallet"])
 
 # Outputs
 st.header("Outputs")
@@ -64,18 +54,17 @@ else:
 st.write("**Interleaving Material:**", interleaving_material)
 
 # Reject Check Message
-if finish == "Mill Finished" and interleaving_material == "Craft Paper":
+if finish == "Mill Finish" and interleaving_material == "Craft Paper":
     message = "Okay"
 else:
-    message = "can cause rejects - go ahead with McFoam"
+    message = "Can cause rejects - go ahead with McFoam"
 
 st.write("**Check:**", message)
 
-# Surface Area (m2)
-surface_area = (2 * ((W * L) + (H * L) + (W * H))) / (1000 ** 2)
+# Surface Area (m²)
+surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
 st.write("**Surface Area (m²):**", round(surface_area, 4))
 
-# Cost of Interleaving Material (simulate VLOOKUP)
 # Cost of Interleaving Material (Rs/m²)
 if interleaving_material == "McFoam":
     interleaving_cost = 51.00
@@ -86,15 +75,16 @@ elif interleaving_material == "Protective Tape":
 elif interleaving_material == "Stretchwrap":
     interleaving_cost = 14.38
 else:
-    interleaving_cost = "Unknown"
+    interleaving_cost = 0.0
 
 st.write("**Cost of Interleaving Material (Rs/m²):**", interleaving_cost)
 
-#Interleaving Cost(Rs)
-Interleaving Cost = Surface Area (m²) * Cost of Interleaving Material (Rs/m²)
+# Interleaving Total Cost
+interleaving_total_cost = surface_area * interleaving_cost
+st.write("**Interleaving Cost (Rs):**", round(interleaving_total_cost, 2))
 
-
-if Protective Tape - Customer Specified == "No":
+# Protective Tape Advice
+if protective_tape_customer_specified == "No":
     if (fabricated == "Fabricated" and finish == "Mill Finish") or fabricated == "Just Cutting":
         protective_tape_advice = "OK"
     else:
@@ -104,21 +94,15 @@ else:
 
 st.write("**Protective Tape Advice:**", protective_tape_advice)
 
-# Protective Tape (Rs/m²)
-if interleaving_material == "McFoam":
-    interleaving_cost = 51.00
-elif interleaving_material == "Craft Paper":
-    interleaving_cost = 34.65
-elif interleaving_material == "Protective Tape":
-    interleaving_cost = 100.65
-elif interleaving_material == "Stretchwrap":
-    interleaving_cost = 14.38
+# Protective Tape Cost (Rs/m²)
+protective_tape_rate = 100.65  # You may update this if dynamic
+
+if "Protective Tape" in protective_tape_advice:
+    protective_tape_cost = surface_area * protective_tape_rate
 else:
-    interleaving_cost = "Unknown"
+    protective_tape_cost = 0.0
 
-st.write("**Protective Tape Cost (Rs/m²):**", protective_Tape_advice)
-
-Protective Tape Cost = Surface Area (m²) * Protective Tape Cost (Rs/m²)
+st.write("**Protective Tape Cost (Rs):**", round(protective_tape_cost, 2))
 
 # Decision based on bundling
 if bundling == "Yes":
@@ -128,44 +112,28 @@ if bundling == "Yes":
     num_rows = st.number_input("Number of Rows (Width direction)", min_value=1, step=1)
     num_layers = st.number_input("Number of Layers (Height direction)", min_value=1, step=1)
 
-    # Bundle length input (from profile length, B6)
-    bundle_length = st.number_input("Profile Length (mm)", min_value=1, step=1)
+    # Use L as bundle length
+    bundle_length = L
 
-    # Choose profile dimension from options (C33 and C34)
+    # Choose profile dimension types
     profile_width_type = st.selectbox("Width Profile Type", ["W/mm", "H/mm"])
-    profile_height_type = st.selectbox("Height Profile Type", ["H/mm", "W/mm"])  # Flip intentionally to simulate Excel matching
+    profile_height_type = st.selectbox("Height Profile Type", ["H/mm", "W/mm"])
 
-    # Define mapping for VLOOKUP-style profile values
+    # Simulate VLOOKUP-style mapping
     profile_dimensions = {
-        "W/mm": st.session_state.get("W", 0),  # fallback if not previously set
-        "H/mm": st.session_state.get("H", 0)
+        "W/mm": W,
+        "H/mm": H
     }
 
     # Calculate bundle dimensions
     bundle_width = num_rows * profile_dimensions.get(profile_width_type, 0)
     bundle_height = num_layers * profile_dimensions.get(profile_height_type, 0)
 
-    # Display calculated dimensions
+    # Display dimensions
     st.subheader("Bundle Dimensions (mm):")
-    st.write(f"**Bundle Width:** {bundle_width}")
-    st.write(f"**Bundle Height:** {bundle_height}")
-    st.write(f"**Bundle Length:** {bundle_length}")
+    st.write(f"**Bundle Width:** {bundle_width:.2f} mm")
+    st.write(f"**Bundle Height:** {bundle_height:.2f} mm")
+    st.write(f"**Bundle Length:** {bundle_length:.2f} mm")
 
 else:
     st.subheader("Move to Crate/Pallet Packing Directly")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
