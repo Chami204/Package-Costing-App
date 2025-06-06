@@ -123,13 +123,14 @@ if bundling == "Yes":
     profile_dimensions = {
         "W/mm": W,
         "H/mm": H
-
+    }
+    
     #choose Material for Bundle Wrap
     Material_for_bundle_wrap = st.selection("Material for Bundle Wrap",["Stretchwrap","Cardboard Wrapper","Cardboard Carton"])
 
     Complete_Wrap_OR_Only_Sections = st.selection("Complete wrap OR Only Sections", ["Complete","Only Sections"]
         
-    }
+
 
     # Calculate bundle dimensions
     bundle_width = num_rows * profile_dimensions.get(profile_width_type, 0)
