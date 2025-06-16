@@ -51,7 +51,7 @@ def calculate_outputs(row):
     protective_tape_customer_specified = row["Protective Tape - Customer Specified"]
 
     interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
-    message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
+    message = "Its fine to Craft paper or Mc Foam." if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
     surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
 
     interleaving_cost = {"McFoam": 51.00, "Craft Paper": 34.65, "Protective Tape": 100.65, "Stretchwrap": 14.38}.get(interleaving_material, 0.0)
