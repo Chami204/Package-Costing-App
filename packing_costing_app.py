@@ -10,14 +10,14 @@ input_data = pd.DataFrame({
     "W (mm)": [0.0],
     "H (mm)": [0.0],
     "L (mm)": [0.0],
-    "Finish": [" "],
-    "Fabricated": [" "],
-    "Eco-Friendly Packing": [" "],
-    "Interleaving Required": [" "],
-    "Protective Tape - Customer Specified": [" "],
-    "Bundling": [" "],
-    "Crate/ Palletizing": [" "]
-    "Packing Method":[" "]
+    "Finish": ["Select"],
+    "Fabricated": ["Select"],
+    "Eco-Friendly Packing": ["Select"],
+    "Interleaving Required": ["Select"],
+    "Protective Tape - Customer Specified": ["Select"],
+    "Bundling": ["Select"],
+    "Crate/ Palletizing": ["Select"]
+    "Packing Method":["Select"]
 })
 
 # Define dropdown options
@@ -29,6 +29,7 @@ dropdown_columns = {
     "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
     "Bundling": st.column_config.SelectboxColumn("Bundling", options=["Yes", "No"]),
     "Crate/ Palletizing": st.column_config.SelectboxColumn("Crate/ Palletizing", options=["Crate", "Pallet"])
+    "Packing Method":st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
 
 # Editable table for inputs
@@ -67,7 +68,7 @@ def calculate_outputs(row):
         protective_tape_advice = "Protective tape required to avoid rejects"
 
     protective_tape_cost = surface_area * 100.65 if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
-
+    
     return pd.Series({
         "Identification No.": row["Identification No."],
         "Interleaving Material": interleaving_material,
@@ -76,7 +77,9 @@ def calculate_outputs(row):
         "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
         "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
         "Protective Tape Advice": protective_tape_advice,
-        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2)
+        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
+        "Packing Method.": row["Packing Method"],
+        
     })
 
 # Calculate outputs
