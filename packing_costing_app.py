@@ -4,7 +4,7 @@ import pandas as pd
 st.set_page_config(page_title="🎯💰 Targeted Packing Costing", page_icon="🎯💰")
 st.title("🎯💰 Targeted Packing Costing App")
 
-# Sample input table
+# Sample input table for profile data
 input_data = pd.DataFrame({
     "Identification No.": [""],
     "W (mm)": [0.0],
@@ -21,16 +21,16 @@ input_data = pd.DataFrame({
 
 # Define dropdown options
 dropdown_columns = {
-    "Finish": {"editor": "select", "options": ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"]},
-    "Fabricated": {"editor": "select", "options": ["Fabricated", "Just Cutting"]},
-    "Eco-Friendly Packing": {"editor": "select", "options": ["Yes", "No"]},
-    "Interleaving Required": {"editor": "select", "options": ["Yes", "No"]},
-    "Protective Tape - Customer Specified": {"editor": "select", "options": ["Yes", "No"]},
-    "Bundling": {"editor": "select", "options": ["Yes", "No"]},
-    "Crate/ Palletizing": {"editor": "select", "options": ["Crate", "Pallet"]}
+    "Finish": st.column_config.SelectboxColumn("Finish", options=["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"]),
+    "Fabricated": st.column_config.SelectboxColumn("Fabricated", options=["Fabricated", "Just Cutting"]),
+    "Eco-Friendly Packing": st.column_config.SelectboxColumn("Eco-Friendly Packing", options=["Yes", "No"]),
+    "Interleaving Required": st.column_config.SelectboxColumn("Interleaving Required", options=["Yes", "No"]),
+    "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
+    "Bundling": st.column_config.SelectboxColumn("Bundling", options=["Yes", "No"]),
+    "Crate/ Palletizing": st.column_config.SelectboxColumn("Crate/ Palletizing", options=["Crate", "Pallet"])
 }
 
-# Editable input table
+# Editable table for inputs
 st.subheader("📥 Input Data (Fill Below)", divider="grey")
 edited_data = st.data_editor(
     input_data,
@@ -40,7 +40,7 @@ edited_data = st.data_editor(
     key="input_table"
 )
 
-# Output calculation
+# Function to calculate outputs
 def calculate_outputs(row):
     W = row["W (mm)"]
     H = row["H (mm)"]
@@ -97,12 +97,12 @@ def calculate_outputs(row):
         "Protective Tape Cost (Rs)": round(protective_tape_cost, 2)
     })
 
-# Display output table
+# Calculate outputs
 st.subheader("📤 Outputs Table", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
 
-# Bundle definition inputs and calculated dimensions
+# Collect bundling output rows for final bundling table
 bundle_output_rows = []
 
 for i, row in edited_data.iterrows():
@@ -142,7 +142,7 @@ for i, row in edited_data.iterrows():
 
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
 
-        # Add to output table
+        # Append the data for table
         bundle_output_rows.append({
             "Identification No.": row["Identification No."],
             "Rows": num_rows,
@@ -155,7 +155,7 @@ for i, row in edited_data.iterrows():
             "Area Covered (m²)": round(area_covered, 4)
         })
 
-# Bundle outputs table
+# Display bundle table if any exist
 if bundle_output_rows:
     st.subheader("📦 Bundle Dimensions Table", divider="grey")
     bundle_df = pd.DataFrame(bundle_output_rows)
