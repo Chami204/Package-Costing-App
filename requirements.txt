@@ -1,2 +1,3 @@
-streamlit>=1.24.0
+streamlit>=1.24
 pandas
+st-aggrid
