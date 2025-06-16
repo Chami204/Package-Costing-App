@@ -94,7 +94,6 @@ def calculate_outputs(row):
     protective_tape_cost = surface_area * protective_tape_rate if "required" in protective_tape_advice else 0.0
 
     return pd.Series({
-        "Identification No.":
         "Interleaving Material": interleaving_material,
         "Check": message,
         "Surface Area (m²)": round(surface_area, 4),
