@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder
+from streamlit_aggrid import AgGrid, GridOptionsBuilder
+
 
 st.set_page_config(page_title="Packing Costing App", page_icon="📦", layout="wide")
 st.title("📦 Packing Costing App with Dropdowns")
