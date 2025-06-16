@@ -10,13 +10,14 @@ input_data = pd.DataFrame({
     "W (mm)": [0.0],
     "H (mm)": [0.0],
     "L (mm)": [0.0],
-    "Finish": ["Mill Finish"],
-    "Fabricated": ["Fabricated"],
-    "Eco-Friendly Packing": ["Yes"],
-    "Interleaving Required": ["Yes"],
-    "Protective Tape - Customer Specified": ["No"],
-    "Bundling": ["Yes"],
-    "Crate/ Palletizing": ["Crate"]
+    "Finish": [" "],
+    "Fabricated": [" "],
+    "Eco-Friendly Packing": [" "],
+    "Interleaving Required": [" "],
+    "Protective Tape - Customer Specified": [" "],
+    "Bundling": [" "],
+    "Crate/ Palletizing": [" "]
+    "Packing Method":[" "]
 })
 
 # Define dropdown options
@@ -82,6 +83,12 @@ def calculate_outputs(row):
 st.subheader("📤 Outputs Table", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
+
+#-----Primary Packing/ Secondary Packing----
+
+
+
+
 
 # --- BUNDLING SECTION FIXED ---
 
