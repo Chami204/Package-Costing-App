@@ -89,43 +89,64 @@ def calculate_outputs(row, row_index):
 
     protective_tape_cost = surface_area * 100.65 if "required" in protective_tape_advice else 0.0
 
-    # Bundle calculation
-    if bundling == "Yes":
+    # Collect bundling output rows for final bundling table
+bundle_output_rows = []
+
+for i, row in edited_data.iterrows():
+    if row["Bundling"] == "Yes":
+        st.divider()
+        st.subheader(f"📦 Bundle Definition for {row['Identification No.']}")
+
         num_rows = st.number_input(
-            f"Rows (Width) - ID {identification or row_index + 1}", min_value=1, value=1, step=1, key=f"rows_{row_index}"
+            f"Number of Rows (Width direction) - ID {row['Identification No.']}",
+            min_value=1,
+            step=1,
+            key=f"rows_{i}"
         )
         num_layers = st.number_input(
-            f"Layers (Height) - ID {identification or row_index + 1}", min_value=1, value=1, step=1, key=f"layers_{row_index}"
-        )
-        width_type = st.selectbox(
-            f"Width Profile - ID {identification or row_index + 1}", ["W/mm", "H/mm"], key=f"wtype_{row_index}"
-        )
-        height_type = st.selectbox(
-            f"Height Profile - ID {identification or row_index + 1}", ["H/mm", "W/mm"], key=f"htype_{row_index}"
+            f"Number of Layers (Height direction) - ID {row['Identification No.']}",
+            min_value=1,
+            step=1,
+            key=f"layers_{i}"
         )
 
-        dims = {"W/mm": W, "H/mm": H}
-        bundle_width = num_rows * dims[width_type]
-        bundle_height = num_layers * dims[height_type]
-        bundle_length = L
+        profile_width_type = st.selectbox(
+            f"Width Profile Type - ID {row['Identification No.']}",
+            ["W/mm", "H/mm"],
+            key=f"width_type_{i}"
+        )
+        profile_height_type = st.selectbox(
+            f"Height Profile Type - ID {row['Identification No.']}",
+            ["H/mm", "W/mm"],
+            key=f"height_type_{i}"
+        )
+
+        profile_dimensions = {"W/mm": row["W (mm)"], "H/mm": row["H (mm)"]}
+
+        bundle_width = num_rows * profile_dimensions[profile_width_type]
+        bundle_height = num_layers * profile_dimensions[profile_height_type]
+        bundle_length = row["L (mm)"]
+
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
-    else:
-        bundle_width = bundle_height = bundle_length = area_covered = 0.0
 
-    return pd.Series({
-        "Identification No.": identification,
-        "Interleaving Material": interleaving_material,
-        "Check": message,
-        "Surface Area (m²)": round(surface_area, 4),
-        "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
-        "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
-        "Protective Tape Advice": protective_tape_advice,
-        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
-        "Bundle Width (mm)": round(bundle_width, 2),
-        "Bundle Height (mm)": round(bundle_height, 2),
-        "Bundle Length (mm)": round(bundle_length, 2),
-        "Bundle Area Covered (m²)": round(area_covered, 4)
-    })
+        # Append the data for table
+        bundle_output_rows.append({
+            "Identification No.": row["Identification No."],
+            "Rows": num_rows,
+            "Layers": num_layers,
+            "Width Type": profile_width_type,
+            "Height Type": profile_height_type,
+            "Bundle Width (mm)": round(bundle_width, 2),
+            "Bundle Height (mm)": round(bundle_height, 2),
+            "Bundle Length (mm)": round(bundle_length, 2),
+            "Area Covered (m²)": round(area_covered, 4)
+        })
+
+# Display bundle table if any exist
+if bundle_output_rows:
+    st.subheader("📦 Bundle Dimensions Table", divider="grey")
+    bundle_df = pd.DataFrame(bundle_output_rows)
+    st.dataframe(bundle_df, use_container_width=True)
 
 # ---- Final Outputs ----
 st.subheader("📤 Outputs Table", divider="grey")
