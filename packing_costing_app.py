@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="🎯💰 Targeted Packing Costing", page_icon="🎯💰")
+st.set_page_config(page_title="🎯💰 Packing Costing", page_icon="🎯💰")
 st.title("🎯💰 Targeted Packing Costing App")
 
 # Sample input table for profile data
