@@ -171,7 +171,4 @@ if not bundling_rows.empty:
 else:
     st.info("No rows with Bundling = 'Yes' found.")
 # Display bundle table if any exist
-if bundle_output_rows:
-    st.subheader("📦 Bundle Dimensions Table", divider="grey")
-    bundle_df = pd.DataFrame(bundle_output_rows)
-    st.dataframe(bundle_df, use_container_width=True)
+
