@@ -58,7 +58,7 @@ def calculate_outputs(row):
     interleaving_total_cost = surface_area * interleaving_cost
 
     if protective_tape_customer_specified == "No":
-        if (fabricated == "Fabricated" and finish == "Mill Finish") or fabricated == "Just Cutting":
+        if (fabricated == "Fabricated" and finish == "Mill Finish") or (fabricated == "Just Cutting" and finish == "Powder Coated") or (fabricated == "Just Cutting" and finish == "Anodized"):
             protective_tape_advice = "Not necessary."
         else:
             protective_tape_advice = "Protective tape required to avoid rejects"
