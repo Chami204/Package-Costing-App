@@ -12,18 +12,6 @@ columns = [
     "Bundling", "Crate/ Palletizing"
 ]
 
-# Define dropdown options per column
-dropdown_options = {
-    "Finish": ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"],
-    "Fabricated": ["Fabricated", "Just Cutting"],
-    "Eco-Friendly Packing": ["Yes", "No"],
-    "Interleaving Required": ["Yes", "No"],
-    "Protective Tape - Customer Specified": ["Yes", "No"],
-    "Bundling": ["Yes", "No"],
-    "Crate/ Palletizing": ["Crate", "Pallet"]
-}
-
-
 default_row = {
     "Identification No.": "",
     "W (mm)": 0.0,
@@ -37,6 +25,19 @@ default_row = {
     "Bundling": "Yes",
     "Crate/ Palletizing": "Crate"
 }
+
+# Define dropdown options per column
+dropdown_options = {
+    "Finish": ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"],
+    "Fabricated": ["Fabricated", "Just Cutting"],
+    "Eco-Friendly Packing": ["Yes", "No"],
+    "Interleaving Required": ["Yes", "No"],
+    "Protective Tape - Customer Specified": ["Yes", "No"],
+    "Bundling": ["Yes", "No"],
+    "Crate/ Palletizing": ["Crate", "Pallet"]
+}
+
+
 
 # Initialize editable table
 st.subheader("📥 Input Data (Fill Below)", divider="grey")
