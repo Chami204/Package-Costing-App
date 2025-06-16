@@ -4,6 +4,14 @@ import pandas as pd
 st.set_page_config(page_title="🎯💰 Targeted Packing Costing", page_icon="🎯💰")
 st.title("🎯💰 Targeted Packing Costing App")
 
+# Define column structure and initial row
+columns = [
+    "Identification No.", "W (mm)", "H (mm)", "L (mm)",
+    "Finish", "Fabricated", "Eco-Friendly Packing",
+    "Interleaving Required", "Protective Tape - Customer Specified",
+    "Bundling", "Crate/ Palletizing"
+]
+
 # Define dropdown options per column
 dropdown_options = {
     "Finish": ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"],
@@ -15,13 +23,7 @@ dropdown_options = {
     "Crate/ Palletizing": ["Crate", "Pallet"]
 }
 
-# Define column structure and initial row
-columns = [
-    "Identification No.", "W (mm)", "H (mm)", "L (mm)",
-    "Finish", "Fabricated", "Eco-Friendly Packing",
-    "Interleaving Required", "Protective Tape - Customer Specified",
-    "Bundling", "Crate/ Palletizing"
-]
+
 default_row = {
     "Identification No.": "",
     "W (mm)": 0.0,
