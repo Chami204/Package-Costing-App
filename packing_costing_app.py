@@ -59,7 +59,7 @@ def calculate_outputs(row):
 
     if protective_tape_customer_specified == "No":
         if (fabricated == "Fabricated" and finish == "Mill Finish") or fabricated == "Just Cutting":
-            protective_tape_advice = "Its fine to either use protective tape or not."
+            protective_tape_advice = "Not necessary."
         else:
             protective_tape_advice = "Protective tape required to avoid rejects"
     else:
