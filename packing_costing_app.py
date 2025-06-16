@@ -140,7 +140,12 @@ if not bundling_rows.empty:
     for _, bundling_row in bundling_inputs_edited.iterrows():
         id_no = bundling_row["Identification No."]
         # Get the corresponding row in edited_data to access W, H, L
-        original_row = edited_data.loc[edited_data["Identification No."] == id_no].iloc[0]
+        match = edited_data.loc[edited_data["Identification No."] == id_no]
+        if match.empty:
+            st.warning(f"No matching input found for ID: {id_no}")
+            continue
+        original_row = match.iloc[0]
+
 
         profile_dimensions = {
             "W/mm": original_row["W (mm)"],
