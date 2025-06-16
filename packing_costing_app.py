@@ -4,14 +4,12 @@ import pandas as pd
 st.set_page_config(page_title="🎯💰 Targeted Packing Costing", page_icon="🎯💰")
 st.title("🎯💰 Targeted Packing Costing App")
 
-st.header("Step 1: Packing Data Table with Dropdowns")
-
-# Define initial DataFrame
-default = {
-    "Identification No.": ["ID001"],
-    "W (mm)": [50.0],
-    "H (mm)": [60.0],
-    "L (mm)": [1000.0],
+# Sample input table
+input_data = pd.DataFrame({
+    "Identification No.": [""],
+    "W (mm)": [0.0],
+    "H (mm)": [0.0],
+    "L (mm)": [0.0],
     "Finish": ["Mill Finish"],
     "Fabricated": ["Fabricated"],
     "Eco-Friendly Packing": ["Yes"],
@@ -19,94 +17,111 @@ default = {
     "Protective Tape - Customer Specified": ["No"],
     "Bundling": ["Yes"],
     "Crate/ Palletizing": ["Crate"]
-}
-df = pd.DataFrame(default)
+})
 
-# Configure dropdown columns
-dropdowns = {
-    "Finish": ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"],
-    "Fabricated": ["Fabricated", "Just Cutting"],
-    "Eco-Friendly Packing": ["Yes", "No"],
-    "Interleaving Required": ["Yes", "No"],
-    "Protective Tape - Customer Specified": ["Yes", "No"],
-    "Bundling": ["Yes", "No"],
-    "Crate/ Palletizing": ["Crate", "Pallet"]
+dropdown_columns = {
+    "Finish": {"editor": "select", "options": ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"]},
+    "Fabricated": {"editor": "select", "options": ["Fabricated", "Just Cutting"]},
+    "Eco-Friendly Packing": {"editor": "select", "options": ["Yes", "No"]},
+    "Interleaving Required": {"editor": "select", "options": ["Yes", "No"]},
+    "Protective Tape - Customer Specified": {"editor": "select", "options": ["Yes", "No"]},
+    "Bundling": {"editor": "select", "options": ["Yes", "No"]},
+    "Crate/ Palletizing": {"editor": "select", "options": ["Crate", "Pallet"]}
 }
 
-# Render editable table with dropdowns
-df_edited = st.data_editor(
-    df,
-    column_config={col: {"editor": "select", "options": opts} for col, opts in dropdowns.items()},
+st.subheader("📥 Input Table", divider="grey")
+edited_data = st.data_editor(
+    input_data,
+    column_config=dropdown_columns,
     use_container_width=True,
-    num_rows="dynamic"
+    num_rows="dynamic",
+    key="input_table"
 )
 
-# Processing and Output
-outputs = []
-for _, r in df_edited.iterrows():
-    W, H, L = r["W (mm)"], r["H (mm)"], r["L (mm)"]
-    eco = r["Eco-Friendly Packing"]
-    finish = r["Finish"]
-    fab = r["Fabricated"]
-    spec = r["Protective Tape - Customer Specified"]
+def calculate_outputs(row):
+    W = row["W (mm)"]
+    H = row["H (mm)"]
+    L = row["L (mm)"]
+    finish = row["Finish"]
+    fabricated = row["Fabricated"]
+    eco_friendly = row["Eco-Friendly Packing"]
+    protective_tape_customer_specified = row["Protective Tape - Customer Specified"]
 
-    # Logic
-    mat = "Craft Paper" if eco == "Yes" else "McFoam"
-    chk = "Okay" if finish == "Mill Finish" and mat == "Craft Paper" else "Can cause rejects - go ahead with McFoam"
-    area = (2 * ((W * L) + (H * L) + (W * H))) / 1e6
-    rates = {"McFoam": 51, "Craft Paper": 34.65, "Protective Tape": 100.65, "Stretchwrap": 14.38}
-    icost = round(area * rates[mat], 2)
-    if spec == "No":
-        advice = "OK" if ((fab == "Fabricated" and finish == "Mill Finish") or fab == "Just Cutting") else "Protective tape required to avoid rejects"
+    interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
+    message = "Okay" if finish == "Mill Finish" and interleaving_material == "Craft Paper" else "Can cause rejects - go ahead with McFoam"
+
+    surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
+
+    cost_rates = {
+        "McFoam": 51.00,
+        "Craft Paper": 34.65,
+        "Protective Tape": 100.65,
+        "Stretchwrap": 14.38
+    }
+    interleaving_cost = cost_rates.get(interleaving_material, 0.0)
+    interleaving_total_cost = surface_area * interleaving_cost
+
+    if protective_tape_customer_specified == "Yes":
+        protective_tape_advice = "Protective tape required to avoid rejects"
+    elif (fabricated == "Fabricated" and finish == "Mill Finish") or fabricated == "Just Cutting":
+        protective_tape_advice = "OK"
     else:
-        advice = "Protective tape required (customer)"
-    tcost = round(area * rates["Protective Tape"], 2) if spec == "Yes" or "Protective tape required" in advice else 0.0
+        protective_tape_advice = "Protective tape required to avoid rejects"
 
-    outputs.append({
-        "Identification No.": r["Identification No."],
-        "Interleaving Material": mat,
-        "Check": chk,
-        "Surface Area (m²)": round(area, 4),
-        "Interleaving Cost (Rs)": icost,
-        "Protective Tape Advice": advice,
-        "Protective Tape Cost (Rs)": tcost
+    protective_tape_rate = cost_rates["Protective Tape"]
+    protective_tape_cost = surface_area * protective_tape_rate if "Protective tape required" in protective_tape_advice else 0.0
+
+    return pd.Series({
+        "Interleaving Material": interleaving_material,
+        "Check": message,
+        "Surface Area (m²)": round(surface_area, 4),
+        "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
+        "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
+        "Protective Tape Advice": protective_tape_advice,
+        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2)
     })
 
-st.markdown("### 🟩 Output Summary")
-st.dataframe(
-    pd.DataFrame(outputs).style.set_properties(**{"background-color": "#E6F2FF"}),
-    use_container_width=True
-)
+st.subheader("📤 Output Table", divider="grey")
+output_table = edited_data.apply(calculate_outputs, axis=1)
+st.dataframe(output_table, use_container_width=True)
 
-# Bundle Section
-bundle_out = []
-st.header("Step 2: Bundle Stack Inputs & Outputs")
+for i, row in edited_data.iterrows():
+    if row["Bundling"] == "Yes":
+        st.divider()
+        st.subheader(f"📦 Bundle Definition - ID: {row['Identification No.'] or i+1}")
 
-for i, r in df_edited.iterrows():
-    if r["Bundling"] == "Yes":
-        st.subheader(f"Bundle – {r['Identification No.']}")
-        nr = st.number_input(f"Rows – {r['Identification No.']}", min_value=1, key=f"nr{i}")
-        nl = st.number_input(f"Layers – {r['Identification No.']}", min_value=1, key=f"nl{i}")
-        wt = st.selectbox(f"Width Profile – {r['Identification No.']}", ["W/mm", "H/mm"], key=f"wt{i}")
-        ht = st.selectbox(f"Height Profile – {r['Identification No.']}", ["H/mm", "W/mm"], key=f"ht{i}")
-        dims = {"W/mm": r["W (mm)"], "H/mm": r["H (mm)"]}
+        num_rows = st.number_input(
+            f"Number of Rows (Width direction) - ID {i+1}",
+            min_value=1,
+            step=1,
+            key=f"rows_{i}"
+        )
+        num_layers = st.number_input(
+            f"Number of Layers (Height direction) - ID {i+1}",
+            min_value=1,
+            step=1,
+            key=f"layers_{i}"
+        )
+        profile_width_type = st.selectbox(
+            f"Width Profile Type - ID {i+1}",
+            ["W/mm", "H/mm"],
+            key=f"width_type_{i}"
+        )
+        profile_height_type = st.selectbox(
+            f"Height Profile Type - ID {i+1}",
+            ["H/mm", "W/mm"],
+            key=f"height_type_{i}"
+        )
 
-        bw = nr * dims[wt]
-        bh = nl * dims[ht]
-        bl = r["L (mm)"]
-        cov = round(2 * ((bw * bl) + (bh * bl) + (bw * bh)) / 1e6, 4)
+        profile_dimensions = {"W/mm": row["W (mm)"], "H/mm": row["H (mm)"]}
+        bundle_width = num_rows * profile_dimensions[profile_width_type]
+        bundle_height = num_layers * profile_dimensions[profile_height_type]
+        bundle_length = row["L (mm)"]
 
-        bundle_out.append({
-            "Identification No.": r["Identification No."],
-            "Bundle Width (mm)": bw,
-            "Bundle Height (mm)": bh,
-            "Bundle Length (mm)": bl,
-            "Area Covered (m²)": cov
-        })
+        st.markdown("#### 📐 Bundle Dimensions")
+        st.write(f"**Bundle Width:** {bundle_width:.2f} mm")
+        st.write(f"**Bundle Height:** {bundle_height:.2f} mm")
+        st.write(f"**Bundle Length:** {bundle_length:.2f} mm")
 
-if bundle_out:
-    st.markdown("### 🟦 Bundle Outputs")
-    st.dataframe(
-        pd.DataFrame(bundle_out).style.set_properties(**{"background-color": "#FFF9C4"}),
-        use_container_width=True
-    )
+        area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
+        st.write(f"**Area Covered (m²):** {round(area_covered, 4)}")
