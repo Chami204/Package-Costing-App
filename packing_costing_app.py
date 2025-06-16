@@ -83,23 +83,34 @@ st.subheader("📤 Outputs Table", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
 
+# --- BUNDLING SECTION FIXED ---
+
 # Filter rows where Bundling == "Yes"
 bundling_rows = edited_data[edited_data["Bundling"] == "Yes"].copy()
 
 if not bundling_rows.empty:
     st.subheader("📦 Bundle Definition Input Table")
 
-    # Always regenerate bundling input from current filtered rows to avoid session-state mismatch
-    bundling_inputs_df = pd.DataFrame({
-        "Identification No.": bundling_rows["Identification No."].values,
-        "Rows": [1] * len(bundling_rows),
-        "Layers": [1] * len(bundling_rows),
-        "Width Type": ["W/mm"] * len(bundling_rows),
-        "Height Type": ["H/mm"] * len(bundling_rows)
-    })
+    # Generate updated identification numbers from latest bundling_rows
+    id_list = bundling_rows["Identification No."].tolist()
 
+    # Check if bundling_inputs in session state matches updated ID list
+    if (
+        "bundling_inputs" not in st.session_state
+        or sorted(st.session_state.bundling_inputs["Identification No."].tolist()) != sorted(id_list)
+    ):
+        # Regenerate fresh bundling input table
+        st.session_state.bundling_inputs = pd.DataFrame({
+            "Identification No.": id_list,
+            "Rows": [1] * len(id_list),
+            "Layers": [1] * len(id_list),
+            "Width Type": ["W/mm"] * len(id_list),
+            "Height Type": ["H/mm"] * len(id_list)
+        })
+
+    # Show editable bundling inputs
     bundling_inputs_edited = st.data_editor(
-        bundling_inputs_df,
+        st.session_state.bundling_inputs,
         column_config={
             "Identification No.": st.column_config.TextColumn("Identification No.", disabled=True),
             "Rows": st.column_config.NumberColumn("Number of Rows", min_value=1, step=1),
@@ -111,7 +122,10 @@ if not bundling_rows.empty:
         key="bundling_table"
     )
 
-    # Bundle Dimensions Output Table
+    # Save latest edited input
+    st.session_state.bundling_inputs = bundling_inputs_edited
+
+    # Process outputs
     bundle_output_rows = []
     for _, bundling_row in bundling_inputs_edited.iterrows():
         id_no = bundling_row["Identification No."]
@@ -150,3 +164,4 @@ if not bundling_rows.empty:
 
 else:
     st.info("No rows with Bundling = 'Yes' found.")
+
