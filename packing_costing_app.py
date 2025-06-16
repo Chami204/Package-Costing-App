@@ -102,59 +102,74 @@ st.subheader("📤 Outputs Table", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
 
-# Collect bundling output rows for final bundling table
-bundle_output_rows = []
+# Filter rows where Bundling == "Yes"
+bundling_rows = edited_data[edited_data["Bundling"] == "Yes"].copy()
 
-for i, row in edited_data.iterrows():
-    if row["Bundling"] == "Yes":
-        st.divider()
-        st.subheader(f"📦 Bundle Definition for {row['Identification No.']}")
+if not bundling_rows.empty:
+    st.subheader("📦 Bundle Definition Input Table")
+    # Create bundling input dataframe with default values or stored values
+    # If running first time, create default columns for bundling inputs
+    if "bundling_inputs" not in st.session_state:
+        st.session_state.bundling_inputs = pd.DataFrame({
+            "Identification No.": bundling_rows["Identification No."],
+            "Rows": [1]*len(bundling_rows),
+            "Layers": [1]*len(bundling_rows),
+            "Width Type": ["W/mm"]*len(bundling_rows),
+            "Height Type": ["H/mm"]*len(bundling_rows)
+        })
 
-        num_rows = st.number_input(
-            f"Number of Rows (Width direction) - ID {row['Identification No.']}",
-            min_value=1,
-            step=1,
-            key=f"rows_{i}"
-        )
-        num_layers = st.number_input(
-            f"Number of Layers (Height direction) - ID {row['Identification No.']}",
-            min_value=1,
-            step=1,
-            key=f"layers_{i}"
-        )
+    # Show editable bundling inputs table
+    bundling_inputs_edited = st.data_editor(
+        st.session_state.bundling_inputs,
+        column_config={
+            "Identification No.": st.column_config.TextColumn("Identification No.", disabled=True),
+            "Rows": st.column_config.NumberColumn("Number of Rows", min_value=1, step=1),
+            "Layers": st.column_config.NumberColumn("Number of Layers", min_value=1, step=1),
+            "Width Type": st.column_config.SelectboxColumn("Width Profile Type", options=["W/mm", "H/mm"]),
+            "Height Type": st.column_config.SelectboxColumn("Height Profile Type", options=["H/mm", "W/mm"]),
+        },
+        use_container_width=True,
+        key="bundling_table"
+    )
 
-        profile_width_type = st.selectbox(
-            f"Width Profile Type - ID {row['Identification No.']}",
-            ["W/mm", "H/mm"],
-            key=f"width_type_{i}"
-        )
-        profile_height_type = st.selectbox(
-            f"Height Profile Type - ID {row['Identification No.']}",
-            ["H/mm", "W/mm"],
-            key=f"height_type_{i}"
-        )
+    # Save edited bundling inputs to session state
+    st.session_state.bundling_inputs = bundling_inputs_edited
 
-        profile_dimensions = {"W/mm": row["W (mm)"], "H/mm": row["H (mm)"]}
+    # Calculate bundle outputs using bundling inputs + original dimensions
+    bundle_output_rows = []
+    for _, bundling_row in bundling_inputs_edited.iterrows():
+        id_no = bundling_row["Identification No."]
+        # Get the corresponding row in edited_data to access W, H, L
+        original_row = edited_data.loc[edited_data["Identification No."] == id_no].iloc[0]
 
-        bundle_width = num_rows * profile_dimensions[profile_width_type]
-        bundle_height = num_layers * profile_dimensions[profile_height_type]
-        bundle_length = row["L (mm)"]
+        profile_dimensions = {
+            "W/mm": original_row["W (mm)"],
+            "H/mm": original_row["H (mm)"]
+        }
+
+        bundle_width = bundling_row["Rows"] * profile_dimensions[bundling_row["Width Type"]]
+        bundle_height = bundling_row["Layers"] * profile_dimensions[bundling_row["Height Type"]]
+        bundle_length = original_row["L (mm)"]
 
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
 
-        # Append the data for table
         bundle_output_rows.append({
-            "Identification No.": row["Identification No."],
-            "Rows": num_rows,
-            "Layers": num_layers,
-            "Width Type": profile_width_type,
-            "Height Type": profile_height_type,
+            "Identification No.": id_no,
+            "Rows": bundling_row["Rows"],
+            "Layers": bundling_row["Layers"],
+            "Width Type": bundling_row["Width Type"],
+            "Height Type": bundling_row["Height Type"],
             "Bundle Width (mm)": round(bundle_width, 2),
             "Bundle Height (mm)": round(bundle_height, 2),
             "Bundle Length (mm)": round(bundle_length, 2),
             "Area Covered (m²)": round(area_covered, 4)
         })
 
+    st.subheader("📦 Bundle Dimensions Output Table")
+    bundle_df = pd.DataFrame(bundle_output_rows)
+    st.dataframe(bundle_df, use_container_width=True)
+else:
+    st.info("No rows with Bundling = 'Yes' found.")
 # Display bundle table if any exist
 if bundle_output_rows:
     st.subheader("📦 Bundle Dimensions Table", divider="grey")
