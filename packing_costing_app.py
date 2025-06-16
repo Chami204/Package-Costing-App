@@ -58,6 +58,7 @@ editable_data = st.data_editor(
 
 # ---- Output Calculation Function ----
 def calculate_outputs(row, row_index):
+    identification = row["Identification No."]
     W = row["W (mm)"]
     H = row["H (mm)"]
     L = row["L (mm)"]
@@ -66,7 +67,7 @@ def calculate_outputs(row, row_index):
     eco_friendly = row["Eco-Friendly Packing"]
     protective_tape_customer_specified = row["Protective Tape - Customer Specified"]
     bundling = row["Bundling"]
-    identification = row["Identification No."]
+    
 
     interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
     message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
