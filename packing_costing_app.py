@@ -37,8 +37,6 @@ dropdown_options = {
     "Crate/ Palletizing": ["Crate", "Pallet"]
 }
 
-
-
 # Input table
 st.subheader("📥 Input Data (Fill Below)", divider="grey")
 df_input = pd.DataFrame([default_row])
