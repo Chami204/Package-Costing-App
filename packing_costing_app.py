@@ -40,9 +40,9 @@ def load_CardboardBox_table():
         "Cost(LKR)": [205]
     })
 
-CardboardBox_df = load_CardboardBox_table().iloc[0]
-ref_volume = CardboardBox_df["Width(mm)"] * CardboardBox_df["Height(mm)"] * CardboardBox_df["Length(mm)"]
-ref_cost = CardboardBox_df["Cost(LKR)"]
+cardboard_ref = load_CardboardBox_table().iloc[0]
+ref_volume = cardboard_ref["Width(mm)"] * cardboard_ref["Height(mm)"] * cardboard_ref["Length(mm)"]
+ref_cost = cardboard_ref["Cost(LKR)"]
 
 
 # ----- INPUT TABLE SETUP -----
@@ -227,6 +227,6 @@ with tab2:
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        CardboardBox_df = st.data_editor(CardboardBox_df,num_rows="dynamic",key="CardboardBox_table")
-    st.dataframe(CardboardBox_df)
+        cardboard_ref = st.data_editor(cardboard_ref,num_rows="dynamic",key="CardboardBox_table")
+    st.dataframe(cardboard_ref)
         
