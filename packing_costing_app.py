@@ -18,9 +18,18 @@ def load_interleaving_table():
         "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
     })
 
-
 interleaving_df = load_interleaving_table()
 material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
+
+@st.cache_data
+def load_polybag_table():
+    return pd.DataFrame({
+        "Polybag Size": ["6 Inch", "9 Inch", "12 Inch"],
+        "Cost per m² (LKR)": [8.54, 12.8, 17.1]
+    })
+
+Polybag_Cost_df = load_polybag_table()
+# material_cost_lookup = dict(zip(Polybag_Cost_df["Material"], Polybag_Cost_df["Cost per m² (LKR)"]))
 
 # ----- INPUT TABLE SETUP -----
 input_data = pd.DataFrame({
@@ -189,3 +198,10 @@ with tab1:
     if st.session_state.edit_mode:
         interleaving_df = st.data_editor(interleaving_df, num_rows="dynamic", key="interleaving_table")
     st.dataframe(interleaving_df)
+
+with tab2:
+    st.markdown("#### Polybag Cost")
+    if st.session_state.edit_mode:
+        Polybag_Cost_df = st.data_editor(Polybag_Cost_df,num_rows="dynamic",key="polybag_table")
+    st.dataframe(Polybag_Cost_df)
+        
