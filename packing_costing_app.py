@@ -20,7 +20,7 @@ def load_interleaving_table():
 
 
 interleaving_df = load_interleaving_table()
-material_cost_lookup = dict(zip(ref_df["Material"], ref_df["Cost per m² (LKR)"]))
+material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
 
 # ----- INPUT TABLE SETUP -----
 input_data = pd.DataFrame({
