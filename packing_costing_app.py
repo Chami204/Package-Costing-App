@@ -10,6 +10,7 @@ EDIT_PASSWORD = "admin123"
 
 if "edit_mode" not in st.session_state:
     st.session_state.edit_mode = False
+
 #----------------Interleaving-------------------------
 @st.cache_data
 def load_interleaving_table():
@@ -21,7 +22,6 @@ def load_interleaving_table():
 interleaving_df = load_interleaving_table()
 material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
 
-
 #------------------Polybag-------------------------
 @st.cache_data
 def load_polybag_table():
@@ -30,38 +30,32 @@ def load_polybag_table():
         "Cost per m² (LKR)": [12.8]
     })
 
-# Load polybag reference
 polybag_ref = load_polybag_table().iloc[0]
-ref_polybag_length = float(polybag_ref["Polybag Size"].split()[0])  # e.g., 9 from "9 Inch"
+ref_polybag_length = float(polybag_ref["Polybag Size"].split()[0])
 polybag_cost_per_m2 = float(polybag_ref["Cost per m² (LKR)"])
 
-
-#-------------------------------Carboard Box------------------------
+#-------------------------------Cardboard Box------------------------
 @st.cache_data
 def load_CardboardBox_table():
     return pd.DataFrame({
-        "Width(mm)": ["210"],
-        "Height(mm)": ["135"],
-        "Length(mm)": ["330"],
+        "Width(mm)": [210],
+        "Height(mm)": [135],
+        "Length(mm)": [330],
         "Cost(LKR)": [205]
     })
 
 cardboard_ref = load_CardboardBox_table().iloc[0]
-ref_width = float(cardboard_ref["Width(mm)"])
-ref_height = float(cardboard_ref["Height(mm)"])
-ref_length = float(cardboard_ref["Length(mm)"])
+ref_volume = float(cardboard_ref["Width(mm)"]) * float(cardboard_ref["Height(mm)"]) * float(cardboard_ref["Length(mm)"])
 ref_cost = float(cardboard_ref["Cost(LKR)"])
 
-ref_volume = ref_width * ref_height * ref_length
-
 #---------------------------Stretchwrap------------------------------
-
 @st.cache_data
 def load_stretchwrap_table():
     return pd.DataFrame({
-        "Area(mm²)": [210000],  
-        "cost(Rs/mm²)": [135]   
+        "Area(mm²)": [210000],
+        "cost(Rs/mm²)": [135]
     })
+
 stretchwrap_ref = load_stretchwrap_table().iloc[0]
 ref_stretch_area = float(stretchwrap_ref["Area(mm²)"])
 ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
@@ -89,7 +83,7 @@ dropdown_columns = {
     "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
 
-st.subheader("📥 User Input Table", divider="grey")
+st.subheader("📅 User Input Table", divider="grey")
 edited_data = st.data_editor(
     input_data,
     column_config=dropdown_columns,
@@ -127,7 +121,7 @@ def calculate_outputs(row):
 
     user_volume = W * H * L
     cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
-    
+
     return pd.Series({
         "Identification No.": row["Identification No."],
         "Interleaving Material": interleaving_material,
@@ -138,26 +132,20 @@ def calculate_outputs(row):
         "Protective Tape Advice": protective_tape_advice,
         "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
         "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
-    
     })
 
-# Calculate outputs
 st.subheader("📤 Packing Details", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
 
-# ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) -----
+# ----- BUNDLING SECTION -----
 bundling_rows = edited_data[edited_data["Packing Method"] == "Secondary"].copy()
-
 if not bundling_rows.empty:
-    st.subheader("📦 Input the data for Secondary Packing (Bundling)")
-
+    st.subheader("🛆 Input the data for Secondary Packing (Bundling)")
     id_list = bundling_rows["Identification No."].tolist()
 
-    if (
-        "bundling_inputs" not in st.session_state
-        or sorted(st.session_state.bundling_inputs["Identification No."].tolist()) != sorted(id_list)
-    ):
+    if ("bundling_inputs" not in st.session_state or
+        sorted(st.session_state.bundling_inputs["Identification No."].tolist()) != sorted(id_list)):
         st.session_state.bundling_inputs = pd.DataFrame({
             "Identification No.": id_list,
             "Rows": [1] * len(id_list),
@@ -185,17 +173,11 @@ if not bundling_rows.empty:
     for _, bundling_row in bundling_inputs_edited.iterrows():
         id_no = bundling_row["Identification No."]
         match = edited_data.loc[edited_data["Identification No."] == id_no]
-        # Calculate total surface area of bundle in mm²
-        bundle_surface_area = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height))
-        
-        # Stretchwrap cost proportional to surface area
-        stretchwrap_cost = (bundle_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
-
         if match.empty:
             st.warning(f"No matching input found for ID: {id_no}")
             continue
-        original_row = match.iloc[0]
 
+        original_row = match.iloc[0]
         profile_dimensions = {
             "W/mm": original_row["W (mm)"],
             "H/mm": original_row["H (mm)"]
@@ -204,8 +186,10 @@ if not bundling_rows.empty:
         bundle_width = bundling_row["Rows"] * profile_dimensions[bundling_row["Width Type"]]
         bundle_height = bundling_row["Layers"] * profile_dimensions[bundling_row["Height Type"]]
         bundle_length = original_row["L (mm)"]
-        # --- Polybag Cost Calculation ---
-        polybag_cost = (bundle_length / (ref_polybag_length * 25.4)) * polybag_cost_per_m2  # Convert inch to mm
+
+        polybag_cost = (bundle_length / (ref_polybag_length * 25.4)) * polybag_cost_per_m2
+        profile_surface_area_mm2 = 2 * ((original_row["W (mm)"] * original_row["L (mm)"]) + (original_row["H (mm)"] * original_row["L (mm)"]) + (original_row["W (mm)"] * original_row["H (mm)"]))
+        stretchwrap_cost = (profile_surface_area_mm2 / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
 
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
 
@@ -221,19 +205,16 @@ if not bundling_rows.empty:
             "Area Covered (m²)": round(area_covered, 4),
             "Polybag Cost (Rs)": round(polybag_cost, 2),
             "Stretchwrap Cost (Rs)": round(stretchwrap_cost, 2)
-
         })
 
-    st.subheader("📦 Secondary Packing (Bundling) Output Table")
+    st.subheader("🛆 Secondary Packing (Bundling) Output Table")
     bundle_df = pd.DataFrame(bundle_output_rows)
     st.dataframe(bundle_df, use_container_width=True)
-
 else:
     st.info("No rows with Packing Method = 'Secondary' found.")
 
 # ----- REFERENCE TABLE PASSWORD-PROTECTED EDITING -----
 st.subheader("🔐 Admin Reference Tables")
-
 if not st.session_state.edit_mode:
     password = st.text_input("Enter password to edit tables:", type="password")
     if password == EDIT_PASSWORD:
@@ -241,8 +222,7 @@ if not st.session_state.edit_mode:
     else:
         st.warning("Read-only mode. Enter correct password to unlock tables.")
 
-# Use tabs for organization
-tab1, tab2, tab3, tab4 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost","🌀Stretchwrap Cost"])
+tab1, tab2, tab3, tab4 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost", "🌀 Stretchwrap Cost"])
 
 with tab1:
     st.markdown("#### Interleaving Material Costs")
@@ -253,17 +233,17 @@ with tab1:
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        polybag_ref= st.data_editor(polybag_ref,num_rows="dynamic",key="polybag_table")
-    st.dataframe(polybag_ref)
+        polybag_ref = st.data_editor(polybag_ref.to_frame().T, num_rows="dynamic", key="polybag_table")
+    st.dataframe(polybag_ref.to_frame().T)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        cardboard_ref = st.data_editor(cardboard_ref,num_rows="dynamic",key="CardboardBox_table")
-    st.dataframe(cardboard_ref)
-        
+        cardboard_ref = st.data_editor(cardboard_ref.to_frame().T, num_rows="dynamic", key="CardboardBox_table")
+    st.dataframe(cardboard_ref.to_frame().T)
+
 with tab4:
     st.markdown("#### Stretchwrap Cost")
     if st.session_state.edit_mode:
-        stretchwrap_ref = st.data_editor(stretchwrap_ref,num_rows="dynamic",key="Stretchwrap_Cost_table")
-    st.dataframe(stretchwrap_ref)
+        stretchwrap_ref = st.data_editor(stretchwrap_ref.to_frame().T, num_rows="dynamic", key="Stretchwrap_Cost_table")
+    st.dataframe(stretchwrap_ref.to_frame().T)
