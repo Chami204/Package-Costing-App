@@ -29,7 +29,19 @@ def load_polybag_table():
     })
 
 Polybag_Cost_df = load_polybag_table()
-# material_cost_lookup = dict(zip(Polybag_Cost_df["Material"], Polybag_Cost_df["Cost per m² (LKR)"]))
+# polybag_cost_lookup = dict(zip(Polybag_Cost_df["Material"], Polybag_Cost_df["Cost (LKR)"]))
+
+@st.cache_data
+def load_CardboardBox_table():
+    return pd.DataFrame({
+        "Width(mm)": ["210"],
+        "Height(mm)": ["135"],
+        "Width(mm)": ["210"],
+        "Cost(LKR)": [205]
+    })
+
+CardboardBox_df = load_CardboardBox_table()
+# cardboard_cost_lookup = dict(zip(CardboardBox_df["Material"], CardboardBox_df["Cost  (LKR)"]))
 
 # ----- INPUT TABLE SETUP -----
 input_data = pd.DataFrame({
@@ -204,4 +216,10 @@ with tab2:
     if st.session_state.edit_mode:
         Polybag_Cost_df = st.data_editor(Polybag_Cost_df,num_rows="dynamic",key="polybag_table")
     st.dataframe(Polybag_Cost_df)
+
+with tab3:
+    st.markdown("#### Cardboard Box Cost")
+    if st.session_state.edit_mode:
+        CardboardBox_df = st.data_editor(CardboardBox_df,num_rows="dynamic",key="CardboardBox_table")
+    st.dataframe(CardboardBox_df)
         
