@@ -115,7 +115,7 @@ def calculate_outputs(row):
         "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
         "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
         "Protective Tape Advice": protective_tape_advice,
-        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2)
+        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
         "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
     
     })
