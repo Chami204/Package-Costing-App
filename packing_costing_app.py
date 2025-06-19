@@ -18,12 +18,6 @@ def load_interleaving_table():
         "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
     })
 
-@st.cache_data
-def load_reference_table():
-    return pd.DataFrame({
-        "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
-        "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
-    })
 
 interleaving_df = load_interleaving_table()
 material_cost_lookup = dict(zip(ref_df["Material"], ref_df["Cost per m² (LKR)"]))
