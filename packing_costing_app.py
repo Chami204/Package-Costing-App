@@ -16,8 +16,7 @@ input_data = pd.DataFrame({
     "Interleaving Required": ["Select"],
     "Protective Tape - Customer Specified": ["Select"],
     "Bundling": ["Select"],
-    "Crate/ Palletizing": ["Select"],
-    "Packing Method":["Select"]
+    "Crate/ Palletizing": ["Select"]
 })
 
 # Define dropdown options
