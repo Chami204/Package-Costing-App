@@ -40,8 +40,10 @@ def load_CardboardBox_table():
         "Cost(LKR)": [205]
     })
 
-CardboardBox_df = load_CardboardBox_table()
-# cardboard_cost_lookup = dict(zip(CardboardBox_df["Material"], CardboardBox_df["Cost  (LKR)"]))
+CardboardBox_df = load_CardboardBox_table().iloc[0]
+ref_volume = CardboardBox_df["Width(mm)"] * CardboardBox_df["Height(mm)"] * CardboardBox_df["Length(mm)"]
+ref_cost = CardboardBox_df["Cost(LKR)"]
+
 
 # ----- INPUT TABLE SETUP -----
 input_data = pd.DataFrame({
@@ -102,6 +104,9 @@ def calculate_outputs(row):
 
     protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65) if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
 
+    user_volume = W * H * L
+    cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
+
     return pd.Series({
         "Identification No.": row["Identification No."],
         "Interleaving Material": interleaving_material,
@@ -111,6 +116,8 @@ def calculate_outputs(row):
         "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
         "Protective Tape Advice": protective_tape_advice,
         "Protective Tape Cost (Rs)": round(protective_tape_cost, 2)
+        "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
+    
     })
 
 # Calculate outputs
