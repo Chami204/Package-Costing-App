@@ -233,8 +233,15 @@ with tab1:
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        polybag_ref = st.data_editor(polybag_ref.to_frame().T, num_rows="dynamic", key="polybag_table")
-    st.dataframe(polybag_ref.to_frame().T)
+        # Reload full table for editing if in admin mode
+        polybag_df = load_polybag_table()
+        polybag_ref = st.data_editor(polybag_df, num_rows="dynamic", key="polybag_table")
+        st.dataframe(polybag_ref)
+    else:
+        # Show just the reference row if not editable
+        polybag_ref = load_polybag_table().iloc[0]
+        st.dataframe(polybag_ref.to_frame().T)
+
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
