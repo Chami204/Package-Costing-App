@@ -36,7 +36,7 @@ def load_CardboardBox_table():
     return pd.DataFrame({
         "Width(mm)": ["210"],
         "Height(mm)": ["135"],
-        "Length(mm)": ["210"],
+        "Length(mm)": ["330"],
         "Cost(LKR)": [205]
     })
 
