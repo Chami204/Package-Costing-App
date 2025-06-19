@@ -12,13 +12,20 @@ if "edit_mode" not in st.session_state:
     st.session_state.edit_mode = False
 
 @st.cache_data
+def load_interleaving_table():
+    return pd.DataFrame({
+        "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+        "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
+    })
+
+@st.cache_data
 def load_reference_table():
     return pd.DataFrame({
         "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
         "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
     })
 
-ref_df = load_reference_table()
+interleaving_df = load_interleaving_table()
 material_cost_lookup = dict(zip(ref_df["Material"], ref_df["Cost per m² (LKR)"]))
 
 # ----- INPUT TABLE SETUP -----
@@ -171,23 +178,20 @@ else:
     st.info("No rows with Packing Method = 'Secondary' found.")
 
 # ----- REFERENCE TABLE PASSWORD-PROTECTED EDITING -----
-st.subheader("🔐 Reference Material Cost Table")
+st.subheader("🔐 Admin Reference Tables")
 
 if not st.session_state.edit_mode:
-    password = st.text_input("Enter password to edit table:", type="password")
+    password = st.text_input("Enter password to edit tables:", type="password")
     if password == EDIT_PASSWORD:
         st.session_state.edit_mode = True
     else:
-        st.warning("Table is in read-only mode. Enter correct password to edit.")
+        st.warning("Read-only mode. Enter correct password to unlock tables.")
 
-editable_ref_df = ref_df.copy()
+# Use tabs for organization
+tab1, tab2, tab3 = st.tabs(["📄 Interleaving", "📦 Crate/Pallet", "🔗 Bundling Accessories"])
 
-if st.session_state.edit_mode:
-    editable_ref_df = st.data_editor(editable_ref_df, num_rows="dynamic", key="ref_table")
-    save = st.button("💾 Save Changes")
-    if save:
-        ref_df = editable_ref_df
-        material_cost_lookup = dict(zip(ref_df["Material"], ref_df["Cost per m² (LKR)"]))
-        st.success("✅ Reference table updated.")
-else:
-    st.dataframe(editable_ref_df)
+with tab1:
+    st.markdown("#### Interleaving Material Costs")
+    if st.session_state.edit_mode:
+        interleaving_df = st.data_editor(interleaving_df, num_rows="dynamic", key="interleaving_table")
+    st.dataframe(interleaving_df)
