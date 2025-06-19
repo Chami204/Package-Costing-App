@@ -83,7 +83,7 @@ def calculate_outputs(row):
     })
 
 # Calculate outputs
-st.subheader("📤 Packing Detials ", divider="grey")
+st.subheader("📤 Packing Details ", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
 
