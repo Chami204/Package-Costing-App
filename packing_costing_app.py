@@ -28,8 +28,7 @@ dropdown_columns = {
     "Interleaving Required": st.column_config.SelectboxColumn("Interleaving Required", options=["Yes", "No"]),
     "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
     "Bundling": st.column_config.SelectboxColumn("Bundling", options=["Yes", "No"]),
-    "Crate/ Palletizing": st.column_config.SelectboxColumn("Crate/ Palletizing", options=["Crate", "Pallet"]),
-    "Packing Method":st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
+    "Crate/ Palletizing": st.column_config.SelectboxColumn("Crate/ Palletizing", options=["Crate", "Pallet"])
 }
 
 # Editable table for inputs
@@ -77,8 +76,7 @@ def calculate_outputs(row):
         "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
         "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
         "Protective Tape Advice": protective_tape_advice,
-        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
-        "Packing Method.": row["Packing Method"]
+        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2)
         
     })
 
