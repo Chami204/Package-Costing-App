@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 
-# --- PASSWORD AND REFERENCE DATA SETUP ---
+# Page setup
+st.set_page_config(page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
+st.title("🎯💰 Packing Costing App")
+
+# ----- PASSWORD-PROTECTED REFERENCE TABLE SETUP -----
 EDIT_PASSWORD = "admin123"
 
 if "edit_mode" not in st.session_state:
@@ -15,15 +19,9 @@ def load_reference_table():
     })
 
 ref_df = load_reference_table()
-
-# Material cost lookup from reference table
 material_cost_lookup = dict(zip(ref_df["Material"], ref_df["Cost per m² (LKR)"]))
 
-
-st.set_page_config(page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
-st.title("🎯💰 Packing Costing App")
-
-# Sample input table for profile data
+# ----- INPUT TABLE SETUP -----
 input_data = pd.DataFrame({
     "Identification No.": [""],
     "W (mm)": [0.0],
@@ -34,23 +32,19 @@ input_data = pd.DataFrame({
     "Eco-Friendly Packing": ["Select"],
     "Interleaving Required": ["Select"],
     "Protective Tape - Customer Specified": ["Select"],
-    "Packing Method": ["Select"],
-    "Crate/ Palletizing": ["Select"]
+    "Packing Method": ["Primary"]
 })
 
-# Define dropdown options
 dropdown_columns = {
     "Finish": st.column_config.SelectboxColumn("Finish", options=["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"]),
     "Fabricated": st.column_config.SelectboxColumn("Fabricated", options=["Fabricated", "Just Cutting"]),
     "Eco-Friendly Packing": st.column_config.SelectboxColumn("Eco-Friendly Packing", options=["Yes", "No"]),
     "Interleaving Required": st.column_config.SelectboxColumn("Interleaving Required", options=["Yes", "No"]),
     "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
-    "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"]),
-    "Crate/ Palletizing": st.column_config.SelectboxColumn("Crate/ Palletizing", options=["Crate", "Pallet"])
+    "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
 
-# Editable table for inputs
-st.subheader("📥User Input Table", divider="grey")
+st.subheader("📥 User Input Table", divider="grey")
 edited_data = st.data_editor(
     input_data,
     column_config=dropdown_columns,
@@ -59,7 +53,7 @@ edited_data = st.data_editor(
     key="input_table"
 )
 
-# Function to calculate outputs
+# ----- COSTING LOGIC -----
 def calculate_outputs(row):
     W = row["W (mm)"]
     H = row["H (mm)"]
@@ -77,15 +71,15 @@ def calculate_outputs(row):
     interleaving_total_cost = surface_area * interleaving_cost
 
     if protective_tape_customer_specified == "No":
-        if (fabricated == "Fabricated" and finish == "Mill Finish") or (fabricated == "Just Cutting" and finish == "Powder Coated") or (fabricated == "Just Cutting" and finish == "Anodized"):
+        if (fabricated == "Fabricated" and finish == "Mill Finish") or (fabricated == "Just Cutting" and finish in ["Powder Coated", "Anodized"]):
             protective_tape_advice = "Not necessary."
         else:
             protective_tape_advice = "Protective tape required to avoid rejects"
     else:
         protective_tape_advice = "Protective tape required to avoid rejects"
 
-    protective_tape_cost = surface_area * 100.65 if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
-    
+    protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65) if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
+
     return pd.Series({
         "Identification No.": row["Identification No."],
         "Interleaving Material": interleaving_material,
@@ -95,37 +89,25 @@ def calculate_outputs(row):
         "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
         "Protective Tape Advice": protective_tape_advice,
         "Protective Tape Cost (Rs)": round(protective_tape_cost, 2)
-        
     })
 
 # Calculate outputs
-st.subheader("📤 Packing Details ", divider="grey")
+st.subheader("📤 Packing Details", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
 
-#-----Primary Packing/ Secondary Packing----
-
-
-
-
-
-# --- BUNDLING SECTION FIXED ---
-
-# Filter rows where Packing Method == "Secondary"
-Bundling_rows = edited_data[edited_data["Packing Method"] == "Yes"].copy()
+# ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) -----
+bundling_rows = edited_data[edited_data["Packing Method"] == "Secondary"].copy()
 
 if not bundling_rows.empty:
-    st.subheader("📦 Input the data for Bundling ")
+    st.subheader("📦 Input the data for Secondary Packing (Bundling)")
 
-    # Generate updated identification numbers from latest bundling_rows
     id_list = bundling_rows["Identification No."].tolist()
 
-    # Check if bundling_inputs in session state matches updated ID list
     if (
         "bundling_inputs" not in st.session_state
         or sorted(st.session_state.bundling_inputs["Identification No."].tolist()) != sorted(id_list)
     ):
-        # Regenerate fresh bundling input table
         st.session_state.bundling_inputs = pd.DataFrame({
             "Identification No.": id_list,
             "Rows": [1] * len(id_list),
@@ -134,7 +116,6 @@ if not bundling_rows.empty:
             "Height Type": ["H/mm"] * len(id_list)
         })
 
-    # Show editable bundling inputs
     bundling_inputs_edited = st.data_editor(
         st.session_state.bundling_inputs,
         column_config={
@@ -148,10 +129,8 @@ if not bundling_rows.empty:
         key="bundling_table"
     )
 
-    # Save latest edited input
     st.session_state.bundling_inputs = bundling_inputs_edited
 
-    # Process outputs
     bundle_output_rows = []
     for _, bundling_row in bundling_inputs_edited.iterrows():
         id_no = bundling_row["Identification No."]
@@ -184,14 +163,14 @@ if not bundling_rows.empty:
             "Area Covered (m²)": round(area_covered, 4)
         })
 
-    st.subheader("📦 Bundle Dimensions Output Table")
+    st.subheader("📦 Secondary Packing (Bundling) Output Table")
     bundle_df = pd.DataFrame(bundle_output_rows)
     st.dataframe(bundle_df, use_container_width=True)
 
 else:
-    st.info("No rows with Bundling = 'Yes' found.")
+    st.info("No rows with Packing Method = 'Secondary' found.")
 
-# --- REFERENCE TABLE EDIT SECTION ---
+# ----- REFERENCE TABLE PASSWORD-PROTECTED EDITING -----
 st.subheader("🔐 Reference Material Cost Table")
 
 if not st.session_state.edit_mode:
