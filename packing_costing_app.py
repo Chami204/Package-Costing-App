@@ -41,8 +41,13 @@ def load_CardboardBox_table():
     })
 
 cardboard_ref = load_CardboardBox_table().iloc[0]
-ref_volume = cardboard_ref["Width(mm)"] * cardboard_ref["Height(mm)"] * cardboard_ref["Length(mm)"]
-ref_cost = cardboard_ref["Cost(LKR)"]
+ref_width = float(cardboard_ref["Width(mm)"])
+ref_height = float(cardboard_ref["Height(mm)"])
+ref_length = float(cardboard_ref["Length(mm)"])
+ref_cost = float(cardboard_ref["Cost(LKR)"])
+
+ref_volume = ref_width * ref_height * ref_length
+
 
 
 # ----- INPUT TABLE SETUP -----
