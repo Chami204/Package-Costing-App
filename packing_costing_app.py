@@ -10,7 +10,7 @@ EDIT_PASSWORD = "admin123"
 
 if "edit_mode" not in st.session_state:
     st.session_state.edit_mode = False
-
+#----------------Interleaving-------------------------
 @st.cache_data
 def load_interleaving_table():
     return pd.DataFrame({
@@ -21,16 +21,22 @@ def load_interleaving_table():
 interleaving_df = load_interleaving_table()
 material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
 
+
+#------------------Polybag-------------------------
 @st.cache_data
 def load_polybag_table():
     return pd.DataFrame({
-        "Polybag Size": ["6 Inch", "9 Inch", "12 Inch"],
-        "Cost per m² (LKR)": [8.54, 12.8, 17.1]
+        "Polybag Size": ["9 Inch"],
+        "Cost per m² (LKR)": [12.8]
     })
 
-Polybag_Cost_df = load_polybag_table()
-# polybag_cost_lookup = dict(zip(Polybag_Cost_df["Material"], Polybag_Cost_df["Cost (LKR)"]))
+# Load polybag reference
+polybag_ref = load_polybag_table().iloc[0]
+ref_polybag_length = float(polybag_ref["Polybag Size"].split()[0])  # e.g., 9 from "9 Inch"
+polybag_cost_per_m2 = float(polybag_ref["Cost per m² (LKR)"])
 
+
+#-------------------------------Carboard Box------------------------
 @st.cache_data
 def load_CardboardBox_table():
     return pd.DataFrame({
@@ -182,6 +188,8 @@ if not bundling_rows.empty:
         bundle_width = bundling_row["Rows"] * profile_dimensions[bundling_row["Width Type"]]
         bundle_height = bundling_row["Layers"] * profile_dimensions[bundling_row["Height Type"]]
         bundle_length = original_row["L (mm)"]
+        # --- Polybag Cost Calculation ---
+        polybag_cost = (bundle_length / (ref_polybag_length * 25.4)) * polybag_cost_per_m2  # Convert inch to mm
 
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
 
@@ -194,7 +202,9 @@ if not bundling_rows.empty:
             "Bundle Width (mm)": round(bundle_width, 2),
             "Bundle Height (mm)": round(bundle_height, 2),
             "Bundle Length (mm)": round(bundle_length, 2),
-            "Area Covered (m²)": round(area_covered, 4)
+            "Area Covered (m²)": round(area_covered, 4),
+            "Polybag Cost (Rs)": round(polybag_cost, 2)
+
         })
 
     st.subheader("📦 Secondary Packing (Bundling) Output Table")
