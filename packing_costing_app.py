@@ -111,8 +111,8 @@ st.dataframe(outputs_df, use_container_width=True)
 
 # --- BUNDLING SECTION FIXED ---
 
-# Filter rows where Bundling == "Secondary"
-bundling_rows = edited_data[edited_data["Packing Method"] == "Yes"].copy()
+# Filter rows where Packing Method == "Secondary"
+Bundling_rows = edited_data[edited_data["Packing Method"] == "Yes"].copy()
 
 if not bundling_rows.empty:
     st.subheader("📦 Input the data for Bundling ")
