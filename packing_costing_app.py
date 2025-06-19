@@ -34,7 +34,7 @@ input_data = pd.DataFrame({
     "Eco-Friendly Packing": ["Select"],
     "Interleaving Required": ["Select"],
     "Protective Tape - Customer Specified": ["Select"],
-    "Bundling": ["Select"],
+    "Packing Method": ["Select"],
     "Crate/ Palletizing": ["Select"]
 })
 
@@ -45,7 +45,7 @@ dropdown_columns = {
     "Eco-Friendly Packing": st.column_config.SelectboxColumn("Eco-Friendly Packing", options=["Yes", "No"]),
     "Interleaving Required": st.column_config.SelectboxColumn("Interleaving Required", options=["Yes", "No"]),
     "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
-    "Bundling": st.column_config.SelectboxColumn("Bundling", options=["Yes", "No"]),
+    "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"]),
     "Crate/ Palletizing": st.column_config.SelectboxColumn("Crate/ Palletizing", options=["Crate", "Pallet"])
 }
 
@@ -111,8 +111,8 @@ st.dataframe(outputs_df, use_container_width=True)
 
 # --- BUNDLING SECTION FIXED ---
 
-# Filter rows where Bundling == "Yes"
-bundling_rows = edited_data[edited_data["Bundling"] == "Yes"].copy()
+# Filter rows where Bundling == "Secondary"
+bundling_rows = edited_data[edited_data["Packing Method"] == "Yes"].copy()
 
 if not bundling_rows.empty:
     st.subheader("📦 Input the data for Bundling ")
