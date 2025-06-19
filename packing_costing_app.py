@@ -34,6 +34,7 @@ Polybag_Cost_df = load_polybag_table()
 @st.cache_data
 def load_CardboardBox_table():
     return pd.DataFrame({
+        "Dimension" = ["mm"]
         "Width(mm)": ["210"],
         "Height(mm)": ["135"],
         "Length(mm)": ["330"],
