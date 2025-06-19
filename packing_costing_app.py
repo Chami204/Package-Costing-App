@@ -236,8 +236,8 @@ with tab1:
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        Polybag_Cost_df = st.data_editor(Polybag_Cost_df,num_rows="dynamic",key="polybag_table")
-    st.dataframe(Polybag_Cost_df)
+        polybag_ref= st.data_editor(polybag_ref,num_rows="dynamic",key="polybag_table")
+    st.dataframe(polybag_ref)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
