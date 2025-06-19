@@ -242,7 +242,7 @@ if not st.session_state.edit_mode:
         st.warning("Read-only mode. Enter correct password to unlock tables.")
 
 # Use tabs for organization
-tab1, tab2, tab3, tab4 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost","Stretchwrap Cost"])
+tab1, tab2, tab3, tab4 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost","🌀Stretchwrap Cost"])
 
 with tab1:
     st.markdown("#### Interleaving Material Costs")
