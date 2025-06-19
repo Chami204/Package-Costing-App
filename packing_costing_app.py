@@ -1,6 +1,25 @@
 import streamlit as st
 import pandas as pd
 
+# --- PASSWORD AND REFERENCE DATA SETUP ---
+EDIT_PASSWORD = "admin123"
+
+if "edit_mode" not in st.session_state:
+    st.session_state.edit_mode = False
+
+@st.cache_data
+def load_reference_table():
+    return pd.DataFrame({
+        "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+        "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
+    })
+
+ref_df = load_reference_table()
+
+# Material cost lookup from reference table
+material_cost_lookup = dict(zip(ref_df["Material"], ref_df["Cost per m² (LKR)"]))
+
+
 st.set_page_config(page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
 st.title("🎯💰 Packing Costing App")
 
@@ -54,7 +73,7 @@ def calculate_outputs(row):
     message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
     surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
 
-    interleaving_cost = {"McFoam": 51.00, "Craft Paper": 34.65, "Protective Tape": 100.65, "Stretchwrap": 14.38}.get(interleaving_material, 0.0)
+    interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
     interleaving_total_cost = surface_area * interleaving_cost
 
     if protective_tape_customer_specified == "No":
@@ -172,3 +191,24 @@ if not bundling_rows.empty:
 else:
     st.info("No rows with Bundling = 'Yes' found.")
 
+# --- REFERENCE TABLE EDIT SECTION ---
+st.subheader("🔐 Reference Material Cost Table")
+
+if not st.session_state.edit_mode:
+    password = st.text_input("Enter password to edit table:", type="password")
+    if password == EDIT_PASSWORD:
+        st.session_state.edit_mode = True
+    else:
+        st.warning("Table is in read-only mode. Enter correct password to edit.")
+
+editable_ref_df = ref_df.copy()
+
+if st.session_state.edit_mode:
+    editable_ref_df = st.data_editor(editable_ref_df, num_rows="dynamic", key="ref_table")
+    save = st.button("💾 Save Changes")
+    if save:
+        ref_df = editable_ref_df
+        material_cost_lookup = dict(zip(ref_df["Material"], ref_df["Cost per m² (LKR)"]))
+        st.success("✅ Reference table updated.")
+else:
+    st.dataframe(editable_ref_df)
