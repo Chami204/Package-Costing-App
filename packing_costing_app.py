@@ -33,7 +33,7 @@ dropdown_columns = {
 }
 
 # Editable table for inputs
-st.subheader("📥Pls enter the following details", divider="grey")
+st.subheader("📥User Input Table", divider="grey")
 edited_data = st.data_editor(
     input_data,
     column_config=dropdown_columns,
