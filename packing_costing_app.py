@@ -54,9 +54,19 @@ ref_cost = float(cardboard_ref["Cost(LKR)"])
 
 ref_volume = ref_width * ref_height * ref_length
 
+#---------------------------Stretchwrap------------------------------
 
+@st.cache_data
+def load_stretchwrap_table():
+    return pd.DataFrame({
+        "Area(mm²)": [210000],  
+        "cost(Rs/mm²)": [135]   
+    })
+stretchwrap_ref = load_stretchwrap_table().iloc[0]
+ref_stretch_area = float(stretchwrap_ref["Area(mm²)"])
+ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
 
-# ----- INPUT TABLE SETUP -----
+# --------------------------=INPUT TABLE SETUP ------------------------
 input_data = pd.DataFrame({
     "Identification No.": [""],
     "W (mm)": [0.0],
@@ -117,7 +127,7 @@ def calculate_outputs(row):
 
     user_volume = W * H * L
     cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
-
+    
     return pd.Series({
         "Identification No.": row["Identification No."],
         "Interleaving Material": interleaving_material,
@@ -175,6 +185,12 @@ if not bundling_rows.empty:
     for _, bundling_row in bundling_inputs_edited.iterrows():
         id_no = bundling_row["Identification No."]
         match = edited_data.loc[edited_data["Identification No."] == id_no]
+        # Calculate total surface area of bundle in mm²
+        bundle_surface_area = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height))
+        
+        # Stretchwrap cost proportional to surface area
+        stretchwrap_cost = (bundle_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
+
         if match.empty:
             st.warning(f"No matching input found for ID: {id_no}")
             continue
@@ -203,7 +219,8 @@ if not bundling_rows.empty:
             "Bundle Height (mm)": round(bundle_height, 2),
             "Bundle Length (mm)": round(bundle_length, 2),
             "Area Covered (m²)": round(area_covered, 4),
-            "Polybag Cost (Rs)": round(polybag_cost, 2)
+            "Polybag Cost (Rs)": round(polybag_cost, 2),
+            "Stretchwrap Cost (Rs)": round(stretchwrap_cost, 2)
 
         })
 
@@ -225,7 +242,7 @@ if not st.session_state.edit_mode:
         st.warning("Read-only mode. Enter correct password to unlock tables.")
 
 # Use tabs for organization
-tab1, tab2, tab3 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost"])
+tab1, tab2, tab3, tab4 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost","Stretchwrap Cost"])
 
 with tab1:
     st.markdown("#### Interleaving Material Costs")
@@ -245,3 +262,8 @@ with tab3:
         cardboard_ref = st.data_editor(cardboard_ref,num_rows="dynamic",key="CardboardBox_table")
     st.dataframe(cardboard_ref)
         
+with tab4:
+    st.markdown("#### Stretchwrap Cost")
+    if st.session_state.edit_mode:
+        stretchwrap_ref = st.data_editor(stretchwrap_ref,num_rows="dynamic",key="Stretchwrap_Cost_table")
+    st.dataframe(stretchwrap_ref)
