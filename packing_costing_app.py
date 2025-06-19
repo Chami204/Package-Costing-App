@@ -33,7 +33,7 @@ dropdown_columns = {
 }
 
 # Editable table for inputs
-st.subheader("📥 Input Data (Fill Below)", divider="grey")
+st.subheader("📥Pls enter the following details", divider="grey")
 edited_data = st.data_editor(
     input_data,
     column_config=dropdown_columns,
@@ -83,7 +83,7 @@ def calculate_outputs(row):
     })
 
 # Calculate outputs
-st.subheader("📤 Outputs Table", divider="grey")
+st.subheader("📤 Packing Detials ", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
 
@@ -99,7 +99,7 @@ st.dataframe(outputs_df, use_container_width=True)
 bundling_rows = edited_data[edited_data["Bundling"] == "Yes"].copy()
 
 if not bundling_rows.empty:
-    st.subheader("📦 Bundle Definition Input Table")
+    st.subheader("📦 Input the data for Bundling ")
 
     # Generate updated identification numbers from latest bundling_rows
     id_list = bundling_rows["Identification No."].tolist()
