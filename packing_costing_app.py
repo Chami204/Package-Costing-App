@@ -63,6 +63,24 @@ stretchwrap_ref = load_stretchwrap_table().iloc[0]
 ref_stretch_area = float(stretchwrap_ref["Area(mm²)"])
 ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
 
+
+#----------------------Crate or Pallet Cost reference table---------------------------
+
+@st.cache_data
+def load_finalpacking_table():
+    return pd.DataFrame({
+        "Description": ["Crate", "Pallet"],
+        "Width (mm)": [480,2000],
+        "Height(mm)":[590,600],
+        "Length(mm)":[2000,2000]
+    })
+
+finalpacking_df = load_finalpacking_table()
+finalpacking_cost_lookup = dict(zip(finalpacking_df["Description"], finalpacking_df["Cost per m² (LKR)"]))
+
+
+
+
 # --------------------------=INPUT TABLE SETUP ------------------------
 input_data = pd.DataFrame({
     "Identification No.": [""],
