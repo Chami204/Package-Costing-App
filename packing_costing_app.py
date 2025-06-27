@@ -280,3 +280,9 @@ with tab4:
     if st.session_state.edit_mode:
         stretchwrap_ref = st.data_editor(stretchwrap_ref, num_rows="dynamic", key="Stretchwrap_Cost_table")
     st.dataframe(stretchwrap_ref)
+
+with tab5:
+    st.markdown("####Final Packing Cost")
+    if st.session_state.edit_mode:
+        finalpacking_df = st.data_editor(finalpacking_df, num_rows="dynamic", key="Stretchwrap_Cost_table")
+    st.dataframe(finalpacking_df)
