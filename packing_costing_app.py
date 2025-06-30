@@ -77,7 +77,7 @@ def load_crate_pallet_table():
     })
 
 cratePallet_df = load_crate_pallet_table()
-finalpacking_cost_lookup = dict(zip(cratePallet_df["Description"], cratePallet_df["Cost per m² (LKR)"]))
+cratePallet_cost_lookup = dict(zip(cratePallet_df["Description"], cratePallet_df["Cost per m² (LKR)"]))
 
 
 
