@@ -215,9 +215,6 @@ with st.container():
         st.markdown(f"Costing is only inclusive of **{interleaving_required}** & **Cardboard Box OR Polybag**")
 
 
-st.subheader("📤 Packing Details", divider="grey")
-outputs_df = edited_data.apply(calculate_outputs, axis=1)
-st.dataframe(outputs_df, use_container_width=True)
 
 # ----------------- Final Packing --------------------
 final_packing_input = pd.DataFrame({
