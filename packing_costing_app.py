@@ -289,7 +289,7 @@ if not bundling_rows.empty:
 
     if (
         "bundling_inputs" not in st.session_state
-        or sorted(st.session_state.bundling_inputs["Identification No."].tolist()) != sorted(id_list)
+        or sorted(st.session_state.bundling_inputs["SKU No."].tolist()) != sorted(id_list)
     ):
         st.session_state.bundling_inputs = pd.DataFrame({
             "SKU No.": id_list,
@@ -316,8 +316,8 @@ if not bundling_rows.empty:
 
     bundle_output_rows = []
     for _, bundling_row in bundling_inputs_edited.iterrows():
-        id_no = bundling_row["Identification No."]
-        match = edited_data.loc[edited_data["Identification No."] == id_no]
+        id_no = bundling_row["SKU No."]
+        match = edited_data.loc[edited_data["SKU No."] == id_no]
 
         if match.empty:
             st.warning(f"No matching input found for ID: {id_no}")
