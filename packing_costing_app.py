@@ -67,18 +67,35 @@ ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
 #----------------------Crate or Pallet Cost reference table---------------------------
 
 @st.cache_data
-def load_crate_pallet_table():
+def load_crate_cost_table():
     return pd.DataFrame({
-        "Description": ["Crate", "Pallet"],
-        "Width (mm)": [480, 2000],
-        "Height(mm)": [590, 600],
-        "Length(mm)": [2000, 2000],
-        "Cost per m² (LKR)": [100.0, 150.0]
+        "Width (mm)": [480],
+        "Height (mm)": [590],
+        "Length (mm)": [2000],
+        "Cost (LKR)": [5000.0]
+    })
+    
+@st.cache_data
+def load_pallet_cost_table():
+    return pd.DataFrame({
+        "Width (mm)": [2000],
+        "Height (mm)": [600],
+        "Cost (LKR)": [3000.0]
     })
 
-cratePallet_df = load_crate_pallet_table()
-cratePallet_cost_lookup = dict(zip(cratePallet_df["Description"], cratePallet_df["Cost per m² (LKR)"]))
+crate_cost_df = load_crate_cost_table()
+pallet_cost_df = load_pallet_cost_table()
 
+#-------------------------Strapping clips & straps cost------------------------------
+
+@st.cache_data
+def load_strapping_cost_table():
+    return pd.DataFrame({
+        "Strapping Length (m)": [1.0],
+        "Cost (LKR/m)": [15.0]
+    })
+
+strapping_cost_df = load_strapping_cost_table()
 
 
 # --------------------------=INPUT TABLE SETUP ------------------------
@@ -103,15 +120,6 @@ dropdown_columns = {
     "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
     "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
-
-st.subheader("📥 User Input Table", divider="grey")
-edited_data = st.data_editor(
-    input_data,
-    column_config=dropdown_columns,
-    use_container_width=True,
-    num_rows="dynamic",
-    key="input_table"
-)
 
 # ----- COSTING LOGIC -----
 def calculate_outputs(row):
@@ -155,9 +163,82 @@ def calculate_outputs(row):
         "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
     })
 
-st.subheader("📤 Packing Details", divider="grey")
+
+#-----------------------📤 Crate/Pallet Input Table--------------------------
+
+st.subheader("📤 Crate/Pallet Input Table", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
+
+
+st.subheader("📤 Crate/Pallet Input Table", divider="grey")
+edited_data = st.data_editor(
+    input_data,
+    column_config=dropdown_columns,
+    use_container_width=True,
+    num_rows="dynamic",
+    key="input_table"
+)
+
+final_packing_input = pd.DataFrame({
+    "Final Packing Method": ["Crate"],
+    "Width (mm)": [0],
+    "Height (mm)": [0],
+    "Length (mm)": [0]  
+})
+
+st.subheader("🚛 Final Packing Selection", divider="grey")
+final_packing_selection = st.data_editor(
+    final_packing_input,
+    column_config={
+        "Final Packing Method": st.column_config.SelectboxColumn("Final Packing Method", options=["Crate", "Pallet"])
+    },
+    use_container_width=True,
+    key="final_packing_selection"
+)
+
+st.subheader("💰 Final Crate/Pallet Cost Summary", divider="grey")
+
+packing_output_rows = []
+
+for _, row in final_packing_selection.iterrows():
+    method = row["Final Packing Method"]
+    width = row["Width (mm)"]
+    height = row["Height (mm)"]
+    length = row["Length (mm)"]
+
+    if method == "Crate":
+        ref_crate = crate_cost_df.iloc[0]
+        ref_vol = ref_crate["Width (mm)"] * ref_crate["Height (mm)"] * ref_crate["Length (mm)"]
+        user_vol = width * height * length
+        cost = (user_vol / ref_vol) * ref_crate["Cost (LKR)"] if ref_vol else 0.0
+
+        strapping_ref = strapping_cost_df.iloc[0]
+        length_m = length / 1000
+        num_clips = length_m / 0.5  # every 500mm
+        strapping_cost = length_m * strapping_ref["Cost (LKR/m)"] * num_clips
+
+    elif method == "Pallet":
+        ref_pallet = pallet_cost_df.iloc[0]
+        ref_area = ref_pallet["Width (mm)"] * ref_pallet["Height (mm)"]
+        user_area = width * height
+        cost = (user_area / ref_area) * ref_pallet["Cost (LKR)"] if ref_area else 0.0
+        strapping_cost = 0.0
+        num_clips = 0
+
+    packing_output_rows.append({
+        "Method": method,
+        "Width (mm)": width,
+        "Height (mm)": height,
+        "Length (mm)": length if method == "Crate" else "-",
+        "Packing Cost (LKR)": round(cost, 2),
+        "Strapping Clips": round(num_clips, 2) if method == "Crate" else "-",
+        "Strapping Cost (LKR)": round(strapping_cost, 2) if method == "Crate" else "-"
+    })
+
+st.dataframe(pd.DataFrame(packing_output_rows))
+
+
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) -----
 bundling_rows = edited_data[edited_data["Packing Method"] == "Secondary"].copy()
@@ -255,7 +336,15 @@ if not st.session_state.edit_mode:
     else:
         st.warning("Read-only mode. Enter correct password to unlock tables.")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost", "🌀 Stretchwrap Cost","📋 Crate/Pallet Cost"])
+tab5, tab6, tab7, tab8 = st.tabs([
+    "📄 Interleaving Cost", 
+    "👝 Polybag Cost", 
+    "📦 Cardboard Box Cost", 
+    "🌀 Stretchwrap Cost",
+    "📏 Crate Cost", 
+    "📐 Pallet Cost", 
+    "🧷 PP Strapping Cost"
+])
 
 with tab1:
     st.markdown("#### Interleaving Material Costs")
@@ -282,7 +371,19 @@ with tab4:
     st.dataframe(stretchwrap_ref)
 
 with tab5:
-    st.markdown("#### Crate/Pallet Cost")
+    st.markdown("#### Crate Cost Reference")
     if st.session_state.edit_mode:
-        cratePallet_df = st.data_editor(cratePallet_df, num_rows="dynamic", key="crate_pallet_table_edit")
-    st.dataframe(cratePallet_df)
+        crate_cost_df = st.data_editor(crate_cost_df, num_rows="dynamic", key="crate_cost_edit")
+    st.dataframe(crate_cost_df)
+
+with tab6:
+    st.markdown("#### Pallet Cost Reference")
+    if st.session_state.edit_mode:
+        pallet_cost_df = st.data_editor(pallet_cost_df, num_rows="dynamic", key="pallet_cost_edit")
+    st.dataframe(pallet_cost_df)
+
+with tab7:
+    st.markdown("#### PP Strapping Cost Reference")
+    if st.session_state.edit_mode:
+        strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="strapping_cost_edit")
+    st.dataframe(strapping_cost_df)
