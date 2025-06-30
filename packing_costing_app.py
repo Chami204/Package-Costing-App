@@ -170,10 +170,10 @@ def calculate_hidden(row):
     total = interleaving_total_cost + protective_tape_cost + cardboard_cost
     return pd.Series({
         "SKU": row["SKU No."],
-        "Interleaving Cost (Rs)": f"{interleaving_total_cost:, 2f},
-        "Protective Tape Cost (Rs)": f"{protective_tape_cost:, 2f},
-        "Cardboard Box Cost (Rs)": f"{cardboard_cost:, 2f},
-        "Total Cost (Rs)": f"{total:, 2f},
+        "Interleaving Cost (Rs)": f"{interleaving_total_cost:,2f}",
+        "Protective Tape Cost (Rs)": f"{protective_tape_cost:,2f}",
+        "Cardboard Box Cost (Rs)": f"{cardboard_cost:,2f}",
+        "Total Cost (Rs)": f"{total:, 2f}",
         "Interleaving Material": interleaving_material,
         "Check": message,
         "Protective Tape Advice": protective_tape_advice
@@ -271,9 +271,9 @@ for _, row in final_packing_selection.iterrows():
         "Width (mm)": width,
         "Height (mm)": height,
         "Length (mm)": length if method == "Crate" else "-",
-        "Packing Cost (LKR)": f"{cost:,2f},
-        "Strapping Clips": f"{num_clips:,2f} if method == "Crate" else "-",
-        "Strapping Cost (LKR)": f"{strapping_cost:,2f} if method == "Crate" else "-"
+        "Packing Cost (LKR)": f"{cost:,2f}",
+        "Strapping Clips": f"{num_clips:,2f}" if method == "Crate" else "-",
+        "Strapping Cost (LKR)": f"{strapping_cost:,2f}" if method == "Crate" else "-"
     })
 
 st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
@@ -340,13 +340,13 @@ if packing_method == "Secondary":
         
         bundle_output_rows.append({
             "SKU": data_row["SKU No."],
-            "Bundle Width (mm)": f"{bundle_width:,2f},
-            "Bundle Height (mm)": f"{bundle_height:,2f},
-            "Bundle Length (mm)": f"{bundle_length:,2f},
-            "Area Covered (m²)": f"{area_covered:,2f},
+            "Bundle Width (mm)": f"{bundle_width:,2f}",
+            "Bundle Height (mm)": f"{bundle_height:,2f}",
+            "Bundle Length (mm)": f"{bundle_length:,2f}",
+            "Area Covered (m²)": f"{area_covered:,2f}",
             "Polybag Cost (Rs)": f"{polybag_cost:.2f}",
             "McFoam_Cost(Rs)":f"{McFoam_Cost:.2f}",
-            "Stretchwrap Cost (Rs)": f"{stretchwrap_cost:,2f}
+            "Stretchwrap Cost (Rs)": f"{stretchwrap_cost:,2f}"
             
         })
 
