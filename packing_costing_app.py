@@ -65,7 +65,6 @@ ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
 
 
 #----------------------Crate or Pallet Cost reference table---------------------------
-
 @st.cache_data
 def load_crate_cost_table():
     return pd.DataFrame({
@@ -87,7 +86,6 @@ crate_cost_df = load_crate_cost_table()
 pallet_cost_df = load_pallet_cost_table()
 
 #-------------------------Strapping clips & straps cost------------------------------
-
 @st.cache_data
 def load_strapping_cost_table():
     return pd.DataFrame({
@@ -96,7 +94,6 @@ def load_strapping_cost_table():
     })
 
 strapping_cost_df = load_strapping_cost_table()
-
 
 # --------------------------=INPUT TABLE SETUP ------------------------
 input_data = pd.DataFrame({
@@ -120,6 +117,15 @@ dropdown_columns = {
     "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
     "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
+
+st.subheader("📥 User Input Table", divider="grey")
+edited_data = st.data_editor(
+    input_data,
+    column_config=dropdown_columns,
+    use_container_width=True,
+    num_rows="dynamic",
+    key="input_table"
+)
 
 # ----- COSTING LOGIC -----
 def calculate_outputs(row):
@@ -163,27 +169,16 @@ def calculate_outputs(row):
         "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
     })
 
-
-#-----------------------📤 Crate/Pallet Input Table--------------------------
-
-st.subheader("📤 Output Table", divider="grey")
-edited_data = st.data_editor(
-    input_data,
-    column_config=dropdown_columns,
-    use_container_width=True,
-    num_rows="dynamic",
-    key="input_table"
-)
-st.subheader("📤 Output Table", divider="grey")
+st.subheader("📤 Packing Details", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
-)
 
+# ----------------- Final Packing --------------------
 final_packing_input = pd.DataFrame({
     "Final Packing Method": ["Crate"],
     "Width (mm)": [0],
     "Height (mm)": [0],
-    "Length (mm)": [0]  
+    "Length (mm)": [0]
 })
 
 st.subheader("🚛 Final Packing Selection", divider="grey")
@@ -197,7 +192,6 @@ final_packing_selection = st.data_editor(
 )
 
 st.subheader("💰 Final Crate/Pallet Cost Summary", divider="grey")
-
 packing_output_rows = []
 
 for _, row in final_packing_selection.iterrows():
@@ -214,7 +208,7 @@ for _, row in final_packing_selection.iterrows():
 
         strapping_ref = strapping_cost_df.iloc[0]
         length_m = length / 1000
-        num_clips = length_m / 0.5  # every 500mm
+        num_clips = length_m / 0.5
         strapping_cost = length_m * strapping_ref["Cost (LKR/m)"] * num_clips
 
     elif method == "Pallet":
@@ -235,99 +229,10 @@ for _, row in final_packing_selection.iterrows():
         "Strapping Cost (LKR)": round(strapping_cost, 2) if method == "Crate" else "-"
     })
 
-st.dataframe(pd.DataFrame(packing_output_rows))
+st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
 
-
-
-# ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) -----
-bundling_rows = edited_data[edited_data["Packing Method"] == "Secondary"].copy()
-
-if not bundling_rows.empty:
-    st.subheader("📦 Input the data for Secondary Packing (Bundling)")
-
-    id_list = bundling_rows["Identification No."].tolist()
-
-    if (
-        "bundling_inputs" not in st.session_state
-        or sorted(st.session_state.bundling_inputs["Identification No."].tolist()) != sorted(id_list)
-    ):
-        st.session_state.bundling_inputs = pd.DataFrame({
-            "Identification No.": id_list,
-            "Rows": [1] * len(id_list),
-            "Layers": [1] * len(id_list),
-            "Width Type": ["W/mm"] * len(id_list),
-            "Height Type": ["H/mm"] * len(id_list)
-        })
-
-    bundling_inputs_edited = st.data_editor(
-        st.session_state.bundling_inputs,
-        column_config={
-            "Identification No.": st.column_config.TextColumn("Identification No.", disabled=True),
-            "Rows": st.column_config.NumberColumn("Number of Rows", min_value=1, step=1),
-            "Layers": st.column_config.NumberColumn("Number of Layers", min_value=1, step=1),
-            "Width Type": st.column_config.SelectboxColumn("Width Profile Type", options=["W/mm", "H/mm"]),
-            "Height Type": st.column_config.SelectboxColumn("Height Profile Type", options=["H/mm", "W/mm"]),
-        },
-        use_container_width=True,
-        key="bundling_table"
-    )
-
-    st.session_state.bundling_inputs = bundling_inputs_edited
-
-    bundle_output_rows = []
-    for _, bundling_row in bundling_inputs_edited.iterrows():
-        id_no = bundling_row["Identification No."]
-        match = edited_data.loc[edited_data["Identification No."] == id_no]
-
-        if match.empty:
-            st.warning(f"No matching input found for ID: {id_no}")
-            continue
-
-        original_row = match.iloc[0]
-        profile_dimensions = {
-            "W/mm": original_row["W (mm)"],
-            "H/mm": original_row["H (mm)"]
-        }
-
-        bundle_width = bundling_row["Rows"] * profile_dimensions[bundling_row["Width Type"]]
-        bundle_height = bundling_row["Layers"] * profile_dimensions[bundling_row["Height Type"]]
-        bundle_length = original_row["L (mm)"]
-
-        polybag_cost = (bundle_length / (ref_polybag_length * 25.4)) * polybag_cost_per_m2  # inch to mm
-
-        # Stretchwrap surface area using profile W, H, L
-        W = float(original_row["W (mm)"])
-        H = float(original_row["H (mm)"])
-        L = float(original_row["L (mm)"])
-        profile_surface_area = 2 * ((W * L) + (H * L) + (W * H))
-        stretchwrap_cost = (profile_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
-
-        area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
-
-        bundle_output_rows.append({
-            "Identification No.": id_no,
-            "Rows": bundling_row["Rows"],
-            "Layers": bundling_row["Layers"],
-            "Width Type": bundling_row["Width Type"],
-            "Height Type": bundling_row["Height Type"],
-            "Bundle Width (mm)": round(bundle_width, 2),
-            "Bundle Height (mm)": round(bundle_height, 2),
-            "Bundle Length (mm)": round(bundle_length, 2),
-            "Area Covered (m²)": round(area_covered, 4),
-            "Polybag Cost (Rs)": round(polybag_cost, 2),
-            "Stretchwrap Cost (Rs)": round(stretchwrap_cost, 2)
-        })
-
-    st.subheader("📦 Secondary Packing (Bundling) Output Table")
-    bundle_df = pd.DataFrame(bundle_output_rows)
-    st.dataframe(bundle_df, use_container_width=True)
-
-else:
-    st.info("No rows with Packing Method = 'Secondary' found.")
-
-# ----- REFERENCE TABLE PASSWORD-PROTECTED EDITING -----
+# ----------------- Tabs for Reference Tables --------------------
 st.subheader("🔐 Admin Reference Tables")
-
 if not st.session_state.edit_mode:
     password = st.text_input("Enter password to edit tables:", type="password")
     if password == EDIT_PASSWORD:
@@ -335,7 +240,7 @@ if not st.session_state.edit_mode:
     else:
         st.warning("Read-only mode. Enter correct password to unlock tables.")
 
-tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📄 Interleaving Cost", 
     "👝 Polybag Cost", 
     "📦 Cardboard Box Cost", 
@@ -386,4 +291,3 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="strapping_cost_edit")
     st.dataframe(strapping_cost_df)
-
