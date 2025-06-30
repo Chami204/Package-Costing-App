@@ -2,8 +2,18 @@ import streamlit as st
 import pandas as pd
 
 # Page setup
-st.set_page_config(page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
+st.set_page_config(layout = "wide",page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
 st.title("🎯💰 Packing Costing App")
+# Custom CSS for wrapping column headers
+st.markdown("""
+    <style>
+    thead tr th div {
+        white-space: break-spaces !important;
+        text-align: center;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 # ----- PASSWORD-PROTECTED REFERENCE TABLE SETUP -----
 EDIT_PASSWORD = "admin123"
