@@ -285,14 +285,14 @@ else:
 if not bundling_rows.empty:
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
 
-    id_list = bundling_rows["Identification No."].tolist()
+    id_list = bundling_rows["SKU No."].tolist()
 
     if (
         "bundling_inputs" not in st.session_state
         or sorted(st.session_state.bundling_inputs["Identification No."].tolist()) != sorted(id_list)
     ):
         st.session_state.bundling_inputs = pd.DataFrame({
-            "Identification No.": id_list,
+            "SKU No.": id_list,
             "Rows": [1] * len(id_list),
             "Layers": [1] * len(id_list),
             "Width Type": ["W/mm"] * len(id_list),
@@ -302,7 +302,7 @@ if not bundling_rows.empty:
     bundling_inputs_edited = st.data_editor(
         st.session_state.bundling_inputs,
         column_config={
-            "Identification No.": st.column_config.TextColumn("Identification No.", disabled=True),
+            "SKU No.": st.column_config.TextColumn("SKU No.", disabled=True),
             "Rows": st.column_config.NumberColumn("Number of Rows", min_value=1, step=1),
             "Layers": st.column_config.NumberColumn("Number of Layers", min_value=1, step=1),
             "Width Type": st.column_config.SelectboxColumn("Width Profile Type", options=["W/mm", "H/mm"]),
@@ -344,7 +344,7 @@ if not bundling_rows.empty:
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
 
         bundle_output_rows.append({
-            "Identification No.": id_no,
+            "SKU No.": id_no,
             "Rows": bundling_row["Rows"],
             "Layers": bundling_row["Layers"],
             "Width Type": bundling_row["Width Type"],
