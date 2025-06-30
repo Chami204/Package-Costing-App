@@ -97,25 +97,15 @@ strapping_cost_df = load_strapping_cost_table()
 
 # --------------------------=INPUT TABLE SETUP ------------------------
 input_data = pd.DataFrame({
-    "Identification No.": [""],
+    "SKU No.": [""],
     "W (mm)": [0.0],
     "H (mm)": [0.0],
     "L (mm)": [0.0],
-    "Finish": ["Select"],
-    "Fabricated": ["Select"],
-    "Eco-Friendly Packing": ["Select"],
-    "Interleaving Required": ["Select"],
-    "Protective Tape - Customer Specified": ["Select"],
-    "Packing Method": ["Primary"]
+    "Fabricated": ["Select"]
 })
 
 dropdown_columns = {
-    "Finish": st.column_config.SelectboxColumn("Finish", options=["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"]),
-    "Fabricated": st.column_config.SelectboxColumn("Fabricated", options=["Fabricated", "Just Cutting"]),
-    "Eco-Friendly Packing": st.column_config.SelectboxColumn("Eco-Friendly Packing", options=["Yes", "No"]),
-    "Interleaving Required": st.column_config.SelectboxColumn("Interleaving Required", options=["Yes", "No"]),
-    "Protective Tape - Customer Specified": st.column_config.SelectboxColumn("Protective Tape - Customer Specified", options=["Yes", "No"]),
-    "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
+    "Fabricated": st.column_config.SelectboxColumn("Fabricated", options=["Fabricated", "Just Cutting"])
 }
 
 st.subheader("📥 User Input Table", divider="grey")
@@ -127,52 +117,102 @@ edited_data = st.data_editor(
     key="input_table"
 )
 
+st.subheader("⚙️ Common Options")
+finish = st.selectbox("Finish", ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"])
+eco_friendly = st.selectbox("Eco-Friendly Packing", ["Yes", "No"])
+interleaving_required = st.selectbox("Interleaving Required", ["Yes", "No"])
+protective_tape_customer_specified = st.selectbox("Protective Tape - Customer Specified", ["Yes", "No"])
+packing_method = st.selectbox("Packing Method", ["Primary", "Secondary"])
+
 # ----- COSTING LOGIC -----
 def calculate_outputs(row):
     W = row["W (mm)"]
     H = row["H (mm)"]
     L = row["L (mm)"]
-    finish = row["Finish"]
-    fabricated = row["Fabricated"]
-    eco_friendly = row["Eco-Friendly Packing"]
-    protective_tape_customer_specified = row["Protective Tape - Customer Specified"]
-
-    interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
-    message = (
-    "Okay"
-    if (finish == "Mill Finish" and interleaving_material == "Craft Paper")
-    or (interleaving_material == "McFoam")
-    else "Can cause rejects - go ahead with McFoam"
+    
+st.subheader("📅 SKU Input Table", divider="grey")
+edited_data = st.data_editor(
+    input_data,
+    column_config={
+        "Fabricated": st.column_config.SelectboxColumn("Fabricated", options=["Fabricated", "Just Cutting"])
+    },
+    use_container_width=True,
+    num_rows="dynamic",
+    key="sku_input_table"
 )
-    surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
+# ----- Common Dropdown Selections Outside Table -----
+st.subheader("🔹 Common Packing Selections", divider="grey")
+finish = st.selectbox("Finish", ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"])
+eco_friendly = st.selectbox("Eco-Friendly Packing", ["Yes", "No"])
+interleaving_required = st.selectbox("Interleaving Required", ["Yes", "No"])
+protective_tape_customer_specified = st.selectbox("Protective Tape - Customer Specified", ["Yes", "No"])
+packing_method = st.selectbox("Packing Method", ["Primary", "Secondary"])
 
+
+# --------- Calculation Logic Hidden Table ------------
+def calculate_hidden(row):
+    W, H, L = row["W (mm)"], row["H (mm)"], row["L (mm)"]
+    interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
+    message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
+    surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
     interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
     interleaving_total_cost = surface_area * interleaving_cost
-
     if protective_tape_customer_specified == "No":
-        if (fabricated == "Fabricated" and finish == "Mill Finish") or (fabricated == "Just Cutting" and finish in ["Powder Coated", "Anodized"]):
+        if (row["Fabricated"] == "Fabricated" and finish == "Mill Finish") or (row["Fabricated"] == "Just Cutting" and finish in ["Powder Coated", "Anodized"]):
             protective_tape_advice = "Not necessary."
         else:
             protective_tape_advice = "Protective tape required to avoid rejects"
     else:
         protective_tape_advice = "Protective tape required to avoid rejects"
-
     protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65) if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
-
     user_volume = W * H * L
     cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
-
+    total = interleaving_total_cost + protective_tape_cost + cardboard_cost
     return pd.Series({
-        "Identification No.": row["Identification No."],
+        "SKU": row["SKU No."],
+        "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
+        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
+        "Cardboard Box Cost (Rs)": round(cardboard_cost, 2),
+        "Total Cost (Rs)": round(total, 2),
         "Interleaving Material": interleaving_material,
         "Check": message,
-        "Surface Area (m²)": round(surface_area, 4),
-        "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
-        "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
-        "Protective Tape Advice": protective_tape_advice,
-        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
-        "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
+        "Protective Tape Advice": protective_tape_advice
     })
+
+hidden_output = edited_data.apply(calculate_hidden, axis=1)
+
+# ----------- Primary Costing Table -------------------
+st.subheader("💼 Primary Costing")
+primary_output = hidden_output[[
+    "SKU",
+    "Interleaving Cost (Rs)",
+    "Protective Tape Cost (Rs)",
+    "Cardboard Box Cost (Rs)",
+    "Total Cost (Rs)"
+]]
+st.dataframe(primary_output, use_container_width=True)
+
+# ----------- Special Comments Section ----------------
+
+from streamlit_extras.let_it_rain import rain
+st.subheader("🌟 Special Comments")
+
+with st.container():
+    st.markdown("**🔗 Packing Method Note**")
+    if packing_method == "Primary":
+        st.info(f"Costing is done according to *{packing_method}* packing. Therefore, this cost does not include any crate or palletizing charges. Please note that secondary packaging will incur an additional charge.")
+    else:
+        user_comment = st.text_area("Add additional comments (for Secondary):", "")
+        st.info(f"Costing is done according to *{packing_method}* packing. {user_comment}")
+
+    if not hidden_output.empty:
+        mat = hidden_output.iloc[0]["Interleaving Material"]
+        msg = hidden_output.iloc[0]["Check"]
+        tape = hidden_output.iloc[0]["Protective Tape Advice"]
+        st.success(f"The interleaving material is **{mat}**. {msg}")
+        st.warning(f"{tape}")
+        st.markdown(f"Costing is only inclusive of **{interleaving_required}** & **Cardboard Box OR Polybag**")
+
 
 st.subheader("📤 Packing Details", divider="grey")
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
