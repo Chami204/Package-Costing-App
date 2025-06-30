@@ -279,7 +279,11 @@ st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 
-bundling_rows = edited_data[edited_data["Packing Method"] == "Secondary"].copy()
+if packing_method == "Secondary":
+    bundling_rows = edited_data.copy()
+else:
+    bundling_rows = pd.DataFrame()
+
 
 if not bundling_rows.empty:
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
