@@ -287,34 +287,37 @@ if packing_method == "Secondary":
         key="bundling_common_input"
     )
 
-
     bundle_output_rows = []
     for _, data_row in edited_data.iterrows():
         profile_dimensions = {
             "W/mm": data_row["W (mm)"],
             "H/mm": data_row["H (mm)"]
         }
-
-        bundle_width = bundling_row["Rows"] * profile_dimensions[bundling_row["Width Type"]]
-        bundle_height = bundling_row["Layers"] * profile_dimensions[bundling_row["Height Type"]]
-        bundle_length = original_row["L (mm)"]
-
+        W = float(data_row["W (mm)"])
+        H = float(data_row["H (mm)"])
+        L = float(data_row["L (mm)"])
+        
+        rows = bundling_common.loc[0, "Rows"]
+        layers = bundling_common.loc[0, "Layers"]
+        width_type = bundling_common.loc[0, "Width Type"]
+        height_type = bundling_common.loc[0, "Height Type"]
+    
+        bundle_width = rows * profile_dimensions[width_type]
+        bundle_height = layers * profile_dimensions[height_type]
+        bundle_length = L
+    
+        # Polybag cost
         polybag_cost = (bundle_length / (ref_polybag_length * 25.4)) * polybag_cost_per_m2  # inch to mm
-
-        W = float(original_row["W (mm)"])
-        H = float(original_row["H (mm)"])
-        L = float(original_row["L (mm)"])
+    
+        # Surface area of single profile for stretchwrap calc
         profile_surface_area = 2 * ((W * L) + (H * L) + (W * H))
         stretchwrap_cost = (profile_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
-
+    
+        # Bundle area covered (approx)
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
-
+    
         bundle_output_rows.append({
-            "SKU No.": id_no,
-            "Rows": bundling_row["Rows"],
-            "Layers": bundling_row["Layers"],
-            "Width Type": bundling_row["Width Type"],
-            "Height Type": bundling_row["Height Type"],
+            "SKU": data_row["SKU No."],
             "Bundle Width (mm)": round(bundle_width, 2),
             "Bundle Height (mm)": round(bundle_height, 2),
             "Bundle Length (mm)": round(bundle_length, 2),
@@ -323,18 +326,15 @@ if packing_method == "Secondary":
             "Stretchwrap Cost (Rs)": round(stretchwrap_cost, 2)
         })
 
-    st.subheader("📦 Secondary Packing (Bundling) Output Table")
-    bundle_df = pd.DataFrame(bundle_output_rows)
-    st.dataframe(bundle_df, use_container_width=True)
 
-else:
-    st.info("No rows with Packing Method = 'Secondary' found.")
+    
 # ---------------- Final Visible Secondary Packing Cost ----------------
 
     st.subheader("📦 Secondary Packing Cost")
     secondary_cost_df = pd.DataFrame(bundle_output_rows)
     secondary_cost_df["Total Cost (Rs/Pc)"] = secondary_cost_df.iloc[:, 4:].sum(axis=1)
     st.dataframe(secondary_cost_df, use_container_width=True)
+
 
 
 # ----------------- Tabs for Reference Tables --------------------
