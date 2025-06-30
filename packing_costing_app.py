@@ -140,12 +140,16 @@ packing_method = st.selectbox("Packing Method", ["Primary", "Secondary"], key="p
 
 # --------- Calculation Logic Hidden Table ------------
 def calculate_hidden(row):
-    W, H, L = row["W (mm)"], row["H (mm)"], row["L (mm)"]
+    W = float(row["W (mm)"])
+    H = float(row["H (mm)"])
+    L = float(row["L (mm)"])
+    
     interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
     message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
     surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
     interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
     interleaving_total_cost = surface_area * interleaving_cost
+    
     if protective_tape_customer_specified == "No":
         if (row["Fabricated"] == "Fabricated" and finish == "Mill Finish") or (row["Fabricated"] == "Just Cutting" and finish in ["Powder Coated", "Anodized"]):
             protective_tape_advice = "Not necessary."
@@ -153,10 +157,12 @@ def calculate_hidden(row):
             protective_tape_advice = "Protective tape required to avoid rejects"
     else:
         protective_tape_advice = "Protective tape required to avoid rejects"
+    
     protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65) if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
     user_volume = W * H * L
     cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
     total = interleaving_total_cost + protective_tape_cost + cardboard_cost
+    
     return pd.Series({
         "SKU": row["SKU No."],
         "Interleaving Cost (Rs)": f"{interleaving_total_cost:.2f}",
@@ -168,18 +174,24 @@ def calculate_hidden(row):
         "Protective Tape Advice": protective_tape_advice
     })
 
-hidden_output = edited_data.apply(calculate_hidden, axis=1)
+if not edited_data.empty:
+    hidden_output = edited_data.apply(calculate_hidden, axis=1)
+else:
+    hidden_output = pd.DataFrame()
 
 # ----------- Primary Costing Table -------------------
 st.subheader("💼 Primary Packing Total Cost")
-primary_output = hidden_output[[
-    "SKU",
-    "Interleaving Cost (Rs)",
-    "Protective Tape Cost (Rs)",
-    "Cardboard Box Cost (Rs)",
-    "Total Cost (Rs)"
-]]
-st.dataframe(primary_output, use_container_width=True)
+if not hidden_output.empty:
+    primary_output = hidden_output[[
+        "SKU",
+        "Interleaving Cost (Rs)",
+        "Protective Tape Cost (Rs)",
+        "Cardboard Box Cost (Rs)",
+        "Total Cost (Rs)"
+    ]]
+    st.dataframe(primary_output, use_container_width=True)
+else:
+    st.warning("No data to display. Please add SKU information.")
 
 # ----------- Special Comments Section ----------------
 
@@ -230,40 +242,43 @@ packing_output_rows = []
 
 for _, row in final_packing_selection.iterrows():
     method = row["Final Packing Method"]
-    width = row["Width (mm)"]
-    height = row["Height (mm)"]
-    length = row["Length (mm)"]
+    width = float(row["Width (mm)"])
+    height = float(row["Height (mm)"])
+    length = float(row["Length (mm)"]) if method == "Crate" else 0
 
     if method == "Crate":
         ref_crate = crate_cost_df.iloc[0]
-        ref_vol = ref_crate["Width (mm)"] * ref_crate["Height (mm)"] * ref_crate["Length (mm)"]
+        ref_vol = float(ref_crate["Width (mm)"]) * float(ref_crate["Height (mm)"]) * float(ref_crate["Length (mm)"])
         user_vol = width * height * length
-        cost = (user_vol / ref_vol) * ref_crate["Cost (LKR)"] if ref_vol else 0.0
+        cost = (user_vol / ref_vol) * float(ref_crate["Cost (LKR)"]) if ref_vol else 0.0
 
         strapping_ref = strapping_cost_df.iloc[0]
         length_m = length / 1000
         num_clips = length_m / 0.5
-        strapping_cost = length_m * strapping_ref["Cost (LKR/m)"] * num_clips
+        strapping_cost = length_m * float(strapping_ref["Cost (LKR/m)"]) * num_clips
 
     elif method == "Pallet":
         ref_pallet = pallet_cost_df.iloc[0]
-        ref_area = ref_pallet["Width (mm)"] * ref_pallet["Height (mm)"]
+        ref_area = float(ref_pallet["Width (mm)"]) * float(ref_pallet["Height (mm)"])
         user_area = width * height
-        cost = (user_area / ref_area) * ref_pallet["Cost (LKR)"] if ref_area else 0.0
+        cost = (user_area / ref_area) * float(ref_pallet["Cost (LKR)"]) if ref_area else 0.0
         strapping_cost = 0.0
         num_clips = 0
 
     packing_output_rows.append({
         "Method": method,
-        "Width (mm)": width,
-        "Height (mm)": height,
-        "Length (mm)": length if method == "Crate" else "-",
+        "Width (mm)": f"{width:.2f}",
+        "Height (mm)": f"{height:.2f}",
+        "Length (mm)": f"{length:.2f}" if method == "Crate" else "-",
         "Packing Cost (LKR)": f"{cost:.2f}",
         "Strapping Clips": f"{num_clips:.2f}" if method == "Crate" else "-",
         "Strapping Cost (LKR)": f"{strapping_cost:.2f}" if method == "Crate" else "-"
     })
 
-st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
+if packing_output_rows:
+    st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
+else:
+    st.warning("No packing method selected or data available")
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 
@@ -291,15 +306,15 @@ if packing_method == "Secondary":
     bundle_output_rows = []
     for _, data_row in edited_data.iterrows():
         profile_dimensions = {
-            "W/mm": data_row["W (mm)"],
-            "H/mm": data_row["H (mm)"]
+            "W/mm": float(data_row["W (mm)"]),
+            "H/mm": float(data_row["H (mm)"])
         }
         W = float(data_row["W (mm)"])
         H = float(data_row["H (mm)"])
         L = float(data_row["L (mm)"])
         
-        rows = bundling_common.loc[0, "Rows"]
-        layers = bundling_common.loc[0, "Layers"]
+        rows = int(bundling_common.loc[0, "Rows"])
+        layers = int(bundling_common.loc[0, "Layers"])
         width_type = bundling_common.loc[0, "Width Type"]
         height_type = bundling_common.loc[0, "Height Type"]
     
@@ -336,20 +351,19 @@ if packing_method == "Secondary":
     
     # ---------------- Final Visible Secondary Packing Cost ----------------
     st.subheader("📦 Secondary Packing Cost")
-    secondary_cost_df = pd.DataFrame(bundle_output_rows)
-    secondary_cost_df["Total Cost (Rs/Pc)"] = secondary_cost_df.iloc[:, 4:].sum(axis=1)
-    st.dataframe(secondary_cost_df, use_container_width=True)
+    if bundle_output_rows:
+        secondary_cost_df = pd.DataFrame(bundle_output_rows)
+        secondary_cost_df["Total Cost (Rs/Pc)"] = secondary_cost_df.iloc[:, 4:].sum(axis=1)
+        st.dataframe(secondary_cost_df, use_container_width=True)
+    else:
+        st.warning("No bundle data available")
 
     # ----------- Special Comments Section for Bundling----------------
     st.subheader("🌟 Special Comments under Secondary Packing")
 
     with st.container():
         st.markdown("**🔗 Packing Method Note**")
-        if packing_method == "Secondary":
-            st.info(f"Costing is done according to *{packing_method}* packing.")
-        else:
-            user_comment = st.text_area("Add additional comments (for Secondary):", "")
-            st.info(f"Costing is done according to *{packing_method}* packing. {user_comment}")
+        st.info(f"Costing is done according to *{packing_method}* packing.")
 
         if not hidden_output.empty:
             mat = hidden_output.iloc[0]["Interleaving Material"]
