@@ -108,21 +108,6 @@ dropdown_columns = {
     "Fabricated": st.column_config.SelectboxColumn("Fabricated", options=["Fabricated", "Just Cutting"])
 }
 
-st.subheader("📥 User Input Table", divider="grey")
-edited_data = st.data_editor(
-    input_data,
-    column_config=dropdown_columns,
-    use_container_width=True,
-    num_rows="dynamic",
-    key="input_table"
-)
-
-st.subheader("⚙️ Common Options")
-finish = st.selectbox("Finish", ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"])
-eco_friendly = st.selectbox("Eco-Friendly Packing", ["Yes", "No"])
-interleaving_required = st.selectbox("Interleaving Required", ["Yes", "No"])
-protective_tape_customer_specified = st.selectbox("Protective Tape - Customer Specified", ["Yes", "No"])
-packing_method = st.selectbox("Packing Method", ["Primary", "Secondary"])
 
 # ----- COSTING LOGIC -----
 def calculate_outputs(row):
