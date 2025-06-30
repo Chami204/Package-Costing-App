@@ -170,10 +170,10 @@ def calculate_hidden(row):
     total = interleaving_total_cost + protective_tape_cost + cardboard_cost
     return pd.Series({
         "SKU": row["SKU No."],
-        "Interleaving Cost (Rs)": f"{interleaving_total_cost, 2},
-        "Protective Tape Cost (Rs)": f"{protective_tape_cost, 2},
-        "Cardboard Box Cost (Rs)": f"{cardboard_cost, 2},
-        "Total Cost (Rs)": f"{total, 2},
+        "Interleaving Cost (Rs)": f"{interleaving_total_cost:, 2f},
+        "Protective Tape Cost (Rs)": f"{protective_tape_cost:, 2f},
+        "Cardboard Box Cost (Rs)": f"{cardboard_cost:, 2f},
+        "Total Cost (Rs)": f"{total:, 2f},
         "Interleaving Material": interleaving_material,
         "Check": message,
         "Protective Tape Advice": protective_tape_advice
