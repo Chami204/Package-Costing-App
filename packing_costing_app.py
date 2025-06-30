@@ -183,7 +183,7 @@ def calculate_hidden(row):
 hidden_output = edited_data.apply(calculate_hidden, axis=1)
 
 # ----------- Primary Costing Table -------------------
-st.subheader("💼 Primary Packing Costing")
+st.subheader("💼 Primary Packing Total Cost")
 primary_output = hidden_output[[
     "SKU",
     "Interleaving Cost (Rs)",
