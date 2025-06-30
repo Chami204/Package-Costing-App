@@ -114,13 +114,6 @@ dropdown_columns = {
     "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
 
-edited_data = st.data_editor(
-    input_data,
-    column_config=dropdown_columns,
-    use_container_width=True,
-    num_rows="dynamic",
-    key="input_table"
-)
 
 st.subheader("📤 Crate/Pallet Input Table", divider="grey")
 
@@ -168,6 +161,14 @@ def calculate_outputs(row):
 
 outputs_df = edited_data.apply(calculate_outputs, axis=1)
 st.dataframe(outputs_df, use_container_width=True)
+
+edited_data = st.data_editor(
+    input_data,
+    column_config=dropdown_columns,
+    use_container_width=True,
+    num_rows="dynamic",
+    key="input_table"
+)
 
 # ------ Final Packing Selection Input ------
 final_packing_input = pd.DataFrame({
