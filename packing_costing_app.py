@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Page setup
-st.set_page_config(layout = "wide",page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
+st.set_page_config(layout="wide", page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
 st.title("🎯💰 Packing Costing App")
 # Custom CSS for wrapping column headers
 st.markdown("""
@@ -118,17 +118,6 @@ input_data = pd.DataFrame({
     "Fabricated": ["Select"]
 })
 
-dropdown_columns = {
-    "Fabricated": st.column_config.SelectboxColumn("Fabricated", options=["Fabricated", "Just Cutting"])
-}
-
-
-# ----- COSTING LOGIC -----
-def calculate_outputs(row):
-    W = row["W (mm)"]
-    H = row["H (mm)"]
-    L = row["L (mm)"]
-    
 st.subheader("📅 SKU Input Table", divider="grey")
 edited_data = st.data_editor(
     input_data,
@@ -139,6 +128,7 @@ edited_data = st.data_editor(
     num_rows="dynamic",
     key="sku_input_table"
 )
+
 # ----- Common Dropdown Selections Outside Table -----
 st.subheader("🔹 Common Packing Selections", divider="grey")
 finish = st.selectbox("Finish", ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"], key="finish_option")
@@ -146,7 +136,6 @@ eco_friendly = st.selectbox("Eco-Friendly Packing", ["Yes", "No"], key="eco_frie
 interleaving_required = st.selectbox("Interleaving Required", ["Yes", "No"], key="interleaving_option")
 protective_tape_customer_specified = st.selectbox("Protective Tape - Customer Specified", ["Yes", "No"], key="tape_option")
 packing_method = st.selectbox("Packing Method", ["Primary", "Secondary"], key="packing_option")
-
 
 
 # --------- Calculation Logic Hidden Table ------------
@@ -170,10 +159,10 @@ def calculate_hidden(row):
     total = interleaving_total_cost + protective_tape_cost + cardboard_cost
     return pd.Series({
         "SKU": row["SKU No."],
-        "Interleaving Cost (Rs)": f"{interleaving_total_cost:,2f}",
-        "Protective Tape Cost (Rs)": f"{protective_tape_cost:,2f}",
-        "Cardboard Box Cost (Rs)": f"{cardboard_cost:,2f}",
-        "Total Cost (Rs)": f"{total:, 2f}",
+        "Interleaving Cost (Rs)": f"{interleaving_total_cost:.2f}",
+        "Protective Tape Cost (Rs)": f"{protective_tape_cost:.2f}",
+        "Cardboard Box Cost (Rs)": f"{cardboard_cost:.2f}",
+        "Total Cost (Rs)": f"{total:.2f}",
         "Interleaving Material": interleaving_material,
         "Check": message,
         "Protective Tape Advice": protective_tape_advice
@@ -194,7 +183,6 @@ st.dataframe(primary_output, use_container_width=True)
 
 # ----------- Special Comments Section ----------------
 
-from streamlit_extras.let_it_rain import rain
 st.subheader("🌟 Special Comments")
 
 with st.container():
@@ -211,13 +199,12 @@ with st.container():
         tape = hidden_output.iloc[0]["Protective Tape Advice"]
         st.success(f"The interleaving material is **{mat}**. {msg}")
         st.warning(f"{tape}")
-        st.markdown( """
-        <div style='backgf"-color:#e1f5fe; padding:10px; border-radius:5px;'>
+        st.markdown("""
+        <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
             Costing is only inclusive of interleaving required & Cardboard Box/Polybag.
         </div>
         """,
         unsafe_allow_html=True)
-
 
 
 # ----------------- Final Packing --------------------
@@ -271,9 +258,9 @@ for _, row in final_packing_selection.iterrows():
         "Width (mm)": width,
         "Height (mm)": height,
         "Length (mm)": length if method == "Crate" else "-",
-        "Packing Cost (LKR)": f"{cost:,2f}",
-        "Strapping Clips": f"{num_clips:,2f}" if method == "Crate" else "-",
-        "Strapping Cost (LKR)": f"{strapping_cost:,2f}" if method == "Crate" else "-"
+        "Packing Cost (LKR)": f"{cost:.2f}",
+        "Strapping Clips": f"{num_clips:.2f}" if method == "Crate" else "-",
+        "Strapping Cost (LKR)": f"{strapping_cost:.2f}" if method == "Crate" else "-"
     })
 
 st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
@@ -335,67 +322,47 @@ if packing_method == "Secondary":
         
         # Calculate McFoam Cost
         McFoam_Cost = area_covered * mcfoam_cost_per_m2
-
-
         
         bundle_output_rows.append({
             "SKU": data_row["SKU No."],
-            "Bundle Width (mm)": f"{bundle_width:,2f}",
-            "Bundle Height (mm)": f"{bundle_height:,2f}",
-            "Bundle Length (mm)": f"{bundle_length:,2f}",
-            "Area Covered (m²)": f"{area_covered:,2f}",
+            "Bundle Width (mm)": f"{bundle_width:.2f}",
+            "Bundle Height (mm)": f"{bundle_height:.2f}",
+            "Bundle Length (mm)": f"{bundle_length:.2f}",
+            "Area Covered (m²)": f"{area_covered:.2f}",
             "Polybag Cost (Rs)": f"{polybag_cost:.2f}",
-            "McFoam_Cost(Rs)":f"{McFoam_Cost:.2f}",
-            "Stretchwrap Cost (Rs)": f"{stretchwrap_cost:,2f}"
-            
+            "McFoam_Cost(Rs)": f"{McFoam_Cost:.2f}",
+            "Stretchwrap Cost (Rs)": f"{stretchwrap_cost:.2f}"
         })
-
-
     
-# ---------------- Final Visible Secondary Packing Cost ----------------
-
+    # ---------------- Final Visible Secondary Packing Cost ----------------
     st.subheader("📦 Secondary Packing Cost")
     secondary_cost_df = pd.DataFrame(bundle_output_rows)
     secondary_cost_df["Total Cost (Rs/Pc)"] = secondary_cost_df.iloc[:, 4:].sum(axis=1)
     st.dataframe(secondary_cost_df, use_container_width=True)
 
-    st.subheader("📦 Secondary Packing Cost")
-    primary_output = hidden_output[[
-        "SKU",
-        "Interleaving Cost (Rs)",
-        "McFoam Cost (Rs)"
-        "Protective Tape Cost (Rs)",
-        "Cardboard Box Cost (Rs)",
-        "Total Cost (Rs)"
-    ]]
-    st.dataframe(primary_output, use_container_width=True)
+    # ----------- Special Comments Section for Bundling----------------
+    st.subheader("🌟 Special Comments under Secondary Packing")
 
-# ----------- Special Comments Sectionfor Bundling----------------
+    with st.container():
+        st.markdown("**🔗 Packing Method Note**")
+        if packing_method == "Secondary":
+            st.info(f"Costing is done according to *{packing_method}* packing.")
+        else:
+            user_comment = st.text_area("Add additional comments (for Secondary):", "")
+            st.info(f"Costing is done according to *{packing_method}* packing. {user_comment}")
 
-from streamlit_extras.let_it_rain import rain
-st.subheader("🌟 Special Comments under Secondary Packing")
-
-with st.container():
-    st.markdown("**🔗 Packing Method Note**")
-    if packing_method == "Secondary":
-        st.info(f"Costing is done according to *{packing_method}* packing.")
-    else:
-        user_comment = st.text_area("Add additional comments (for Secondary):", "")
-        st.info(f"Costing is done according to *{packing_method}* packing. {user_comment}")
-
-    if not hidden_output.empty:
-        mat = hidden_output.iloc[0]["Interleaving Material"]
-        msg = hidden_output.iloc[0]["Check"]
-        tape = hidden_output.iloc[0]["Protective Tape Advice"]
-        st.success(f"The interleaving material is **{mat}**. {msg}")
-        st.warning(f"{tape}")
-        st.markdown( """
-        <div style='backgf"-color:#e1f5fe; padding:10px; border-radius:5px;'>
-            Costing is inclusive of secondary packing - pallet or crate, however it is not inclisve of any labels artwork these will incur an ddditonal charge.
-        </div>
-        """,
-        unsafe_allow_html=True)
-
+        if not hidden_output.empty:
+            mat = hidden_output.iloc[0]["Interleaving Material"]
+            msg = hidden_output.iloc[0]["Check"]
+            tape = hidden_output.iloc[0]["Protective Tape Advice"]
+            st.success(f"The interleaving material is **{mat}**. {msg}")
+            st.warning(f"{tape}")
+            st.markdown("""
+            <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
+                Costing is inclusive of secondary packing - pallet or crate, however it is not inclusive of any labels artwork these will incur an additional charge.
+            </div>
+            """,
+            unsafe_allow_html=True)
 
 
 # ----------------- Tabs for Reference Tables --------------------
@@ -420,7 +387,6 @@ with col2:
 
 #----------------------------------------Final tabs-----------------------------------------------
 
-
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📄 Interleaving Cost", 
     "👝 Polybag Cost", 
@@ -440,19 +406,19 @@ with tab1:
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        polybag_ref = st.data_editor(polybag_ref, num_rows="dynamic", key="edit_polybag_table")
+        polybag_ref = st.data_editor(polybag_ref.to_frame().T, num_rows="dynamic", key="edit_polybag_table")
     st.dataframe(polybag_ref)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        cardboard_ref = st.data_editor(cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
+        cardboard_ref = st.data_editor(cardboard_ref.to_frame().T, num_rows="dynamic", key="edit_CardboardBox_table")
     st.dataframe(cardboard_ref)
 
 with tab4:
     st.markdown("#### Stretchwrap Cost")
     if st.session_state.edit_mode:
-        stretchwrap_ref = st.data_editor(stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
+        stretchwrap_ref = st.data_editor(stretchwrap_ref.to_frame().T, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
     st.dataframe(stretchwrap_ref)
 
 with tab5:
