@@ -378,7 +378,7 @@ st.subheader("🌟 Special Comments under Secondary Packing")
 with st.container():
     st.markdown("**🔗 Packing Method Note**")
     if packing_method == "Secondary":
-        st.info(f"Costing is done according to *{packing_method}* packing.)
+        st.info(f"Costing is done according to *{packing_method}* packing.")
     else:
         user_comment = st.text_area("Add additional comments (for Secondary):", "")
         st.info(f"Costing is done according to *{packing_method}* packing. {user_comment}")
