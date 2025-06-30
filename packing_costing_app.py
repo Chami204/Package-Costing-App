@@ -70,15 +70,14 @@ ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
 def load_crate_pallet_table():
     return pd.DataFrame({
         "Description": ["Crate", "Pallet"],
-        "Width (mm)": [480,2000],
-        "Height(mm)":[590,600],
-        "Length(mm)":[2000,2000],
+        "Width (mm)": [480, 2000],
+        "Height(mm)": [590, 600],
+        "Length(mm)": [2000, 2000],
         "Cost per m² (LKR)": [100.0, 150.0]
     })
 
 cratePallet_df = load_crate_pallet_table()
 cratePallet_cost_lookup = dict(zip(cratePallet_df["Description"], cratePallet_df["Cost per m² (LKR)"]))
-
 
 
 
@@ -256,7 +255,7 @@ if not st.session_state.edit_mode:
     else:
         st.warning("Read-only mode. Enter correct password to unlock tables.")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost", "🌀 Stretchwrap Cost","Crate/Pallet cost"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost", "🌀 Stretchwrap Cost","📋 Crate/Pallet Cost"])
 
 with tab1:
     st.markdown("#### Interleaving Material Costs")
@@ -283,7 +282,7 @@ with tab4:
     st.dataframe(stretchwrap_ref)
 
 with tab5:
-    st.markdown("####Crate/Pallet Cost")
+    st.markdown("#### Crate/Pallet Cost")
     if st.session_state.edit_mode:
-        cratePallet_df = st.data_editor(cratePallet_df, num_rows="dynamic", key="crate_pallet_table")
+        cratePallet_df = st.data_editor(cratePallet_df, num_rows="dynamic", key="crate_pallet_table_edit")
     st.dataframe(cratePallet_df)
