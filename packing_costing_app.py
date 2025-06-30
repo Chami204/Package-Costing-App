@@ -360,15 +360,15 @@ if packing_method == "Secondary":
     st.dataframe(secondary_cost_df, use_container_width=True)
 
     st.subheader("📦 Secondary Packing Cost")
-        primary_output = hidden_output[[
-            "SKU",
-            "Interleaving Cost (Rs)",
-            "McFoam Cost (Rs)"
-            "Protective Tape Cost (Rs)",
-            "Cardboard Box Cost (Rs)",
-            "Total Cost (Rs)"
-        ]]
-        st.dataframe(primary_output, use_container_width=True)
+    primary_output = hidden_output[[
+        "SKU",
+        "Interleaving Cost (Rs)",
+        "McFoam Cost (Rs)"
+        "Protective Tape Cost (Rs)",
+        "Cardboard Box Cost (Rs)",
+        "Total Cost (Rs)"
+    ]]
+    st.dataframe(primary_output, use_container_width=True)
 
 # ----------- Special Comments Sectionfor Bundling----------------
 
