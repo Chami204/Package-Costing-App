@@ -350,6 +350,33 @@ if packing_method == "Secondary":
     st.dataframe(secondary_cost_df, use_container_width=True)
 
 
+# ----------- Special Comments Sectionfor Bundling----------------
+
+from streamlit_extras.let_it_rain import rain
+st.subheader("🌟 Special Comments under Secondary Packing")
+
+with st.container():
+    st.markdown("**🔗 Packing Method Note**")
+    if packing_method == "Secondary":
+        st.info(f"Costing is done according to *{packing_method}* packing.)
+    else:
+        user_comment = st.text_area("Add additional comments (for Secondary):", "")
+        st.info(f"Costing is done according to *{packing_method}* packing. {user_comment}")
+
+    if not hidden_output.empty:
+        mat = hidden_output.iloc[0]["Interleaving Material"]
+        msg = hidden_output.iloc[0]["Check"]
+        tape = hidden_output.iloc[0]["Protective Tape Advice"]
+        st.success(f"The interleaving material is **{mat}**. {msg}")
+        st.warning(f"{tape}")
+        st.markdown( """
+        <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
+            Costing is inclusive of secondary packing - pallet or crate, however it is not inclisve of any labels artwork these will incur an ddditonal charge.
+        </div>
+        """,
+        unsafe_allow_html=True)
+
+
 
 # ----------------- Tabs for Reference Tables --------------------
 st.subheader("🔐 Admin Reference Tables")
