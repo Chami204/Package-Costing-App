@@ -117,8 +117,6 @@ dropdown_columns = {
     "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
 
-# ------- Input Table Setup -------
-st.subheader("📥 User Input Table", divider="grey")
 edited_data = st.data_editor(
     input_data,
     column_config=dropdown_columns,
@@ -127,9 +125,48 @@ edited_data = st.data_editor(
     key="input_table"
 )
 
-# ------- Now you can apply calculations safely -------
-st.subheader("📤 Crate/Pallet Input Table", divider="grey")
-outputs_df = edited_data.apply(calculate_outputs, axis=1)
-st.dataframe(outputs_df, use_container_width=True)
+# ----- COSTING LOGIC -----
+def calculate_outputs(row):
+    W = row["W (mm)"]
+    H = row["H (mm)"]
+    L = row["L (mm)"]
+    finish = row["Finish"]
+    fabricated = row["Fabricated"]
+    eco_friendly = row["Eco-Friendly Packing"]
+    protective_tape_customer_specified = row["Protective Tape - Customer Specified"]
 
-# [The rest of your code remains unchanged here: bundling section, final packing, reference table tabs, etc.]
+    interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
+    message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
+    surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
+
+    interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
+    interleaving_total_cost = surface_area * interleaving_cost
+
+    if protective_tape_customer_specified == "No":
+        if (fabricated == "Fabricated" and finish == "Mill Finish") or (fabricated == "Just Cutting" and finish in ["Powder Coated", "Anodized"]):
+            protective_tape_advice = "Not necessary."
+        else:
+            protective_tape_advice = "Protective tape required to avoid rejects"
+    else:
+        protective_tape_advice = "Protective tape required to avoid rejects"
+
+    protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65) if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
+
+    user_volume = W * H * L
+    cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
+
+    return pd.Series({
+        "Identification No.": row["Identification No."],
+        "Interleaving Material": interleaving_material,
+        "Check": message,
+        "Surface Area (m²)": round(surface_area, 4),
+        "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
+        "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
+        "Protective Tape Advice": protective_tape_advice,
+        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
+        "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
+    })
+
+outputs_df = edited_data.apply(calculate_outputs, axis=1)
+st.subheader("📤 Crate/Pallet Input Table", divider="grey")
+st.dataframe(outputs_df, use_container_width=True)
