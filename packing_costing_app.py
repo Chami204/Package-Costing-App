@@ -21,6 +21,10 @@ EDIT_PASSWORD = "admin123"
 if "edit_mode" not in st.session_state:
     st.session_state.edit_mode = False
 
+if "save_clicked" not in st.session_state:
+    st.session_state.save_clicked = False
+
+
 #----------------Interleaving-------------------------
 @st.cache_data
 def load_interleaving_table():
@@ -349,12 +353,26 @@ if packing_method == "Secondary":
 
 # ----------------- Tabs for Reference Tables --------------------
 st.subheader("🔐 Admin Reference Tables")
-if not st.session_state.edit_mode:
-    password = st.text_input("Enter password to edit tables:", type="password")
-    if password == EDIT_PASSWORD:
-        st.session_state.edit_mode = True
-    else:
-        st.warning("Read-only mode. Enter correct password to unlock tables.")
+
+col1, col2 = st.columns([3, 1])  # Wider left, button on right
+with col1:
+    if not st.session_state.edit_mode:
+        password = st.text_input("Enter password to edit tables:", type="password")
+        if password == EDIT_PASSWORD:
+            st.session_state.edit_mode = True
+            st.session_state.save_clicked = False
+        else:
+            st.warning("Read-only mode. Enter correct password to unlock tables.")
+with col2:
+    if st.session_state.edit_mode:
+        if st.button("💾 Save All Tables", use_container_width=True):
+            # Simulate saving logic
+            st.success("All tables saved!")
+            st.session_state.edit_mode = False
+            st.session_state.save_clicked = True
+
+#----------------------------------------Final tabs-----------------------------------------------
+
 
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📄 Interleaving Cost", 
@@ -369,41 +387,41 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 with tab1:
     st.markdown("#### Interleaving Material Costs")
     if st.session_state.edit_mode:
-        interleaving_df = st.data_editor(interleaving_df, num_rows="dynamic", key="interleaving_table")
+        interleaving_df = st.data_editor(interleaving_df, num_rows="dynamic", key="edit_interleaving")
     st.dataframe(interleaving_df)
 
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        polybag_ref = st.data_editor(polybag_ref, num_rows="dynamic", key="polybag_table")
+        polybag_ref = st.data_editor(polybag_ref, num_rows="dynamic", key="edit_polybag_table")
     st.dataframe(polybag_ref)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        cardboard_ref = st.data_editor(cardboard_ref, num_rows="dynamic", key="CardboardBox_table")
+        cardboard_ref = st.data_editor(cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
     st.dataframe(cardboard_ref)
 
 with tab4:
     st.markdown("#### Stretchwrap Cost")
     if st.session_state.edit_mode:
-        stretchwrap_ref = st.data_editor(stretchwrap_ref, num_rows="dynamic", key="Stretchwrap_Cost_table")
+        stretchwrap_ref = st.data_editor(stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
     st.dataframe(stretchwrap_ref)
 
 with tab5:
     st.markdown("#### Crate Cost Reference")
     if st.session_state.edit_mode:
-        crate_cost_df = st.data_editor(crate_cost_df, num_rows="dynamic", key="crate_cost_edit")
+        crate_cost_df = st.data_editor(crate_cost_df, num_rows="dynamic", key="edit_crate_cost_edit")
     st.dataframe(crate_cost_df)
 
 with tab6:
     st.markdown("#### Pallet Cost Reference")
     if st.session_state.edit_mode:
-        pallet_cost_df = st.data_editor(pallet_cost_df, num_rows="dynamic", key="pallet_cost_edit")
+        pallet_cost_df = st.data_editor(pallet_cost_df, num_rows="dynamic", key="edit_pallet_cost_edit")
     st.dataframe(pallet_cost_df)
 
 with tab7:
     st.markdown("#### PP Strapping Cost Reference")
     if st.session_state.edit_mode:
-        strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="strapping_cost_edit")
+        strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
