@@ -212,7 +212,12 @@ with st.container():
         tape = hidden_output.iloc[0]["Protective Tape Advice"]
         st.success(f"The interleaving material is **{mat}**. {msg}")
         st.warning(f"{tape}")
-        st.markdown(f"{Costing is only inclusive of interleaving required & Cardboard Box/Polybag.}")
+        st.markdown( """
+        <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
+            Costing is only inclusive of interleaving required & Cardboard Box/Polybag.
+        </div>
+        """,
+        unsafe_allow_html=True)
 
 
 
