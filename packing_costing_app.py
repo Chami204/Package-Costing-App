@@ -166,18 +166,17 @@ def calculate_outputs(row):
 
 #-----------------------📤 Crate/Pallet Input Table--------------------------
 
-st.subheader("📤 Crate/Pallet Input Table", divider="grey")
-outputs_df = edited_data.apply(calculate_outputs, axis=1)
-st.dataframe(outputs_df, use_container_width=True)
-
-
-st.subheader("📤 Crate/Pallet Input Table", divider="grey")
+st.subheader("📤 Output Table", divider="grey")
 edited_data = st.data_editor(
     input_data,
     column_config=dropdown_columns,
     use_container_width=True,
     num_rows="dynamic",
     key="input_table"
+)
+st.subheader("📤 Output Table", divider="grey")
+outputs_df = edited_data.apply(calculate_outputs, axis=1)
+st.dataframe(outputs_df, use_container_width=True)
 )
 
 final_packing_input = pd.DataFrame({
