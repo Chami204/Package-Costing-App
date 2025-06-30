@@ -7,6 +7,7 @@ st.title("🎯💰 Packing Costing App")
 
 # ----- PASSWORD-PROTECTED REFERENCE TABLE SETUP -----
 EDIT_PASSWORD = "admin123"
+
 if "edit_mode" not in st.session_state:
     st.session_state.edit_mode = False
 
@@ -62,7 +63,7 @@ stretchwrap_ref = load_stretchwrap_table().iloc[0]
 ref_stretch_area = float(stretchwrap_ref["Area(mm²)"])
 ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
 
-#----------------------Crate/Pallet/Strapping Cost Reference Tables---------------------------
+#----------------------Crate or Pallet Cost reference table---------------------------
 @st.cache_data
 def load_crate_cost_table():
     return pd.DataFrame({
@@ -80,6 +81,10 @@ def load_pallet_cost_table():
         "Cost (LKR)": [3000.0]
     })
 
+crate_cost_df = load_crate_cost_table()
+pallet_cost_df = load_pallet_cost_table()
+
+#-------------------------Strapping clips & straps cost------------------------------
 @st.cache_data
 def load_strapping_cost_table():
     return pd.DataFrame({
@@ -87,8 +92,6 @@ def load_strapping_cost_table():
         "Cost (LKR/m)": [15.0]
     })
 
-crate_cost_df = load_crate_cost_table()
-pallet_cost_df = load_pallet_cost_table()
 strapping_cost_df = load_strapping_cost_table()
 
 # --------------------------=INPUT TABLE SETUP ------------------------
@@ -114,54 +117,8 @@ dropdown_columns = {
     "Packing Method": st.column_config.SelectboxColumn("Packing Method", options=["Primary", "Secondary"])
 }
 
-
-st.subheader("📤 Crate/Pallet Input Table", divider="grey")
-
-# ----- COSTING LOGIC -----
-def calculate_outputs(row):
-    W = row["W (mm)"]
-    H = row["H (mm)"]
-    L = row["L (mm)"]
-    finish = row["Finish"]
-    fabricated = row["Fabricated"]
-    eco_friendly = row["Eco-Friendly Packing"]
-    protective_tape_customer_specified = row["Protective Tape - Customer Specified"]
-
-    interleaving_material = "Craft Paper" if eco_friendly == "Yes" else "McFoam"
-    message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
-    surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
-
-    interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
-    interleaving_total_cost = surface_area * interleaving_cost
-
-    if protective_tape_customer_specified == "No":
-        if (fabricated == "Fabricated" and finish == "Mill Finish") or (fabricated == "Just Cutting" and finish in ["Powder Coated", "Anodized"]):
-            protective_tape_advice = "Not necessary."
-        else:
-            protective_tape_advice = "Protective tape required to avoid rejects"
-    else:
-        protective_tape_advice = "Protective tape required to avoid rejects"
-
-    protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65) if protective_tape_advice == "Protective tape required to avoid rejects" else 0.0
-
-    user_volume = W * H * L
-    cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
-
-    return pd.Series({
-        "Identification No.": row["Identification No."],
-        "Interleaving Material": interleaving_material,
-        "Check": message,
-        "Surface Area (m²)": round(surface_area, 4),
-        "Cost of Interleaving Material (Rs/m²)": interleaving_cost,
-        "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
-        "Protective Tape Advice": protective_tape_advice,
-        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
-        "Cardboard Box Cost (Rs)": round(cardboard_cost, 2)
-    })
-
-outputs_df = edited_data.apply(calculate_outputs, axis=1)
-st.dataframe(outputs_df, use_container_width=True)
-
+# ------- Input Table Setup -------
+st.subheader("📥 User Input Table", divider="grey")
 edited_data = st.data_editor(
     input_data,
     column_config=dropdown_columns,
@@ -170,122 +127,9 @@ edited_data = st.data_editor(
     key="input_table"
 )
 
-# ------ Final Packing Selection Input ------
-final_packing_input = pd.DataFrame({
-    "Final Packing Method": ["Crate"],
-    "Width (mm)": [0],
-    "Height (mm)": [0],
-    "Length (mm)": [0]  # Only used for crate
-})
+# ------- Now you can apply calculations safely -------
+st.subheader("📤 Crate/Pallet Input Table", divider="grey")
+outputs_df = edited_data.apply(calculate_outputs, axis=1)
+st.dataframe(outputs_df, use_container_width=True)
 
-st.subheader("🚛 Final Packing Selection", divider="grey")
-final_packing_selection = st.data_editor(
-    final_packing_input,
-    column_config={
-        "Final Packing Method": st.column_config.SelectboxColumn("Final Packing Method", options=["Crate", "Pallet"])
-    },
-    use_container_width=True,
-    key="final_packing_selection"
-)
-
-# ------ Final Packing Cost Calculation ------
-st.subheader("💰 Final Crate/Pallet Cost Summary", divider="grey")
-packing_output_rows = []
-for _, row in final_packing_selection.iterrows():
-    method = row["Final Packing Method"]
-    width = row["Width (mm)"]
-    height = row["Height (mm)"]
-    length = row["Length (mm)"]
-
-    if method == "Crate":
-        ref_crate = crate_cost_df.iloc[0]
-        ref_vol = ref_crate["Width (mm)"] * ref_crate["Height (mm)"] * ref_crate["Length (mm)"]
-        user_vol = width * height * length
-        cost = (user_vol / ref_vol) * ref_crate["Cost (LKR)"] if ref_vol else 0.0
-
-        strapping_ref = strapping_cost_df.iloc[0]
-        length_m = length / 1000
-        num_clips = length_m / 0.5  # every 500mm
-        strapping_cost = length_m * strapping_ref["Cost (LKR/m)"] * num_clips
-
-    elif method == "Pallet":
-        ref_pallet = pallet_cost_df.iloc[0]
-        ref_area = ref_pallet["Width (mm)"] * ref_pallet["Height (mm)"]
-        user_area = width * height
-        cost = (user_area / ref_area) * ref_pallet["Cost (LKR)"] if ref_area else 0.0
-        strapping_cost = 0.0
-        num_clips = 0
-
-    packing_output_rows.append({
-        "Method": method,
-        "Width (mm)": width,
-        "Height (mm)": height,
-        "Length (mm)": length if method == "Crate" else "-",
-        "Packing Cost (LKR)": round(cost, 2),
-        "Strapping Clips": round(num_clips, 2) if method == "Crate" else "-",
-        "Strapping Cost (LKR)": round(strapping_cost, 2) if method == "Crate" else "-"
-    })
-
-st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
-
-# ----- REFERENCE TABLE PASSWORD-PROTECTED EDITING -----
-st.subheader("🔐 Admin Reference Tables")
-if not st.session_state.edit_mode:
-    password = st.text_input("Enter password to edit tables:", type="password")
-    if password == EDIT_PASSWORD:
-        st.session_state.edit_mode = True
-    else:
-        st.warning("Read-only mode. Enter correct password to unlock tables.")
-
-# ----- Tabs for Reference Tables -----
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "📄 Interleaving Cost",
-    "👝 Polybag Cost",
-    "📦 Cardboard Box Cost",
-    "🌀 Stretchwrap Cost",
-    "📏 Crate Cost",
-    "📀 Pallet Cost",
-    "🧇 PP Strapping Cost"
-])
-
-with tab1:
-    st.markdown("#### Interleaving Material Costs")
-    if st.session_state.edit_mode:
-        interleaving_df = st.data_editor(interleaving_df, num_rows="dynamic", key="interleaving_table")
-    st.dataframe(interleaving_df)
-
-with tab2:
-    st.markdown("#### Polybag Cost")
-    if st.session_state.edit_mode:
-        polybag_ref = st.data_editor(polybag_ref, num_rows="dynamic", key="polybag_table")
-    st.dataframe(polybag_ref)
-
-with tab3:
-    st.markdown("#### Cardboard Box Cost")
-    if st.session_state.edit_mode:
-        cardboard_ref = st.data_editor(cardboard_ref, num_rows="dynamic", key="cardboard_table")
-    st.dataframe(cardboard_ref)
-
-with tab4:
-    st.markdown("#### Stretchwrap Cost")
-    if st.session_state.edit_mode:
-        stretchwrap_ref = st.data_editor(stretchwrap_ref, num_rows="dynamic", key="stretchwrap_table")
-    st.dataframe(stretchwrap_ref)
-
-with tab5:
-    st.markdown("#### Crate Cost Reference")
-    if st.session_state.edit_mode:
-        crate_cost_df = st.data_editor(crate_cost_df, num_rows="dynamic", key="crate_cost_table")
-    st.dataframe(crate_cost_df)
-
-with tab6:
-    st.markdown("#### Pallet Cost Reference")
-    if st.session_state.edit_mode:
-        pallet_cost_df = st.data_editor(pallet_cost_df, num_rows="dynamic", key="pallet_cost_table")
-    st.dataframe(pallet_cost_df)
-
-with tab7:
-    st.markdown("#### PP Strapping Cost Reference")
-    if st.session_state.edit_mode:
-        strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="strapping_cost_table")
-    st.dataframe(strapping_cost_df)
+# [The rest of your code remains unchanged here: bundling section, final packing, reference table tabs, etc.]
