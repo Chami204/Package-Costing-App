@@ -67,16 +67,17 @@ ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
 #----------------------Crate or Pallet Cost reference table---------------------------
 
 @st.cache_data
-def load_finalpacking_table():
+def load_crate_pallet_table():
     return pd.DataFrame({
         "Description": ["Crate", "Pallet"],
         "Width (mm)": [480,2000],
         "Height(mm)":[590,600],
-        "Length(mm)":[2000,2000]
+        "Length(mm)":[2000,2000],
+        "Cost per m² (LKR)": [100.0, 150.0]
     })
 
-finalpacking_df = load_finalpacking_table()
-finalpacking_cost_lookup = dict(zip(finalpacking_df["Description"], finalpacking_df["Cost per m² (LKR)"]))
+cratePallet_df = load_crate_pallet_table()
+finalpacking_cost_lookup = dict(zip(cratePallet_df["Description"], cratePallet_df["Cost per m² (LKR)"]))
 
 
 
@@ -255,7 +256,7 @@ if not st.session_state.edit_mode:
     else:
         st.warning("Read-only mode. Enter correct password to unlock tables.")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost", "🌀 Stretchwrap Cost"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📄 Interleaving Cost", "👝 Polybag Cost", "📦 Cardboard Box Cost", "🌀 Stretchwrap Cost","Crate/Pallet cost"])
 
 with tab1:
     st.markdown("#### Interleaving Material Costs")
@@ -282,7 +283,7 @@ with tab4:
     st.dataframe(stretchwrap_ref)
 
 with tab5:
-    st.markdown("####Final Packing Cost")
+    st.markdown("####Crate/Pallet Cost")
     if st.session_state.edit_mode:
-        finalpacking_df = st.data_editor(finalpacking_df, num_rows="dynamic", key="Stretchwrap_Cost_table")
-    st.dataframe(finalpacking_df)
+        cratePallet_df = st.data_editor(cratePallet_df, num_rows="dynamic", key="crate_pallet_table")
+    st.dataframe(cratePallet_df)
