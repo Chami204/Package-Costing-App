@@ -267,56 +267,32 @@ st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 
 if packing_method == "Secondary":
-    bundling_rows = edited_data.copy()
-else:
-    bundling_rows = pd.DataFrame()
-
-
-if not bundling_rows.empty:
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
+    bundling_data = pd.DataFrame({
+        "Rows": [1],
+        "Layers": [1],
+        "Width Type": ["W/mm"],
+        "Height Type": ["H/mm"]
+    })
 
-    id_list = bundling_rows["SKU No."].tolist()
-
-    if (
-        "bundling_inputs" not in st.session_state
-        or sorted(st.session_state.bundling_inputs["SKU No."].tolist()) != sorted(id_list)
-    ):
-        st.session_state.bundling_inputs = pd.DataFrame({
-            "SKU No.": id_list,
-            "Rows": [1] * len(id_list),
-            "Layers": [1] * len(id_list),
-            "Width Type": ["W/mm"] * len(id_list),
-            "Height Type": ["H/mm"] * len(id_list)
-        })
-
-    bundling_inputs_edited = st.data_editor(
-        st.session_state.bundling_inputs,
+    bundling_common = st.data_editor(
+        bundling_data,
         column_config={
-            "SKU No.": st.column_config.TextColumn("SKU No.", disabled=True),
             "Rows": st.column_config.NumberColumn("Number of Rows", min_value=1, step=1),
             "Layers": st.column_config.NumberColumn("Number of Layers", min_value=1, step=1),
             "Width Type": st.column_config.SelectboxColumn("Width Profile Type", options=["W/mm", "H/mm"]),
             "Height Type": st.column_config.SelectboxColumn("Height Profile Type", options=["H/mm", "W/mm"]),
         },
         use_container_width=True,
-        key="bundling_table"
+        key="bundling_common_input"
     )
 
-    st.session_state.bundling_inputs = bundling_inputs_edited
 
     bundle_output_rows = []
-    for _, bundling_row in bundling_inputs_edited.iterrows():
-        id_no = bundling_row["SKU No."]
-        match = edited_data.loc[edited_data["SKU No."] == id_no]
-
-        if match.empty:
-            st.warning(f"No matching input found for ID: {id_no}")
-            continue
-
-        original_row = match.iloc[0]
+    for _, data_row in edited_data.iterrows():
         profile_dimensions = {
-            "W/mm": original_row["W (mm)"],
-            "H/mm": original_row["H (mm)"]
+            "W/mm": data_row["W (mm)"],
+            "H/mm": data_row["H (mm)"]
         }
 
         bundle_width = bundling_row["Rows"] * profile_dimensions[bundling_row["Width Type"]]
@@ -353,6 +329,12 @@ if not bundling_rows.empty:
 
 else:
     st.info("No rows with Packing Method = 'Secondary' found.")
+# ---------------- Final Visible Secondary Packing Cost ----------------
+
+    st.subheader("📦 Secondary Packing Cost")
+    secondary_cost_df = pd.DataFrame(bundle_output_rows)
+    secondary_cost_df["Total Cost (Rs/Pc)"] = secondary_cost_df.iloc[:, 4:].sum(axis=1)
+    st.dataframe(secondary_cost_df, use_container_width=True)
 
 
 # ----------------- Tabs for Reference Tables --------------------
