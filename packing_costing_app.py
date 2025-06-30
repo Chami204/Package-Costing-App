@@ -170,10 +170,10 @@ def calculate_hidden(row):
     total = interleaving_total_cost + protective_tape_cost + cardboard_cost
     return pd.Series({
         "SKU": row["SKU No."],
-        "Interleaving Cost (Rs)": round(interleaving_total_cost, 2),
-        "Protective Tape Cost (Rs)": round(protective_tape_cost, 2),
-        "Cardboard Box Cost (Rs)": round(cardboard_cost, 2),
-        "Total Cost (Rs)": round(total, 2),
+        "Interleaving Cost (Rs)": f"(interleaving_total_cost, 2),
+        "Protective Tape Cost (Rs)": f"(protective_tape_cost, 2),
+        "Cardboard Box Cost (Rs)": f"(cardboard_cost, 2),
+        "Total Cost (Rs)": f"(total, 2),
         "Interleaving Material": interleaving_material,
         "Check": message,
         "Protective Tape Advice": protective_tape_advice
@@ -212,7 +212,7 @@ with st.container():
         st.success(f"The interleaving material is **{mat}**. {msg}")
         st.warning(f"{tape}")
         st.markdown( """
-        <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
+        <div style='backgf"-color:#e1f5fe; padding:10px; border-radius:5px;'>
             Costing is only inclusive of interleaving required & Cardboard Box/Polybag.
         </div>
         """,
@@ -271,9 +271,9 @@ for _, row in final_packing_selection.iterrows():
         "Width (mm)": width,
         "Height (mm)": height,
         "Length (mm)": length if method == "Crate" else "-",
-        "Packing Cost (LKR)": round(cost, 2),
-        "Strapping Clips": round(num_clips, 2) if method == "Crate" else "-",
-        "Strapping Cost (LKR)": round(strapping_cost, 2) if method == "Crate" else "-"
+        "Packing Cost (LKR)": f"(cost:,2f),
+        "Strapping Clips": f"(num_clips:,2f) if method == "Crate" else "-",
+        "Strapping Cost (LKR)": f"(strapping_cost:,2f) if method == "Crate" else "-"
     })
 
 st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
@@ -329,15 +329,25 @@ if packing_method == "Secondary":
     
         # Bundle area covered (approx)
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
-    
+
+        # Get McFoam cost per m² from interleaving_df
+        mcfoam_cost_per_m2 = interleaving_df.loc[interleaving_df["Material"] == "McFoam", "Cost per m² (LKR)"].values[0]
+        
+        # Calculate McFoam Cost
+        McFoam_Cost = area_covered * mcfoam_cost_per_m2
+
+
+        
         bundle_output_rows.append({
             "SKU": data_row["SKU No."],
-            "Bundle Width (mm)": round(bundle_width, 2),
-            "Bundle Height (mm)": round(bundle_height, 2),
-            "Bundle Length (mm)": round(bundle_length, 2),
-            "Area Covered (m²)": round(area_covered, 4),
-            "Polybag Cost (Rs)": round(polybag_cost, 2),
-            "Stretchwrap Cost (Rs)": round(stretchwrap_cost, 2)
+            "Bundle Width (mm)": f"(bundle_width:,2f),
+            "Bundle Height (mm)": f"(bundle_height:,2f),
+            "Bundle Length (mm)": f"(bundle_length:,2f),
+            "Area Covered (m²)": f"(area_covered:,2f),
+            "Polybag Cost (Rs)": f"{polybag_cost:.2f)}",
+            "McFoam_Cost(Rs)":f"{McFoam_Cost:.2f}",
+            "Stretchwrap Cost (Rs)": f"(stretchwrap_cost:,2f)
+            
         })
 
 
@@ -349,6 +359,16 @@ if packing_method == "Secondary":
     secondary_cost_df["Total Cost (Rs/Pc)"] = secondary_cost_df.iloc[:, 4:].sum(axis=1)
     st.dataframe(secondary_cost_df, use_container_width=True)
 
+    st.subheader("📦 Secondary Packing Cost")
+        primary_output = hidden_output[[
+            "SKU",
+            "Interleaving Cost (Rs)",
+            "McFoam Cost (Rs)"
+            "Protective Tape Cost (Rs)",
+            "Cardboard Box Cost (Rs)",
+            "Total Cost (Rs)"
+        ]]
+        st.dataframe(primary_output, use_container_width=True)
 
 # ----------- Special Comments Sectionfor Bundling----------------
 
@@ -370,7 +390,7 @@ with st.container():
         st.success(f"The interleaving material is **{mat}**. {msg}")
         st.warning(f"{tape}")
         st.markdown( """
-        <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
+        <div style='backgf"-color:#e1f5fe; padding:10px; border-radius:5px;'>
             Costing is inclusive of secondary packing - pallet or crate, however it is not inclisve of any labels artwork these will incur an ddditonal charge.
         </div>
         """,
