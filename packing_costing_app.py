@@ -133,7 +133,6 @@ edited_data = st.data_editor(
 st.subheader("🔹 Common Packing Selections", divider="grey")
 finish = st.selectbox("Finish", ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"], key="finish_option")
 eco_friendly = st.selectbox("Eco-Friendly Packing", ["McFoam", "Stretchwrap","Craft Paper"], key="eco_friendly_option")
-interleaving_required = st.selectbox("Interleaving Required", ["Yes", "No"], key="interleaving_option")
 protective_tape_customer_specified = st.selectbox("Protective Tape - Customer Specified", ["Yes", "No"], key="tape_option")
 packing_method = st.selectbox("Packing Method", ["Primary", "Secondary"], key="packing_option")
 
@@ -144,8 +143,7 @@ def calculate_hidden(row):
     H = float(row["H (mm)"])
     L = float(row["L (mm)"])
     
-    interleaving_material = "McFoam" if eco_friendly in ["McFoam", "Stretchwrap", "Craft Paper"] else "Default Material"
-    message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
+    message = "Okay" if (finish == "Mill Finish" and eco_friendly == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
     surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1000000
     interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
     interleaving_total_cost = surface_area * interleaving_cost
