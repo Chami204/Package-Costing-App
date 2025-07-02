@@ -47,6 +47,7 @@ def load_polybag_table():
 polybag_ref = load_polybag_table()
 ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.4  # Convert inches to mm
 polybag_cost_per_m2 = float(polybag_ref["Cost per m² (LKR/m²)"].iloc[0])
+polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
 
 #-------------------------------Carboard Box------------------------
 @st.cache_data
@@ -177,27 +178,14 @@ def calculate_hidden(row):
     
     # Calculate packaging cost (polybag or cardboard box)
     user_volume = W * H * L
-    
-        # First, convert polybag size from inches to meters
-    polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
-    
-    # Then in the polybag cost calculation:
-        # First, convert polybag size from inches to meters
-    polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
-    
-    # Then in the polybag cost calculation:
     if L > 550:  # Use polybag
-        # Calculate bundle area in m²
-        bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
-        
-        # New polybag cost formula
-        polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
-        
-        packaging_cost = polybag_cost
+        # Calculate polybag cost proportionally
+        polybag_cost = (polybag_cost_per_m2 * (L / 1000)) / 1  # Divided by 1 profile (for primary packing)
+        cardboard_cost = 0.0
         packaging_type = "Polybag"
     else:  # Use cardboard box
-        user_volume = bundle_width * bundle_height * bundle_length
-        packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
+        cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
+        polybag_cost = 0.0
         packaging_type = "Cardboard Box"
     
     total = interleaving_total_cost + protective_tape_cost + max(cardboard_cost, polybag_cost)
@@ -219,9 +207,7 @@ if not edited_data.empty:
 else:
     hidden_output = pd.DataFrame()
 
-
 # ----------- Primary Costing Table -------------------
-# Only show if packing method is Primary
 if packing_method == "Primary":
     st.subheader("💼 Primary Packing Total Cost")
     if not hidden_output.empty:
@@ -257,36 +243,9 @@ if packing_method == "Primary":
             """,
             unsafe_allow_html=True)
 
-# ----------- Special Comments Section ----------------
-st.subheader("🌟 Special Comments")
-
-with st.container():
-    st.markdown("**🔗 Packing Method Note**")
-    if packing_method == "Primary":
-        st.info(f"Costing is done according to *{packing_method}* packing. Therefore, this cost does not include any crate or palletizing charges. Please note that secondary packaging will incur an additional charge.")
-    else:
-        user_comment = st.text_area("Add additional comments (for Secondary):", "")
-        st.info(f"Costing is done according to *{packing_method}* packing. {user_comment}")
-
-    if not hidden_output.empty:
-        mat = hidden_output.iloc[0]["Interleaving Material"]
-        msg = hidden_output.iloc[0]["Check"]
-        tape = hidden_output.iloc[0]["Protective Tape Advice"]
-        st.success(f"The interleaving material is **{mat}**. {msg}")
-        st.warning(f"{tape}")
-        st.markdown("""
-        <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
-            Costing is only inclusive of interleaving required & Cardboard Box/Polybag.
-        </div>
-        """,
-        unsafe_allow_html=True)
-
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 if packing_method == "Secondary":
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
-    
-    # Convert polybag size from inches to meters
-    polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
     
     # Bundle input method selection
     bundle_input_method = st.radio("Bundle Input Method:", ["Number of layers", "Size of the bundle"])
@@ -382,7 +341,40 @@ if packing_method == "Secondary":
             "Packaging Cost (Rs/prof)": f"{packaging_cost:.2f}",
         }
         
-        # [Rest of the cost calculations remain the same...]
+        # Add selected eco-friendly material cost only if interleaving is required - PER PROFILE
+        if interleaving_required == "Yes":
+            if eco_friendly == "McFoam":
+                mcfoam_cost_per_m2 = material_cost_lookup.get("McFoam", 0.0)
+                McFoam_Cost = (bundle_area_m2 * mcfoam_cost_per_m2) / profiles_per_bundle
+                bundle_cost_data["McFoam Cost (Rs/prof)"] = f"{McFoam_Cost:.2f}"
+            elif eco_friendly == "Stretchwrap":
+                bundle_surface_area = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height))
+                stretchwrap_cost = ((bundle_surface_area / ref_stretch_area) * ref_stretch_cost) / profiles_per_bundle if ref_stretch_area else 0.0
+                bundle_cost_data["Stretchwrap Cost (Rs/prof)"] = f"{stretchwrap_cost:.2f}"
+            elif eco_friendly == "Craft Paper":
+                craft_paper_cost_per_m2 = material_cost_lookup.get("Craft Paper", 0.0)
+                craft_paper_cost = (bundle_area_m2 * craft_paper_cost_per_m2) / profiles_per_bundle
+                bundle_cost_data["Craft Paper Cost (Rs/prof)"] = f"{craft_paper_cost:.2f}"
+        
+        # Protective tape cost (if needed) - PER PROFILE
+        profile_surface_area = 2 * ((W * L) + (H * L) + (W * H)) / 1_000_000
+        if (finish == "Anodized") or (data_row["Fabricated"] == "Fabricated") or (protective_tape_customer_specified == "Yes"):
+            protective_tape_cost = (profile_surface_area * material_cost_lookup.get("Protective Tape", 100.65)) / 1  # Already per profile
+            bundle_cost_data["Protective Tape Cost (Rs/prof)"] = f"{protective_tape_cost:.2f}"
+        
+        # Calculate total cost per profile
+        total_cost_per_profile = packaging_cost
+        if interleaving_required == "Yes":
+            if eco_friendly == "McFoam":
+                total_cost_per_profile += McFoam_Cost
+            elif eco_friendly == "Stretchwrap":
+                total_cost_per_profile += stretchwrap_cost
+            elif eco_friendly == "Craft Paper":
+                total_cost_per_profile += craft_paper_cost
+        if (finish == "Anodized") or (data_row["Fabricated"] == "Fabricated") or (protective_tape_customer_specified == "Yes"):
+            total_cost_per_profile += protective_tape_cost
+        
+        bundle_cost_data["Total Cost (Rs/prof)"] = f"{total_cost_per_profile:.2f}"
         
         bundle_output_rows.append(bundle_cost_data)
     
@@ -393,7 +385,6 @@ if packing_method == "Secondary":
         st.dataframe(secondary_cost_df, use_container_width=True)
     else:
         st.warning("No bundle data available")
-    
 
     # ----------- Special Comments Section for Bundling----------------
     st.subheader("🌟 Special Comments under Secondary Packing")
@@ -414,6 +405,7 @@ if packing_method == "Secondary":
             </div>
             """,
             unsafe_allow_html=True)
+
 
 # ----------------- Final Packing --------------------
 if packing_method == "Secondary":
