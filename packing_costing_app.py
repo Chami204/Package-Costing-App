@@ -44,9 +44,9 @@ def load_polybag_table():
         "Cost per m² (LKR/m²)": [12.8]
     })
 
-polybag_ref = load_polybag_table().iloc[0]
-ref_polybag_length = float(polybag_ref["Polybag Size"].split()[0]) * 25.4  # Convert inches to mm
-polybag_cost_per_m2 = float(polybag_ref["Cost per m² (LKR)"])
+polybag_ref = load_polybag_table()
+ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.4  # Convert inches to mm
+polybag_cost_per_m2 = float(polybag_ref["Cost per m² (LKR/m²)"].iloc[0])
 
 #-------------------------------Carboard Box------------------------
 @st.cache_data
@@ -58,11 +58,11 @@ def load_CardboardBox_table():
         "Cost(LKR)": [205]
     })
 
-cardboard_ref = load_CardboardBox_table().iloc[0]
-ref_width = float(cardboard_ref["Width(mm)"])
-ref_height = float(cardboard_ref["Height(mm)"])
-ref_length = float(cardboard_ref["Length(mm)"])
-ref_cost = float(cardboard_ref["Cost(LKR)"])
+cardboard_ref = load_CardboardBox_table()
+ref_width = float(cardboard_ref["Width(mm)"].iloc[0])
+ref_height = float(cardboard_ref["Height(mm)"].iloc[0])
+ref_length = float(cardboard_ref["Length(mm)"].iloc[0])
+ref_cost = float(cardboard_ref["Cost(LKR)"].iloc[0])
 ref_volume = ref_width * ref_height * ref_length
 
 #---------------------------Stretchwrap------------------------------
@@ -70,12 +70,12 @@ ref_volume = ref_width * ref_height * ref_length
 def load_stretchwrap_table():
     return pd.DataFrame({
         "Area(mm²)": [210000],
-        "cost(Rs/mm²)": [135]
+        "Cost(Rs/mm²)": [135]
     })
 
-stretchwrap_ref = load_stretchwrap_table().iloc[0]
-ref_stretch_area = float(stretchwrap_ref["Area(mm²)"])
-ref_stretch_cost = float(stretchwrap_ref["cost(Rs/mm²)"])
+stretchwrap_ref = load_stretchwrap_table()
+ref_stretch_area = float(stretchwrap_ref["Area(mm²)"].iloc[0])
+ref_stretch_cost = float(stretchwrap_ref["Cost(Rs/mm²)"].iloc[0])
 
 
 #----------------------Crate or Pallet Cost reference table---------------------------
@@ -317,9 +317,9 @@ if packing_method == "Secondary":
             
             # Calculate maximum profiles that can fit in the bundle
             # Simple calculation - can be enhanced with more complex packing logic
-            rows_width = int(bundle_width / W)
-            rows_height = int(bundle_height / H)
-            profiles_per_bundle = rows_width * rows_height
+            rows_width = int(bundle_width / W) if W > 0 else 0
+            rows_height = int(bundle_height / H) if H > 0 else 0
+            profiles_per_bundle = rows_width * rows_height if rows_width > 0 and rows_height > 0 else 1
         
         # Calculate bundle surface area in m²
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
@@ -502,19 +502,19 @@ with tab1:
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        polybag_ref = st.data_editor(polybag_ref.to_frame().T, num_rows="dynamic", key="edit_polybag_table")
+        polybag_ref = st.data_editor(polybag_ref, num_rows="dynamic", key="edit_polybag_table")
     st.dataframe(polybag_ref)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        cardboard_ref = st.data_editor(cardboard_ref.to_frame().T, num_rows="dynamic", key="edit_CardboardBox_table")
+        cardboard_ref = st.data_editor(cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
     st.dataframe(cardboard_ref)
 
 with tab4:
     st.markdown("#### Stretchwrap Cost")
     if st.session_state.edit_mode:
-        stretchwrap_ref = st.data_editor(stretchwrap_ref.to_frame().T, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
+        stretchwrap_ref = st.data_editor(stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
     st.dataframe(stretchwrap_ref)
 
 with tab5:
