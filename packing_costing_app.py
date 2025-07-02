@@ -178,27 +178,27 @@ def calculate_hidden(row):
     # Calculate packaging cost (polybag or cardboard box)
     user_volume = W * H * L
     
-    # First, convert polybag size from inches to meters
-polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
-
-# Then in the polybag cost calculation:
-    # First, convert polybag size from inches to meters
-polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
-
-# Then in the polybag cost calculation:
-if L > 550:  # Use polybag
-    # Calculate bundle area in m²
-    bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
+        # First, convert polybag size from inches to meters
+    polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
     
-    # New polybag cost formula
-    polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
+    # Then in the polybag cost calculation:
+        # First, convert polybag size from inches to meters
+    polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
     
-    packaging_cost = polybag_cost
-    packaging_type = "Polybag"
-else:  # Use cardboard box
-    user_volume = bundle_width * bundle_height * bundle_length
-    packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
-    packaging_type = "Cardboard Box"
+    # Then in the polybag cost calculation:
+    if L > 550:  # Use polybag
+        # Calculate bundle area in m²
+        bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
+        
+        # New polybag cost formula
+        polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
+        
+        packaging_cost = polybag_cost
+        packaging_type = "Polybag"
+    else:  # Use cardboard box
+        user_volume = bundle_width * bundle_height * bundle_length
+        packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
+        packaging_type = "Cardboard Box"
     
     total = interleaving_total_cost + protective_tape_cost + max(cardboard_cost, polybag_cost)
     
