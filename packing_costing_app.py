@@ -257,4 +257,115 @@ if packing_method == "Secondary" and not edited_data.empty:
         st.warning("No bundling data available.")
 
 
+# Final Packing Costing App - Bundling Logic Implemented
+import streamlit as st
+import pandas as pd
+import math
+
+# ... [PREVIOUS LOADED TABLES AND PRIMARY SECTION OMITTED FOR BREVITY - already loaded above] ...
+
+# ------------------ Secondary Packing Section ------------------
+if packing_method == "Secondary" and not edited_data.empty:
+    st.subheader("📦 Input for Secondary Packing (Bundling)")
+
+    bundling_mode = st.radio("What is your input mode for bundle creation?", ["Number of layers", "Size of the bundle"], index=0)
+
+    bundling_input = {}
+    if bundling_mode == "Number of layers":
+        bundling_input["Rows"] = st.number_input("Number of Rows", min_value=1, value=1)
+        bundling_input["Layers"] = st.number_input("Number of Layers", min_value=1, value=1)
+        bundling_input["Width Type"] = st.selectbox("Width Type", ["W/mm", "H/mm"])
+        bundling_input["Height Type"] = st.selectbox("Height Type", ["H/mm", "W/mm"])
+    else:
+        bundling_input["Bundle Width"] = st.number_input("Bundle Width (mm)", min_value=100)
+        bundling_input["Bundle Height"] = st.number_input("Bundle Height (mm)", min_value=100)
+        bundling_input["Bundle Length"] = st.number_input("Bundle Length (mm)", min_value=100)
+
+    # Calculate bundling data
+    bundle_rows = []
+    for _, row in edited_data.iterrows():
+        W = float(row["W (mm)"])
+        H = float(row["H (mm)"])
+        L = float(row["L (mm)"])
+        fabricated = row["Fabricated"]
+
+        profile_surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1_000_000
+        profile_volume = W * H * L
+
+        if bundling_mode == "Number of layers":
+            rows = bundling_input["Rows"]
+            layers = bundling_input["Layers"]
+            width_type = bundling_input["Width Type"]
+            height_type = bundling_input["Height Type"]
+
+            profile_w = W if width_type == "W/mm" else H
+            profile_h = H if height_type == "H/mm" else W
+
+            bundle_width = rows * profile_w
+            bundle_height = layers * profile_h
+            bundle_length = L
+
+            profiles_per_bundle = rows * layers  # 1 profile per row-layer pair
+
+        else:
+            bundle_width = bundling_input["Bundle Width"]
+            bundle_height = bundling_input["Bundle Height"]
+            bundle_length = bundling_input["Bundle Length"]
+
+            profiles_per_width = math.floor(bundle_width / W)
+            profiles_per_height = math.floor(bundle_height / H)
+            profiles_per_length = math.floor(bundle_length / L)
+            profiles_per_bundle = profiles_per_width * profiles_per_height * profiles_per_length
+
+            if profiles_per_bundle == 0:
+                profiles_per_bundle = 1  # Fallback to avoid division by zero
+
+        # Area of bundle for wrapping
+        bundle_area = (2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height))) / 1_000_000
+
+        # Polybag cost (per m² * profile length / count)
+        polybag_cost_per_bundle = (polybag_cost_per_m2 * L) / profiles_per_bundle
+
+        # Stretchwrap cost
+        stretch_cost = (bundle_area / (ref_stretch_area / 1_000_000)) * ref_stretch_cost
+
+        # McFoam cost if required (same as interleaving)
+        mcfoam_cost = 0.0
+        if interleaving_required == "Yes" and eco_friendly == "Yes":
+            mcfoam_cost = bundle_area * material_cost_lookup["McFoam"]
+
+        # Tape cost (based on profile count if required)
+        tape_cost = 0.0
+        if protective_tape_customer_specified == "Yes" or finish == "Anodized" or fabricated == "Fabricated":
+            tape_cost = profile_surface_area * material_cost_lookup["Protective Tape"] * profiles_per_bundle
+
+        total_bundle_cost = polybag_cost_per_bundle * profiles_per_bundle + stretch_cost + mcfoam_cost + tape_cost
+        cost_per_profile = total_bundle_cost / profiles_per_bundle
+
+        bundle_rows.append({
+            "SKU": row["SKU No."],
+            "Profiles per Bundle": profiles_per_bundle,
+            "Bundle Area (m²)": f"{bundle_area:.2f}",
+            "Polybag Cost (Rs)": f"{polybag_cost_per_bundle * profiles_per_bundle:.2f}",
+            "McFoam Cost (Rs)": f"{mcfoam_cost:.2f}",
+            "Stretchwrap Cost (Rs)": f"{stretch_cost:.2f}",
+            "Tape Cost (Rs)": f"{tape_cost:.2f}",
+            "Total Bundle Cost (Rs)": f"{total_bundle_cost:.2f}",
+            "Cost per Profile (Rs)": f"{cost_per_profile:.2f}"
+        })
+
+    # Show bundling result
+    if bundle_rows:
+        bundling_df = pd.DataFrame(bundle_rows)
+        st.subheader("📦 Secondary Packing Cost (Bundling)")
+        st.dataframe(bundling_df, use_container_width=True)
+
+        # Final cost summary per SKU
+        st.subheader("📊 Final Cost Summary per SKU")
+        primary_map = hidden_output.set_index("SKU")[["Total Cost (Rs)"]].rename(columns={"Total Cost (Rs)": "Primary Cost (Rs)"})
+        bundling_map = bundling_df.set_index("SKU")[["Cost per Profile (Rs)"]].rename(columns={"Cost per Profile (Rs)": "Secondary Cost (Rs)"})
+        final_summary = pd.concat([primary_map, bundling_map], axis=1).fillna("-")
+        st.dataframe(final_summary, use_container_width=True)
+    else:
+        st.warning("No bundling data available.")
 
