@@ -206,20 +206,43 @@ if not edited_data.empty:
 else:
     hidden_output = pd.DataFrame()
 
+
 # ----------- Primary Costing Table -------------------
-st.subheader("💼 Primary Packing Total Cost")
-if not hidden_output.empty:
-    primary_output = hidden_output[[
-        "SKU",
-        "Interleaving Cost (Rs)",
-        "Protective Tape Cost (Rs)",
-        "Packaging Type",
-        "Packaging Cost (Rs)",
-        "Total Cost (Rs)"
-    ]]
-    st.dataframe(primary_output, use_container_width=True)
-else:
-    st.warning("No data to display. Please add SKU information.")
+# Only show if packing method is Primary
+if packing_method == "Primary":
+    st.subheader("💼 Primary Packing Total Cost")
+    if not hidden_output.empty:
+        primary_output = hidden_output[[
+            "SKU",
+            "Interleaving Cost (Rs)",
+            "Protective Tape Cost (Rs)",
+            "Packaging Type",
+            "Packaging Cost (Rs)",
+            "Total Cost (Rs)"
+        ]]
+        st.dataframe(primary_output, use_container_width=True)
+    else:
+        st.warning("No data to display. Please add SKU information.")
+
+    # ----------- Special Comments Section ----------------
+    st.subheader("🌟 Special Comments")
+
+    with st.container():
+        st.markdown("**🔗 Packing Method Note**")
+        st.info(f"Costing is done according to *{packing_method}* packing. Therefore, this cost does not include any crate or palletizing charges. Please note that secondary packaging will incur an additional charge.")
+
+        if not hidden_output.empty:
+            mat = hidden_output.iloc[0]["Interleaving Material"]
+            msg = hidden_output.iloc[0]["Check"]
+            tape = hidden_output.iloc[0]["Protective Tape Advice"]
+            st.success(f"The interleaving material is **{mat}**. {msg}")
+            st.warning(f"{tape}")
+            st.markdown("""
+            <div style='background-color:#e1f5fe; padding:10px; border-radius:5px;'>
+                Costing is only inclusive of interleaving required & Cardboard Box/Polybag.
+            </div>
+            """,
+            unsafe_allow_html=True)
 
 # ----------- Special Comments Section ----------------
 st.subheader("🌟 Special Comments")
