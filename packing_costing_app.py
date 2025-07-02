@@ -268,13 +268,16 @@ if packing_method == "Secondary":
         stretchwrap_cost = (profile_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
     
         # Bundle area covered (approx)
-        area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
+        area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1000000
 
         # Get McFoam cost per m² from interleaving_df
         mcfoam_cost_per_m2 = interleaving_df.loc[interleaving_df["Material"] == "McFoam", "Cost per m² (LKR)"].values[0]
         
         # Calculate McFoam Cost
         McFoam_Cost = area_covered * mcfoam_cost_per_m2
+
+        #calculate the total cost
+        total_bundling_cost=polybag_cost+stretchwrap_cost+McFoam_Cost
         
         bundle_output_rows.append({
             "SKU": data_row["SKU No."],
