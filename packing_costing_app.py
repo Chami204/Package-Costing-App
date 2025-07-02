@@ -269,7 +269,6 @@ with st.container():
         unsafe_allow_html=True)
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
-# ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 if packing_method == "Secondary":
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
     
@@ -295,19 +294,17 @@ if packing_method == "Secondary":
             use_container_width=True,
             key="bundling_common_input"
         )
-    else:  # Size of the bundle
+    else:  # Size of the bundle - Only ask for width and height
         bundling_data = pd.DataFrame({
             "Bundle Width (mm)": [0],
-            "Bundle Height (mm)": [0],
-            "Bundle Length (mm)": [0]
+            "Bundle Height (mm)": [0]
         })
 
         bundling_common = st.data_editor(
             bundling_data,
             column_config={
                 "Bundle Width (mm)": st.column_config.NumberColumn("Bundle Width (mm)", min_value=0),
-                "Bundle Height (mm)": st.column_config.NumberColumn("Bundle Height (mm)", min_value=0),
-                "Bundle Length (mm)": st.column_config.NumberColumn("Bundle Length (mm)", min_value=0),
+                "Bundle Height (mm)": st.column_config.NumberColumn("Bundle Height (mm)", min_value=0)
             },
             use_container_width=True,
             key="bundling_size_input"
@@ -317,7 +314,7 @@ if packing_method == "Secondary":
     for _, data_row in edited_data.iterrows():
         W = float(data_row["W (mm)"])
         H = float(data_row["H (mm)"])
-        L = float(data_row["L (mm)"])
+        L = float(data_row["L (mm)"])  # Profile length will be used as bundle length
         
         if bundle_input_method == "Number of layers":
             rows = int(bundling_common.loc[0, "Rows"])
@@ -332,12 +329,12 @@ if packing_method == "Secondary":
             
             bundle_width = rows * profile_dimensions[width_type]
             bundle_height = layers * profile_dimensions[height_type]
-            bundle_length = L
+            bundle_length = L  # Use profile length
             profiles_per_bundle = rows * layers
         else:  # Size of the bundle
             bundle_width = float(bundling_common.loc[0, "Bundle Width (mm)"])
             bundle_height = float(bundling_common.loc[0, "Bundle Height (mm)"])
-            bundle_length = float(bundling_common.loc[0, "Bundle Length (mm)"])
+            bundle_length = L  # Use profile length as bundle length
             
             # Calculate maximum profiles that can fit in the bundle
             rows_width = int(bundle_width / W) if W > 0 else 0
