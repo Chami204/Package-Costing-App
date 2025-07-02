@@ -269,7 +269,6 @@ with st.container():
         unsafe_allow_html=True)
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
-# ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 if packing_method == "Secondary":
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
     
@@ -403,13 +402,6 @@ if packing_method == "Secondary":
         
         bundle_output_rows.append(bundle_cost_data)
     
-    # ---------------- Final Visible Secondary Packing Cost ----------------
-    st.subheader("📦 Secondary Packing Cost (Per Profile)")
-    if bundle_output_rows:
-        secondary_cost_df = pd.DataFrame(bundle_output_rows)
-        st.dataframe(secondary_cost_df, use_container_width=True)
-    else:
-        st.warning("No bundle data available")
     
     # ---------------- Final Visible Secondary Packing Cost ----------------
     st.subheader("📦 Secondary Packing Cost")
