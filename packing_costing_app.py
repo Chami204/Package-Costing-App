@@ -144,7 +144,7 @@ def calculate_hidden(row):
     H = float(row["H (mm)"])
     L = float(row["L (mm)"])
     
-    interleaving_material = "McFoam" if ((eco_friendly == "McFoam") or (eco_friendly == "Stretchwrap") or (eco_friendly == "Craft Paper"))
+    interleaving_material = "McFoam" if eco_friendly in ["McFoam", "Stretchwrap", "Craft Paper"] else "Default Material"
     message = "Okay" if (finish == "Mill Finish" and interleaving_material == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
     surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1000000
     interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
