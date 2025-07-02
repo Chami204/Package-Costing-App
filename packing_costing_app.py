@@ -145,7 +145,7 @@ def calculate_hidden(row):
     
     message = "Okay" if (finish == "Mill Finish" and eco_friendly == "Craft Paper") else "Can cause rejects - go ahead with McFoam"
     surface_area = (2 * ((W * L) + (H * L) + (W * H))) / 1000000
-    interleaving_cost = material_cost_lookup.get(interleaving_material, 0.0)
+    interleaving_cost = material_cost_lookup.get(eco_friendly, 0.0)
     interleaving_total_cost = surface_area * interleaving_cost
    
     
