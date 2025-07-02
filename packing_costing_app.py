@@ -219,66 +219,6 @@ with st.container():
         unsafe_allow_html=True)
 
 
-# ----------------- Final Packing --------------------
-final_packing_input = pd.DataFrame({
-    "Final Packing Method": ["Crate"],
-    "Width (mm)": [0],
-    "Height (mm)": [0],
-    "Length (mm)": [0]
-})
-
-st.subheader("🚛 Final Packing Selection", divider="grey")
-final_packing_selection = st.data_editor(
-    final_packing_input,
-    column_config={
-        "Final Packing Method": st.column_config.SelectboxColumn("Final Packing Method", options=["Crate", "Pallet"])
-    },
-    use_container_width=True,
-    key="final_packing_selection"
-)
-
-st.subheader("💰 Final Crate/Pallet Cost Summary", divider="grey")
-packing_output_rows = []
-
-for _, row in final_packing_selection.iterrows():
-    method = row["Final Packing Method"]
-    width = float(row["Width (mm)"])
-    height = float(row["Height (mm)"])
-    length = float(row["Length (mm)"]) if method == "Crate" else 0
-
-    if method == "Crate":
-        ref_crate = crate_cost_df.iloc[0]
-        ref_vol = float(ref_crate["Width (mm)"]) * float(ref_crate["Height (mm)"]) * float(ref_crate["Length (mm)"])
-        user_vol = width * height * length
-        cost = (user_vol / ref_vol) * float(ref_crate["Cost (LKR)"]) if ref_vol else 0.0
-
-        strapping_ref = strapping_cost_df.iloc[0]
-        length_m = length / 1000
-        num_clips = length_m / 0.5
-        strapping_cost = length_m * float(strapping_ref["Cost (LKR/m)"]) * num_clips
-
-    elif method == "Pallet":
-        ref_pallet = pallet_cost_df.iloc[0]
-        ref_area = float(ref_pallet["Width (mm)"]) * float(ref_pallet["Height (mm)"])
-        user_area = width * height
-        cost = (user_area / ref_area) * float(ref_pallet["Cost (LKR)"]) if ref_area else 0.0
-        strapping_cost = 0.0
-        num_clips = 0
-
-    packing_output_rows.append({
-        "Method": method,
-        "Width (mm)": f"{width:.2f}",
-        "Height (mm)": f"{height:.2f}",
-        "Length (mm)": f"{length:.2f}" if method == "Crate" else "-",
-        "Packing Cost (LKR)": f"{cost:.2f}",
-        "Strapping Clips": f"{num_clips:.2f}" if method == "Crate" else "-",
-        "Strapping Cost (LKR)": f"{strapping_cost:.2f}" if method == "Crate" else "-"
-    })
-
-if packing_output_rows:
-    st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
-else:
-    st.warning("No packing method selected or data available")
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 
@@ -377,6 +317,71 @@ if packing_method == "Secondary":
             </div>
             """,
             unsafe_allow_html=True)
+
+
+
+
+# ----------------- Final Packing --------------------
+final_packing_input = pd.DataFrame({
+    "Final Packing Method": ["Crate"],
+    "Width (mm)": [0],
+    "Height (mm)": [0],
+    "Length (mm)": [0]
+})
+
+st.subheader("🚛 Final Packing Selection", divider="grey")
+final_packing_selection = st.data_editor(
+    final_packing_input,
+    column_config={
+        "Final Packing Method": st.column_config.SelectboxColumn("Final Packing Method", options=["Crate", "Pallet"])
+    },
+    use_container_width=True,
+    key="final_packing_selection"
+)
+
+st.subheader("💰 Final Crate/Pallet Cost Summary", divider="grey")
+packing_output_rows = []
+
+for _, row in final_packing_selection.iterrows():
+    method = row["Final Packing Method"]
+    width = float(row["Width (mm)"])
+    height = float(row["Height (mm)"])
+    length = float(row["Length (mm)"]) if method == "Crate" else 0
+
+    if method == "Crate":
+        ref_crate = crate_cost_df.iloc[0]
+        ref_vol = float(ref_crate["Width (mm)"]) * float(ref_crate["Height (mm)"]) * float(ref_crate["Length (mm)"])
+        user_vol = width * height * length
+        cost = (user_vol / ref_vol) * float(ref_crate["Cost (LKR)"]) if ref_vol else 0.0
+
+        strapping_ref = strapping_cost_df.iloc[0]
+        length_m = length / 1000
+        num_clips = length_m / 0.5
+        strapping_cost = length_m * float(strapping_ref["Cost (LKR/m)"]) * num_clips
+
+    elif method == "Pallet":
+        ref_pallet = pallet_cost_df.iloc[0]
+        ref_area = float(ref_pallet["Width (mm)"]) * float(ref_pallet["Height (mm)"])
+        user_area = width * height
+        cost = (user_area / ref_area) * float(ref_pallet["Cost (LKR)"]) if ref_area else 0.0
+        strapping_cost = 0.0
+        num_clips = 0
+
+    packing_output_rows.append({
+        "Method": method,
+        "Width (mm)": f"{width:.2f}",
+        "Height (mm)": f"{height:.2f}",
+        "Length (mm)": f"{length:.2f}" if method == "Crate" else "-",
+        "Packing Cost (LKR)": f"{cost:.2f}",
+        "Strapping Clips": f"{num_clips:.2f}" if method == "Crate" else "-",
+        "Strapping Cost (LKR)": f"{strapping_cost:.2f}" if method == "Crate" else "-"
+    })
+
+if packing_output_rows:
+    st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
+else:
+    st.warning("No packing method selected or data available")
+
 
 
 # ----------------- Tabs for Reference Tables --------------------
