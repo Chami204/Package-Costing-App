@@ -132,8 +132,8 @@ edited_data = st.data_editor(
 # ----- Common Dropdown Selections Outside Table -----
 st.subheader("🔹 Common Packing Selections", divider="grey")
 finish = st.selectbox("Finish", ["Mill Finish", "Anodized", "Powder Coated", "Wood Finished"], key="finish_option")
-eco_friendly = st.selectbox("Eco-Friendly Packing", ["Yes", "No"], key="eco_friendly_option")
 interleaving_required = st.selectbox("Interleaving Required", ["Yes", "No"], key="interleaving_option")
+eco_friendly = st.selectbox("Eco-Friendly Packing", ["Yes", "No"], key="eco_friendly_option")
 protective_tape_customer_specified = st.selectbox("Protective Tape - Customer Specified", ["Yes", "No"], key="tape_option")
 packing_method = st.selectbox("Packing Method", ["Primary", "Secondary"], key="packing_option")
 
