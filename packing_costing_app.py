@@ -269,6 +269,7 @@ with st.container():
         unsafe_allow_html=True)
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
+# ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 if packing_method == "Secondary":
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
     
@@ -339,7 +340,6 @@ if packing_method == "Secondary":
             bundle_length = float(bundling_common.loc[0, "Bundle Length (mm)"])
             
             # Calculate maximum profiles that can fit in the bundle
-            # Simple calculation - can be enhanced with more complex packing logic
             rows_width = int(bundle_width / W) if W > 0 else 0
             rows_height = int(bundle_height / H) if H > 0 else 0
             profiles_per_bundle = rows_width * rows_height if rows_width > 0 and rows_height > 0 else 1
@@ -357,29 +357,8 @@ if packing_method == "Secondary":
             packaging_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
             packaging_type = "Cardboard Box"
         
-        # McFoam cost (if interleaving is required)
-        if interleaving_required == "Yes" and eco_friendly == "McFoam":
-            mcfoam_cost_per_m2 = material_cost_lookup.get("McFoam", 0.0)
-            McFoam_Cost = (area_covered * mcfoam_cost_per_m2) / profiles_per_bundle
-        else:
-            McFoam_Cost = 0.0
-        
-        # Stretchwrap cost for bundle
-        bundle_surface_area = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height))
-        stretchwrap_cost = (bundle_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
-        
-        # Protective tape cost (if needed)
-        profile_surface_area = 2 * ((W * L) + (H * L) + (W * H)) / 1_000_000
-        if (finish == "Anodized") or (data_row["Fabricated"] == "Fabricated") or (protective_tape_customer_specified == "Yes"):
-            protective_tape_cost = profile_surface_area * material_cost_lookup.get("Protective Tape", 100.65) * profiles_per_bundle
-        else:
-            protective_tape_cost = 0.0
-        
-        # Calculate total cost per bundle and per profile
-        total_bundle_cost = packaging_cost + McFoam_Cost + stretchwrap_cost + protective_tape_cost
-        cost_per_profile = total_bundle_cost / profiles_per_bundle if profiles_per_bundle else 0
-        
-        bundle_output_rows.append({
+        # Only include the selected eco-friendly material cost
+        bundle_cost_data = {
             "SKU": data_row["SKU No."],
             "Bundle Width (mm)": f"{bundle_width:.2f}",
             "Bundle Height (mm)": f"{bundle_height:.2f}",
@@ -387,12 +366,47 @@ if packing_method == "Secondary":
             "Profiles per Bundle": profiles_per_bundle,
             "Packaging Type": packaging_type,
             "Packaging Cost (Rs)": f"{packaging_cost:.2f}",
-            "McFoam Cost (Rs)": f"{McFoam_Cost:.2f}",
-            "Stretchwrap Cost (Rs)": f"{stretchwrap_cost:.2f}",
-            "Protective Tape Cost (Rs)": f"{protective_tape_cost:.2f}",
-            "Total Bundle Cost (Rs)": f"{total_bundle_cost:.2f}",
-            "Cost per Profile (Rs)": f"{cost_per_profile:.2f}"
-        })
+        }
+        
+        # Add selected eco-friendly material cost only if interleaving is required
+        if interleaving_required == "Yes":
+            if eco_friendly == "McFoam":
+                mcfoam_cost_per_m2 = material_cost_lookup.get("McFoam", 0.0)
+                McFoam_Cost = (area_covered * mcfoam_cost_per_m2) / profiles_per_bundle
+                bundle_cost_data["McFoam Cost (Rs)"] = f"{McFoam_Cost:.2f}"
+            elif eco_friendly == "Stretchwrap":
+                bundle_surface_area = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height))
+                stretchwrap_cost = (bundle_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
+                bundle_cost_data["Stretchwrap Cost (Rs)"] = f"{stretchwrap_cost:.2f}"
+            elif eco_friendly == "Craft Paper":
+                craft_paper_cost_per_m2 = material_cost_lookup.get("Craft Paper", 0.0)
+                craft_paper_cost = (area_covered * craft_paper_cost_per_m2) / profiles_per_bundle
+                bundle_cost_data["Craft Paper Cost (Rs)"] = f"{craft_paper_cost:.2f}"
+        
+        # Protective tape cost (if needed)
+        profile_surface_area = 2 * ((W * L) + (H * L) + (W * H)) / 1_000_000
+        if (finish == "Anodized") or (data_row["Fabricated"] == "Fabricated") or (protective_tape_customer_specified == "Yes"):
+            protective_tape_cost = profile_surface_area * material_cost_lookup.get("Protective Tape", 100.65) * profiles_per_bundle
+            bundle_cost_data["Protective Tape Cost (Rs)"] = f"{protective_tape_cost:.2f}"
+        
+        # Calculate total cost
+        total_bundle_cost = packaging_cost
+        if interleaving_required == "Yes":
+            if eco_friendly == "McFoam":
+                total_bundle_cost += McFoam_Cost
+            elif eco_friendly == "Stretchwrap":
+                total_bundle_cost += stretchwrap_cost
+            elif eco_friendly == "Craft Paper":
+                total_bundle_cost += craft_paper_cost
+        if (finish == "Anodized") or (data_row["Fabricated"] == "Fabricated") or (protective_tape_customer_specified == "Yes"):
+            total_bundle_cost += protective_tape_cost
+        
+        cost_per_profile = total_bundle_cost / profiles_per_bundle if profiles_per_bundle else 0
+        
+        bundle_cost_data["Total Bundle Cost (Rs)"] = f"{total_bundle_cost:.2f}"
+        bundle_cost_data["Cost per Profile (Rs)"] = f"{cost_per_profile:.2f}"
+        
+        bundle_output_rows.append(bundle_cost_data)
     
     # ---------------- Final Visible Secondary Packing Cost ----------------
     st.subheader("📦 Secondary Packing Cost")
