@@ -41,7 +41,7 @@ material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Co
 def load_polybag_table():
     return pd.DataFrame({
         "Polybag Size": ["9 Inch"],
-        "Cost per m² (LKR)": [12.8]
+        "Cost per m (LKR/m)": [12.8]
     })
 
 polybag_ref = load_polybag_table().iloc[0]
