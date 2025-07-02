@@ -269,6 +269,7 @@ with st.container():
         unsafe_allow_html=True)
 
 # ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
+# ----- BUNDLING SECTION (FOR SECONDARY PACKING ONLY) ------------------------------------
 if packing_method == "Secondary":
     st.subheader("📦 Input the data for Secondary Packing (Bundling)")
     
@@ -344,17 +345,17 @@ if packing_method == "Secondary":
         # Calculate bundle surface area in m²
         area_covered = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
         
-        # Polybag cost calculation (proportional)
+        # Polybag cost calculation (proportional) - PER PROFILE
         if L > 550:  # Use polybag
             polybag_cost = (polybag_cost_per_m2 * (L / 1000)) / profiles_per_bundle
             packaging_cost = polybag_cost
             packaging_type = "Polybag"
-        else:  # Use cardboard box
+        else:  # Use cardboard box - PER PROFILE
             user_volume = bundle_width * bundle_height * bundle_length
-            packaging_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
+            packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
             packaging_type = "Cardboard Box"
         
-        # Only include the selected eco-friendly material cost
+        # Initialize cost data - all costs will be per profile
         bundle_cost_data = {
             "SKU": data_row["SKU No."],
             "Bundle Width (mm)": f"{bundle_width:.2f}",
@@ -362,48 +363,53 @@ if packing_method == "Secondary":
             "Bundle Length (mm)": f"{bundle_length:.2f}",
             "Profiles per Bundle": profiles_per_bundle,
             "Packaging Type": packaging_type,
-            "Packaging Cost (Rs)": f"{packaging_cost:.2f}",
+            "Packaging Cost (Rs/prof)": f"{packaging_cost:.2f}",
         }
         
-        # Add selected eco-friendly material cost only if interleaving is required
+        # Add selected eco-friendly material cost only if interleaving is required - PER PROFILE
         if interleaving_required == "Yes":
             if eco_friendly == "McFoam":
                 mcfoam_cost_per_m2 = material_cost_lookup.get("McFoam", 0.0)
                 McFoam_Cost = (area_covered * mcfoam_cost_per_m2) / profiles_per_bundle
-                bundle_cost_data["McFoam Cost (Rs)"] = f"{McFoam_Cost:.2f}"
+                bundle_cost_data["McFoam Cost (Rs/prof)"] = f"{McFoam_Cost:.2f}"
             elif eco_friendly == "Stretchwrap":
-                bundle_surface_area = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height))
-                stretchwrap_cost = (bundle_surface_area / ref_stretch_area) * ref_stretch_cost if ref_stretch_area else 0.0
-                bundle_cost_data["Stretchwrap Cost (Rs)"] = f"{stretchwrap_cost:.2f}"
+                bundle_surface_area = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_length))
+                stretchwrap_cost = ((bundle_surface_area / ref_stretch_area) * ref_stretch_cost) / profiles_per_bundle if ref_stretch_area else 0.0
+                bundle_cost_data["Stretchwrap Cost (Rs/prof)"] = f"{stretchwrap_cost:.2f}"
             elif eco_friendly == "Craft Paper":
                 craft_paper_cost_per_m2 = material_cost_lookup.get("Craft Paper", 0.0)
                 craft_paper_cost = (area_covered * craft_paper_cost_per_m2) / profiles_per_bundle
-                bundle_cost_data["Craft Paper Cost (Rs)"] = f"{craft_paper_cost:.2f}"
+                bundle_cost_data["Craft Paper Cost (Rs/prof)"] = f"{craft_paper_cost:.2f}"
         
-        # Protective tape cost (if needed)
+        # Protective tape cost (if needed) - PER PROFILE
         profile_surface_area = 2 * ((W * L) + (H * L) + (W * H)) / 1_000_000
         if (finish == "Anodized") or (data_row["Fabricated"] == "Fabricated") or (protective_tape_customer_specified == "Yes"):
-            protective_tape_cost = profile_surface_area * material_cost_lookup.get("Protective Tape", 100.65) * profiles_per_bundle
-            bundle_cost_data["Protective Tape Cost (Rs)"] = f"{protective_tape_cost:.2f}"
+            protective_tape_cost = (profile_surface_area * material_cost_lookup.get("Protective Tape", 100.65) * profiles_per_bundle) / profiles_per_bundle
+            bundle_cost_data["Protective Tape Cost (Rs/prof)"] = f"{protective_tape_cost:.2f}"
         
-        # Calculate total cost
-        total_bundle_cost = packaging_cost
+        # Calculate total cost per profile
+        total_cost_per_profile = packaging_cost
         if interleaving_required == "Yes":
             if eco_friendly == "McFoam":
-                total_bundle_cost += McFoam_Cost
+                total_cost_per_profile += McFoam_Cost
             elif eco_friendly == "Stretchwrap":
-                total_bundle_cost += stretchwrap_cost
+                total_cost_per_profile += stretchwrap_cost
             elif eco_friendly == "Craft Paper":
-                total_bundle_cost += craft_paper_cost
+                total_cost_per_profile += craft_paper_cost
         if (finish == "Anodized") or (data_row["Fabricated"] == "Fabricated") or (protective_tape_customer_specified == "Yes"):
-            total_bundle_cost += protective_tape_cost
+            total_cost_per_profile += protective_tape_cost
         
-        cost_per_profile = total_bundle_cost / profiles_per_bundle if profiles_per_bundle else 0
-        
-        bundle_cost_data["Total Bundle Cost (Rs)"] = f"{total_bundle_cost:.2f}"
-        bundle_cost_data["Cost per Profile (Rs)"] = f"{cost_per_profile:.2f}"
+        bundle_cost_data["Total Cost (Rs/prof)"] = f"{total_cost_per_profile:.2f}"
         
         bundle_output_rows.append(bundle_cost_data)
+    
+    # ---------------- Final Visible Secondary Packing Cost ----------------
+    st.subheader("📦 Secondary Packing Cost (Per Profile)")
+    if bundle_output_rows:
+        secondary_cost_df = pd.DataFrame(bundle_output_rows)
+        st.dataframe(secondary_cost_df, use_container_width=True)
+    else:
+        st.warning("No bundle data available")
     
     # ---------------- Final Visible Secondary Packing Cost ----------------
     st.subheader("📦 Secondary Packing Cost")
