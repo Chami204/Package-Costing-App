@@ -335,10 +335,6 @@ if packing_method == "Secondary":
                 default_packaging_cost = cardboard_cost
                 default_packaging_type = "Cardboard Box"
         
-            # Check if user edited packaging type or profiles per bundle
-            final_packaging_type = bundle_cost_data.get("Packaging Type Editable", default_packaging_type)
-            final_profiles_per_bundle = int(bundle_cost_data.get("Profiles per Bundle Editable", profiles_per_bundle))
-        
             # Recalculate packaging cost based on final values
             if final_packaging_type == "Polybag":
                 packaging_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L / 1000)) / (polybag_size_m * final_profiles_per_bundle)
@@ -590,6 +586,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
