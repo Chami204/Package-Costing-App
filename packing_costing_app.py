@@ -411,6 +411,7 @@ if packing_method == "Secondary":
 # ----------------- Final Packing --------------------
 if packing_method == "Secondary":
     final_packing_input = pd.DataFrame({
+        "SKU No.": [""],
         "Final Packing Method": ["Crate"],
         "Width (mm)": [0],
         "Height (mm)": [0],
@@ -431,6 +432,7 @@ if packing_method == "Secondary":
     packing_output_rows = []
 
     for _, row in final_packing_selection.iterrows():
+        sku_no = row["SKU No."]
         method = row["Final Packing Method"]
         width = float(row["Width (mm)"])
         height = float(row["Height (mm)"])
@@ -456,6 +458,7 @@ if packing_method == "Secondary":
             num_clips = 0
 
         packing_output_rows.append({
+            "SKU No.": sku_no,
             "Method": method,
             "Width (mm)": f"{width:.2f}",
             "Height (mm)": f"{height:.2f}",
@@ -543,4 +546,5 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
