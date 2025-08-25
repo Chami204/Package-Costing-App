@@ -410,12 +410,16 @@ if packing_method == "Secondary":
 
 # ----------------- Final Packing --------------------
 if packing_method == "Secondary":
+    # Get SKU numbers from the input table
+    sku_numbers = edited_data["SKU No."].tolist()
+    
+    # Create final packing input with SKU numbers
     final_packing_input = pd.DataFrame({
-        "SKU No.": [""],
-        "Final Packing Method": ["Crate"],
-        "Width (mm)": [0],
-        "Height (mm)": [0],
-        "Length (mm)": [0]
+        "SKU No.": sku_numbers,
+        "Final Packing Method": ["Crate"] * len(sku_numbers),
+        "Width (mm)": [0] * len(sku_numbers),
+        "Height (mm)": [0] * len(sku_numbers),
+        "Length (mm)": [0] * len(sku_numbers)
     })
 
     st.subheader("🚛 Final Packing Selection", divider="grey")
@@ -546,5 +550,6 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
