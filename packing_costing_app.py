@@ -387,10 +387,28 @@ if packing_method == "Secondary":
         bundle_output_rows.append(bundle_cost_data)
     
     # ---------------- Final Visible Secondary Packing Cost ----------------
+        # ---------------- Final Visible Secondary Packing Cost ----------------
     st.subheader("📦 Secondary Packing Cost (Per Profile)")
     if bundle_output_rows:
         secondary_cost_df = pd.DataFrame(bundle_output_rows)
-        st.dataframe(secondary_cost_df, use_container_width=True)
+        
+        # Make Profiles per Bundle and Packaging Type editable
+        editable_secondary_cost_df = st.data_editor(
+            secondary_cost_df,
+            column_config={
+                "Profiles per Bundle": st.column_config.NumberColumn(
+                    "Profiles per Bundle",
+                    min_value=1,
+                    step=1
+                ),
+                "Packaging Type": st.column_config.SelectboxColumn(
+                    "Packaging Type",
+                    options=["Polybag", "Cardboard Box"]
+                )
+            },
+            use_container_width=True,
+            key="secondary_packing_editor"
+        )
     else:
         st.warning("No bundle data available")
 
@@ -557,6 +575,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
