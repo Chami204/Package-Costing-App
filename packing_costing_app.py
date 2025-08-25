@@ -178,16 +178,20 @@ def calculate_hidden(row):
         protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65)
     
     # Calculate packaging cost (polybag or cardboard box)
-    user_volume = W * H * L
+    # Packaging cost calculation - store original calculation for reference
     if L > 550:  # Use polybag
-        # Calculate polybag cost proportionally
-        polybag_cost = (polybag_cost_per_m2 * (L / 1000)) / 1  # Divided by 1 profile (for primary packing)
-        cardboard_cost = 0.0
-        packaging_type = "Polybag"
+        # New polybag cost formula
+        polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
+        original_packaging_cost = polybag_cost
+        original_packaging_type = "Polybag"
     else:  # Use cardboard box
-        cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
-        polybag_cost = 0.0
-        packaging_type = "Cardboard Box"
+        user_volume = bundle_width * bundle_height * bundle_length
+        original_packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
+        original_packaging_type = "Cardboard Box"
+    
+    # Store original values for reference
+    packaging_cost = original_packaging_cost
+    packaging_type = original_packaging_type
     
     total = interleaving_total_cost + protective_tape_cost + max(cardboard_cost, polybag_cost)
     
@@ -572,6 +576,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
