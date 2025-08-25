@@ -178,20 +178,16 @@ def calculate_hidden(row):
         protective_tape_cost = surface_area * material_cost_lookup.get("Protective Tape", 100.65)
     
     # Calculate packaging cost (polybag or cardboard box)
-    # Packaging cost calculation - store original calculation for reference
+    user_volume = W * H * L
     if L > 550:  # Use polybag
-        # New polybag cost formula
-        polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
-        original_packaging_cost = polybag_cost
-        original_packaging_type = "Polybag"
+        # Calculate polybag cost proportionally
+        polybag_cost = (polybag_cost_per_m2 * (L / 1000)) / 1  # Divided by 1 profile (for primary packing)
+        cardboard_cost = 0.0
+        packaging_type = "Polybag"
     else:  # Use cardboard box
-        user_volume = bundle_width * bundle_height * bundle_length
-        original_packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
-        original_packaging_type = "Cardboard Box"
-    
-    # Store original values for reference
-    packaging_cost = original_packaging_cost
-    packaging_type = original_packaging_type
+        cardboard_cost = (user_volume / ref_volume) * ref_cost if ref_volume else 0.0
+        polybag_cost = 0.0
+        packaging_type = "Cardboard Box"
     
     total = interleaving_total_cost + protective_tape_cost + max(cardboard_cost, polybag_cost)
     
@@ -325,20 +321,15 @@ if packing_method == "Secondary":
         bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
         
         # Packaging cost calculation
-# Packaging cost calculation - store original calculation for reference
         if L > 550:  # Use polybag
             # New polybag cost formula
             polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
-            original_packaging_cost = polybag_cost
-            original_packaging_type = "Polybag"
+            packaging_cost = polybag_cost
+            packaging_type = "Polybag"
         else:  # Use cardboard box
             user_volume = bundle_width * bundle_height * bundle_length
-            original_packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
-            original_packaging_type = "Cardboard Box"
-        
-        # Store original values for reference
-        packaging_cost = original_packaging_cost
-        packaging_type = original_packaging_type
+            packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
+            packaging_type = "Cardboard Box"
         
         # Initialize cost data - all costs will be per profile
         bundle_cost_data = {
@@ -436,16 +427,12 @@ if packing_method == "Secondary":
 
 # ----------------- Final Packing --------------------
 if packing_method == "Secondary":
-    # Get SKU numbers from the input table
-    sku_numbers = edited_data["SKU No."].tolist()
-    
-    # Create final packing input with SKU numbers
     final_packing_input = pd.DataFrame({
-        "SKU No.": sku_numbers,
-        "Final Packing Method": ["Crate"] * len(sku_numbers),
-        "Width (mm)": [0] * len(sku_numbers),
-        "Height (mm)": [0] * len(sku_numbers),
-        "Length (mm)": [0] * len(sku_numbers)
+        "SKU No.": [""],
+        "Final Packing Method": ["Crate"],
+        "Width (mm)": [0],
+        "Height (mm)": [0],
+        "Length (mm)": [0]
     })
 
     st.subheader("🚛 Final Packing Selection", divider="grey")
@@ -576,9 +563,3 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
-
-
-
-
-
-
