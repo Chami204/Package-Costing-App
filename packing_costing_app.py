@@ -383,24 +383,7 @@ if packing_method == "Secondary":
     st.subheader("📦 Secondary Packing Cost (Per Profile)")
     if bundle_output_rows:
         secondary_cost_df = pd.DataFrame(bundle_output_rows)
-        
-        # Make Profiles per Bundle and Packaging Type editable
-        editable_secondary_cost_df = st.data_editor(
-            secondary_cost_df,
-            column_config={
-                "Profiles per Bundle": st.column_config.NumberColumn(
-                    "Profiles per Bundle",
-                    min_value=1,
-                    step=1
-                ),
-                "Packaging Type": st.column_config.SelectboxColumn(
-                    "Packaging Type",
-                    options=["Polybag", "Cardboard Box"]
-                )
-            },
-            use_container_width=True,
-            key="secondary_packing_editor"
-        )
+        st.dataframe(secondary_cost_df, use_container_width=True)
     else:
         st.warning("No bundle data available")
 
@@ -427,12 +410,16 @@ if packing_method == "Secondary":
 
 # ----------------- Final Packing --------------------
 if packing_method == "Secondary":
+    # Get SKU numbers from the input table
+    sku_numbers = edited_data["SKU No."].tolist()
+    
+    # Create final packing input with SKU numbers
     final_packing_input = pd.DataFrame({
-        "SKU No.": [""],
-        "Final Packing Method": ["Crate"],
-        "Width (mm)": [0],
-        "Height (mm)": [0],
-        "Length (mm)": [0]
+        "SKU No.": sku_numbers,
+        "Final Packing Method": ["Crate"] * len(sku_numbers),
+        "Width (mm)": [0] * len(sku_numbers),
+        "Height (mm)": [0] * len(sku_numbers),
+        "Length (mm)": [0] * len(sku_numbers)
     })
 
     st.subheader("🚛 Final Packing Selection", divider="grey")
@@ -563,3 +550,6 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
+
+
