@@ -336,13 +336,6 @@ if packing_method == "Secondary":
         packaging_cost = original_packaging_cost
         packaging_type = original_packaging_type
 
-        # After the user edits the packaging type, recalculate the cost
-        if packaging_type == "Polybag":
-            packaging_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
-        elif packaging_type == "Cardboard Box":
-            user_volume = bundle_width * bundle_height * bundle_length
-            packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
-        
         # Initialize cost data - all costs will be per profile
         bundle_cost_data = {
             "SKU": data_row["SKU No."],
@@ -392,6 +385,7 @@ if packing_method == "Secondary":
         bundle_output_rows.append(bundle_cost_data)
     
     # ---------------- Final Visible Secondary Packing Cost ----------------
+   
     st.subheader("📦 Secondary Packing Cost (Per Profile)")
     if bundle_output_rows:
         secondary_cost_df = pd.DataFrame(bundle_output_rows)
@@ -413,6 +407,56 @@ if packing_method == "Secondary":
             use_container_width=True,
             key="secondary_packing_editor"
         )
+        
+        # Recalculate packaging cost based on user edits
+        updated_output_rows = []
+        for idx, row in editable_secondary_cost_df.iterrows():
+            # Get the original bundle dimensions from bundle_output_rows
+            original_bundle_data = bundle_output_rows[idx]
+            bundle_width = float(original_bundle_data["Bundle Width (mm)"].replace(',', ''))
+            bundle_height = float(original_bundle_data["Bundle Height (mm)"].replace(',', ''))
+            bundle_length = float(original_bundle_data["Bundle Length (mm)"].replace(',', ''))
+            
+            # Get user-edited values
+            profiles_per_bundle = int(row["Profiles per Bundle"])
+            packaging_type = row["Packaging Type"]
+            
+            # Recalculate packaging cost based on user selection
+            bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
+            
+            if packaging_type == "Polybag":
+                packaging_cost = (bundle_area_m2 * polybag_cost_per_m2 * (bundle_length/1000)) / (polybag_size_m * profiles_per_bundle)
+            elif packaging_type == "Cardboard Box":
+                user_volume = bundle_width * bundle_height * bundle_length
+                packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
+            
+            # Update the row with recalculated values
+            updated_row = row.copy()
+            updated_row["Packaging Cost (Rs/prof)"] = f"{packaging_cost:.2f}"
+            
+            # Recalculate total cost
+            total_cost = packaging_cost
+            
+            # Add other costs if they exist in the row
+            if "McFoam Cost (Rs/prof)" in row:
+                mcfoam_cost = float(row["McFoam Cost (Rs/prof)"])
+                total_cost += mcfoam_cost
+            if "Stretchwrap Cost (Rs/prof)" in row:
+                stretchwrap_cost = float(row["Stretchwrap Cost (Rs/prof)"])
+                total_cost += stretchwrap_cost
+            if "Craft Paper Cost (Rs/prof)" in row:
+                craft_paper_cost = float(row["Craft Paper Cost (Rs/prof)"])
+                total_cost += craft_paper_cost
+            if "Protective Tape Cost (Rs/prof)" in row:
+                protective_tape_cost = float(row["Protective Tape Cost (Rs/prof)"])
+                total_cost += protective_tape_cost
+            
+            updated_row["Total Cost (Rs/prof)"] = f"{total_cost:.2f}"
+            updated_output_rows.append(updated_row)
+        
+        # Display the updated dataframe
+        st.dataframe(pd.DataFrame(updated_output_rows), use_container_width=True)
+        
     else:
         st.warning("No bundle data available")
 
@@ -579,6 +623,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
