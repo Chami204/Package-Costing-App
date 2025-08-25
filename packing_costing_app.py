@@ -321,15 +321,22 @@ if packing_method == "Secondary":
         bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
         
         # Packaging cost calculation
-        if L > 550:  # Use polybag
-            # New polybag cost formula
-            polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
-            packaging_cost = polybag_cost
-            packaging_type = "Polybag"
-        else:  # Use cardboard box
-            user_volume = bundle_width * bundle_height * bundle_length
-            packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
-            packaging_type = "Cardboard Box"
+        # Update packaging cost logic in secondary packing section:
+
+        if packing_method == "Secondary":
+            if L > 550:  # Use polybag
+                polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L / 1000)) / (polybag_size_m * profiles_per_bundle)
+                packaging_cost = polybag_cost
+                packaging_type = "Polybag"
+            else:  # Use cardboard box
+                user_volume = bundle_width * bundle_height * bundle_length
+                packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
+                packaging_type = "Cardboard Box"
+        else:
+            # Optional: fallback or default behavior if needed
+            packaging_cost = 0.0
+            packaging_type = "N/A"
+
         
         # Initialize cost data - all costs will be per profile
         bundle_cost_data = {
@@ -550,6 +557,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
