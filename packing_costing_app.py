@@ -321,33 +321,15 @@ if packing_method == "Secondary":
         bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
         
         # Packaging cost calculation
-        # Update packaging cost logic in secondary packing section:
-
-        if packing_method == "Secondary":
-        # Default calculation based on length L
-            if L > 550:  # Use polybag
-                polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L / 1000)) / (polybag_size_m * profiles_per_bundle)
-                default_packaging_cost = polybag_cost
-                default_packaging_type = "Polybag"
-            else:  # Use cardboard box
-                user_volume = bundle_width * bundle_height * bundle_length
-                cardboard_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
-                default_packaging_cost = cardboard_cost
-                default_packaging_type = "Cardboard Box"
-        
-            # Recalculate packaging cost based on final values
-            if packaging_type == "Polybag":
-                packaging_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L / 1000)) / (polybag_size_m * final_profiles_per_bundle)
-            elif packaging_type == "Cardboard Box":
-                user_volume = bundle_width * bundle_height * bundle_length
-                packaging_cost = ((user_volume / ref_volume) * ref_cost) / final_profiles_per_bundle if ref_volume else 0.0
-            else:
-                packaging_cost = 0.0
-        else:
-            packaging_cost = 0.0
-            final_packaging_type = "N/A"
-
-
+        if L > 550:  # Use polybag
+            # New polybag cost formula
+            polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
+            packaging_cost = polybag_cost
+            packaging_type = "Polybag"
+        else:  # Use cardboard box
+            user_volume = bundle_width * bundle_height * bundle_length
+            packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
+            packaging_type = "Cardboard Box"
         
         # Initialize cost data - all costs will be per profile
         bundle_cost_data = {
@@ -398,28 +380,10 @@ if packing_method == "Secondary":
         bundle_output_rows.append(bundle_cost_data)
     
     # ---------------- Final Visible Secondary Packing Cost ----------------
-        # ---------------- Final Visible Secondary Packing Cost ----------------
     st.subheader("📦 Secondary Packing Cost (Per Profile)")
     if bundle_output_rows:
         secondary_cost_df = pd.DataFrame(bundle_output_rows)
-        
-        # Make Profiles per Bundle and Packaging Type editable
-        editable_secondary_cost_df = st.data_editor(
-            secondary_cost_df,
-            column_config={
-                "Profiles per Bundle": st.column_config.NumberColumn(
-                    "Profiles per Bundle",
-                    min_value=1,
-                    step=1
-                ),
-                "Packaging Type": st.column_config.SelectboxColumn(
-                    "Packaging Type",
-                    options=["Polybag", "Cardboard Box"]
-                )
-            },
-            use_container_width=True,
-            key="secondary_packing_editor"
-        )
+        st.dataframe(secondary_cost_df, use_container_width=True)
     else:
         st.warning("No bundle data available")
 
@@ -586,13 +550,6 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
-
-
-
-
-
-
-
 
 
 
