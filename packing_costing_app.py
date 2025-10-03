@@ -485,6 +485,7 @@ if packing_method == "Secondary":
 if packing_method == "Secondary":
     # Get SKU numbers from the input table
     sku_numbers = edited_data["SKU No."].tolist()
+
     
     # Create final packing input with SKU numbers
     final_packing_input = pd.DataFrame({
@@ -493,7 +494,8 @@ if packing_method == "Secondary":
         "Width (mm)": [0] * len(sku_numbers),
         "Height (mm)": [0] * len(sku_numbers),
         "Length (mm)": [0] * len(sku_numbers)
-    })
+        })
+
 
     st.subheader("🚛 Final Packing Selection", divider="grey")
     final_packing_selection = st.data_editor(
@@ -533,6 +535,33 @@ if packing_method == "Secondary":
             cost = (user_area / ref_area) * float(ref_pallet["Cost (LKR)"]) if ref_area else 0.0
             strapping_cost = 0.0
             num_clips = 0
+            
+        bundle_data = None
+        for bundle_row in bundle_output_rows:
+            if bundle_row["SKU"] == sku_no:
+                bundle_data = bundle_row
+                break
+        
+        if bundle_data:
+            box_width = float(bundle_data["Bundle Width (mm)"].replace(',', ''))
+            box_height = float(bundle_data["Bundle Height (mm)"].replace(',', ''))
+            profiles_per_bundle = int(bundle_data["Profiles per Bundle"])
+            
+            # Calculate number of boxes that can fit
+            boxes_per_pallet_crate = (width / box_width) * (height / box_height)
+            boxes_per_pallet_crate = max(1, int(boxes_per_pallet_crate))  # At least 1 box
+            
+            # Calculate total profiles per pallet/crate
+            profiles_per_pallet_crate = boxes_per_pallet_crate * profiles_per_bundle
+            
+            # Calculate costs per profile
+            packing_cost_per_profile = cost / profiles_per_pallet_crate if profiles_per_pallet_crate else 0.0
+            strapping_cost_per_profile = strapping_cost / profiles_per_pallet_crate if profiles_per_pallet_crate else 0.0
+        else:
+            boxes_per_pallet_crate = 0
+            profiles_per_pallet_crate = 0
+            packing_cost_per_profile = 0.0
+            strapping_cost_per_profile = 0.0
 
         packing_output_rows.append({
             "SKU No.": sku_no,
@@ -540,9 +569,13 @@ if packing_method == "Secondary":
             "Width (mm)": f"{width:.2f}",
             "Height (mm)": f"{height:.2f}",
             "Length (mm)": f"{length:.2f}" if method == "Crate" else "-",
+            "Boxes per Pallet/Crate": f"{boxes_per_pallet_crate:.0f}",
+            "Profiles per Pallet/Crate": f"{profiles_per_pallet_crate:.0f}",
             "Packing Cost (LKR)": f"{cost:.2f}",
+            "Packing Cost per Profile (LKR)": f"{packing_cost_per_profile:.2f}",
             "Strapping Clips": f"{num_clips:.2f}" if method == "Crate" else "-",
-            "Strapping Cost (LKR)": f"{strapping_cost:.2f}" if method == "Crate" else "-"
+            "Strapping Cost (LKR)": f"{strapping_cost:.2f}" if method == "Crate" else "-",
+            "Strapping Cost per Profile (LKR)": f"{strapping_cost_per_profile:.2f}" if method == "Crate" else "-"
         })
 
     if packing_output_rows:
@@ -623,7 +656,6 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
-
 
 
 
