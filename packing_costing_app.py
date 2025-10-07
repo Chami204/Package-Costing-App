@@ -640,8 +640,8 @@ if packing_method == "Secondary":
                     updated_secondary_cost = float(updated_secondary_row["Total Cost (Rs/prof)"])
                     break
             
-            updated_row["Total Cost per Profile (LKR)"] = f"{packing_cost_per_profile + strapping_cost_per_profile + updated_secondary_cost:.2f}"            
-            
+            total_cost = packing_cost_per_profile + strapping_cost_per_profile + updated_secondary_cost
+            updated_row["Total Cost per Profile (LKR)"] = f"{int(total_cost * 100) / 100:.2f}"            
             updated_final_rows.append(updated_row)
         
         # Display the updated dataframe
@@ -817,6 +817,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
