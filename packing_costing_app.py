@@ -606,25 +606,26 @@ st.subheader("📥 Download Results", divider="grey")
 
 if st.button("📊 Download Excel", use_container_width=True):
     try:
-        # Create a simple Excel file with all tables
+        # Create Excel writer using openpyxl
         import io
         buffer = io.BytesIO()
         
-        # Create Excel file with multiple sheets
         with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-            # Add all available tables
+            # Add Primary Packing table if available
             if packing_method == "Primary" and not hidden_output.empty:
                 primary_output.to_excel(writer, sheet_name='Primary Packing', index=False)
             
+            # Add Secondary Packing table if available
             if packing_method == "Secondary" and bundle_output_rows:
                 secondary_df = pd.DataFrame(bundle_output_rows)
                 secondary_df.to_excel(writer, sheet_name='Secondary Packing', index=False)
             
+            # Add Final Packing table if available
             if packing_method == "Secondary" and packing_output_rows:
                 final_df = pd.DataFrame(packing_output_rows)
                 final_df.to_excel(writer, sheet_name='Final Packing', index=False)
             
-            # Add reference tables
+            # Add Reference Tables
             interleaving_df.to_excel(writer, sheet_name='Interleaving Ref', index=False)
             polybag_ref.to_excel(writer, sheet_name='Polybag Ref', index=False)
             cardboard_ref.to_excel(writer, sheet_name='Cardboard Ref', index=False)
@@ -633,21 +634,20 @@ if st.button("📊 Download Excel", use_container_width=True):
             pallet_cost_df.to_excel(writer, sheet_name='Pallet Ref', index=False)
             strapping_cost_df.to_excel(writer, sheet_name='Strapping Ref', index=False)
         
+        # Prepare download
         buffer.seek(0)
-        
         st.download_button(
             label="⬇️ Click to Download Excel File",
             data=buffer,
-            file_name="packing_costing_report.xlsx",
+            file_name=f"packing_costing_report.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True
         )
         
-        st.success("Excel file ready for download!")
+        st.success("Excel file generated successfully! Click the download button above.")
         
     except Exception as e:
         st.error(f"Error generating Excel file: {str(e)}")
-        st.info("Try installing openpyxl: pip install openpyxl")
 
 
 # ----------------- Tabs for Reference Tables --------------------
@@ -723,6 +723,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
