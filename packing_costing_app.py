@@ -426,7 +426,7 @@ if packing_method == "Secondary":
             bundle_area_m2 = 2 * ((bundle_width * bundle_length) + (bundle_height * bundle_length) + (bundle_width * bundle_height)) / 1_000_000
             
             if packaging_type == "Polybag":
-                packaging_cost = (bundle_area_m2 * polybag_cost_per_m2 * (bundle_length/1000)) / (polybag_size_m * profiles_per_bundle)
+                packaging_cost = (polybag_cost_per_m * (L / 1000)) / ( profiles_per_bundle)
             elif packaging_type == "Cardboard Box":
                 user_volume = bundle_width * bundle_height * bundle_length
                 packaging_cost = ((user_volume / ref_volume) * ref_cost) / profiles_per_bundle if ref_volume else 0.0
@@ -757,6 +757,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
