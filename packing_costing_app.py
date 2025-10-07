@@ -571,10 +571,11 @@ if packing_method == "Secondary":
             packing_cost_per_profile = 0.0
             strapping_cost_per_profile = 0.0
 
+        # Get the secondary packing cost from the UPDATED table
         secondary_cost = 0.0
-        for bundle_row in bundle_output_rows:
-            if bundle_row["SKU"] == sku_no:
-                secondary_cost = float(bundle_row["Total Cost (Rs/prof)"])
+        for idx, updated_row in enumerate(updated_output_rows):
+            if updated_row["SKU"] == sku_no:
+                secondary_cost = float(updated_row["Total Cost (Rs/prof)"])
                 break
 
         packing_output_rows.append({
@@ -671,6 +672,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
