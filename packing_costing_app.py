@@ -596,48 +596,7 @@ if packing_method == "Secondary":
         })
 
     if packing_output_rows:
-        final_packing_df = pd.DataFrame(packing_output_rows)
-        
-        # Make Profiles per Pallet/Crate editable
-        editable_final_packing_df = st.data_editor(
-            final_packing_df,
-            column_config={
-                "Profiles per Pallet/Crate": st.column_config.NumberColumn(
-                    "Profiles per Pallet/Crate",
-                    min_value=1,
-                    step=1
-                )
-            },
-            use_container_width=True,
-            key="final_packing_editor"
-        )
-        
-        # Recalculate costs based on user edits
-        updated_final_rows = []
-        for idx, row in editable_final_packing_df.iterrows():
-            # Get original values from packing_output_rows
-            original_row = packing_output_rows[idx]
-            packing_cost = float(original_row["Packing Cost (LKR)"])
-            strapping_cost = float(original_row["Strapping Cost (LKR)"]) if original_row["Strapping Cost (LKR)"] != "-" else 0.0
-            secondary_cost = float(original_row["Total Cost per Profile (LKR)"]) - (float(original_row["Packing Cost per Profile (LKR)"]) + (float(original_row["Strapping Cost per Profile (LKR)"]) if original_row["Strapping Cost per Profile (LKR)"] != "-" else 0.0))
-            
-            # Get user-edited values
-            profiles_per_pallet_crate = int(row["Profiles per Pallet/Crate"])
-            
-            # Recalculate costs per profile
-            packing_cost_per_profile = packing_cost / profiles_per_pallet_crate if profiles_per_pallet_crate else 0.0
-            strapping_cost_per_profile = strapping_cost / profiles_per_pallet_crate if profiles_per_pallet_crate else 0.0
-            
-            # Update the row with recalculated values
-            updated_row = row.copy()
-            updated_row["Packing Cost per Profile (LKR)"] = f"{packing_cost_per_profile:.2f}"
-            updated_row["Strapping Cost per Profile (LKR)"] = f"{strapping_cost_per_profile:.2f}" if row["Method"] == "Crate" else "-"
-            updated_row["Total Cost per Profile (LKR)"] = f"{packing_cost_per_profile + strapping_cost_per_profile + secondary_cost:.2f}"
-            
-            updated_final_rows.append(updated_row)
-        
-        # Display the updated dataframe
-        st.dataframe(pd.DataFrame(updated_final_rows), use_container_width=True)
+        st.dataframe(pd.DataFrame(packing_output_rows), use_container_width=True)
     else:
         st.warning("No packing method selected or data available")
 
@@ -798,6 +757,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
