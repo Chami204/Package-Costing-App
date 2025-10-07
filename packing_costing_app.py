@@ -606,49 +606,43 @@ if packing_method == "Secondary":
 
 
 
-# ----------------- Excel Download --------------------
+# ----------------- Data Download --------------------
 st.subheader("📥 Download Results", divider="grey")
 
-if st.button("📊 Download Excel", use_container_width=True):
+if st.button("📊 Download Data", use_container_width=True):
     try:
-        # Create a simple Excel file with just the main result table
-        import io
-        
         # Determine which table to export based on packing method
         if packing_method == "Primary" and not hidden_output.empty:
             df_to_export = primary_output
-            sheet_name = "Primary_Packing"
+            filename = "primary_packing_data.csv"
         elif packing_method == "Secondary" and packing_output_rows:
             df_to_export = pd.DataFrame(packing_output_rows)
-            sheet_name = "Final_Packing"
+            filename = "final_packing_data.csv"
         elif packing_method == "Secondary" and bundle_output_rows:
             df_to_export = pd.DataFrame(bundle_output_rows)
-            sheet_name = "Secondary_Packing"
+            filename = "secondary_packing_data.csv"
         else:
             st.warning("No data available to export")
             df_to_export = None
         
         if df_to_export is not None:
-            # Convert to Excel
-            buffer = io.BytesIO()
-            df_to_export.to_excel(buffer, index=False, sheet_name=sheet_name)
-            buffer.seek(0)
+            # Convert to CSV
+            csv_data = df_to_export.to_csv(index=False)
             
             st.download_button(
-                label="⬇️ Click to Download Excel File",
-                data=buffer,
-                file_name="packing_costing.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                label="⬇️ Click to Download CSV File",
+                data=csv_data,
+                file_name=filename,
+                mime="text/csv",
                 use_container_width=True
             )
             
-            st.success("Excel file ready for download!")
+            st.success("CSV file ready for download! You can open this in Excel.")
         else:
             st.warning("No data available to export")
             
     except Exception as e:
-        st.error(f"Error: {str(e)}")
-        st.info("To enable Excel export, please install: pip install openpyxl")
+        st.error(f"Error generating download: {str(e)}")
 
 
 # ----------------- Tabs for Reference Tables --------------------
@@ -724,6 +718,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
