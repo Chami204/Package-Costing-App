@@ -599,6 +599,126 @@ if packing_method == "Secondary":
     else:
         st.warning("No packing method selected or data available")
 
+
+
+# ----------------- Excel Download --------------------
+st.subheader("📥 Download Results", divider="grey")
+
+if st.button("📊 Download Excel", use_container_width=True):
+    try:
+        # Create Excel writer
+        import io
+        buffer = io.BytesIO()
+        
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            workbook = writer.book
+            
+            # Add Primary Packing table if available
+            if packing_method == "Primary" and not hidden_output.empty:
+                primary_output.to_excel(writer, sheet_name='Primary Packing', index=False)
+                worksheet = writer.sheets['Primary Packing']
+                
+                # Add formulas for Primary Packing
+                if len(primary_output) > 0:
+                    for row in range(1, len(primary_output) + 1):
+                        # Total Cost formula: =B2+C2+E2 (Interleaving + Protective Tape + Packaging)
+                        worksheet.write_formula(f'F{row+1}', f'=B{row+1}+C{row+1}+E{row+1}')
+            
+            # Add Secondary Packing table if available
+            if packing_method == "Secondary" and bundle_output_rows:
+                secondary_df = pd.DataFrame(bundle_output_rows)
+                secondary_df.to_excel(writer, sheet_name='Secondary Packing', index=False)
+                worksheet = writer.sheets['Secondary Packing']
+                
+                # Add formulas for Secondary Packing
+                if len(secondary_df) > 0:
+                    for row in range(1, len(secondary_df) + 1):
+                        total_formula = f'=F{row+1}'  # Start with Packaging Cost
+                        
+                        # Add McFoam cost if column exists
+                        if 'McFoam Cost (Rs/prof)' in secondary_df.columns:
+                            mcfoam_col = secondary_df.columns.get_loc('McFoam Cost (Rs/prof)') + 1
+                            total_formula += f'+{chr(64 + mcfoam_col)}{row+1}'
+                        
+                        # Add Stretchwrap cost if column exists
+                        if 'Stretchwrap Cost (Rs/prof)' in secondary_df.columns:
+                            stretch_col = secondary_df.columns.get_loc('Stretchwrap Cost (Rs/prof)') + 1
+                            total_formula += f'+{chr(64 + stretch_col)}{row+1}'
+                        
+                        # Add Craft Paper cost if column exists
+                        if 'Craft Paper Cost (Rs/prof)' in secondary_df.columns:
+                            craft_col = secondary_df.columns.get_loc('Craft Paper Cost (Rs/prof)') + 1
+                            total_formula += f'+{chr(64 + craft_col)}{row+1}'
+                        
+                        # Add Protective Tape cost if column exists
+                        if 'Protective Tape Cost (Rs/prof)' in secondary_df.columns:
+                            tape_col = secondary_df.columns.get_loc('Protective Tape Cost (Rs/prof)') + 1
+                            total_formula += f'+{chr(64 + tape_col)}{row+1}'
+                        
+                        # Write the total formula
+                        total_col = secondary_df.columns.get_loc('Total Cost (Rs/prof)') + 1
+                        worksheet.write_formula(f'{chr(64 + total_col)}{row+1}', total_formula)
+            
+            # Add Final Packing table if available
+            if packing_method == "Secondary" and packing_output_rows:
+                final_df = pd.DataFrame(packing_output_rows)
+                final_df.to_excel(writer, sheet_name='Final Packing', index=False)
+                worksheet = writer.sheets['Final Packing']
+                
+                # Add formulas for Final Packing
+                if len(final_df) > 0:
+                    for row in range(1, len(final_df) + 1):
+                        # Packing Cost per Profile formula: =G{row+1}/F{row+1}
+                        worksheet.write_formula(f'H{row+1}', f'=G{row+1}/F{row+1}')
+                        
+                        # Strapping Cost per Profile formula: =J{row+1}/F{row+1} (if crate)
+                        if final_df.iloc[row-1]['Method'] == 'Crate':
+                            worksheet.write_formula(f'K{row+1}', f'=J{row+1}/F{row+1}')
+                        
+                        # Total Cost per Profile formula: =H{row+1}+K{row+1}+SecondaryCost
+                        # Note: Secondary cost would need to be linked from Secondary sheet
+                        worksheet.write_formula(f'L{row+1}', f'=H{row+1}+K{row+1}')
+            
+            # Add Reference Tables
+            interleaving_df.to_excel(writer, sheet_name='Interleaving Ref', index=False)
+            polybag_ref.to_excel(writer, sheet_name='Polybag Ref', index=False)
+            cardboard_ref.to_excel(writer, sheet_name='Cardboard Ref', index=False)
+            stretchwrap_ref.to_excel(writer, sheet_name='Stretchwrap Ref', index=False)
+            crate_cost_df.to_excel(writer, sheet_name='Crate Ref', index=False)
+            pallet_cost_df.to_excel(writer, sheet_name='Pallet Ref', index=False)
+            strapping_cost_df.to_excel(writer, sheet_name='Strapping Ref', index=False)
+            
+            # Auto-adjust column widths
+            for sheet_name in writer.sheets:
+                worksheet = writer.sheets[sheet_name]
+                for idx, col in enumerate(writer.sheets[sheet_name]._worksheet.columns):
+                    max_length = 0
+                    column = col[0].column_letter  # Get the column name
+                    for cell in col:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = (max_length + 2)
+                    worksheet.set_column(idx, idx, adjusted_width)
+        
+        # Prepare download
+        buffer.seek(0)
+        st.download_button(
+            label="⬇️ Click to Download Excel File",
+            data=buffer,
+            file_name=f"packing_costing_report.xlsx",
+            mime="application/vnd.ms-excel",
+            use_container_width=True
+        )
+        
+        st.success("Excel file generated successfully! Click the download button above.")
+        
+    except Exception as e:
+        st.error(f"Error generating Excel file: {str(e)}")
+
+
 # ----------------- Tabs for Reference Tables --------------------
 st.subheader("🔐 Admin Reference Tables")
 
@@ -672,6 +792,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
