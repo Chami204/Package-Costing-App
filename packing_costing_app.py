@@ -536,6 +536,8 @@ if packing_method == "Secondary":
             strapping_cost = 0.0
             num_clips = 0
             
+        # Calculate number of boxes per pallet/crate and profiles per pallet/crate
+        # Get the corresponding bundle data for this SKU
         bundle_data = None
         for bundle_row in bundle_output_rows:
             if bundle_row["SKU"] == sku_no:
@@ -547,9 +549,14 @@ if packing_method == "Secondary":
             box_height = float(bundle_data["Bundle Height (mm)"].replace(',', ''))
             profiles_per_bundle = int(bundle_data["Profiles per Bundle"])
             
-            # Calculate number of boxes that can fit
-            boxes_per_pallet_crate = (width / box_width) * (height / box_height)
-            boxes_per_pallet_crate = max(1, int(boxes_per_pallet_crate))  # At least 1 box
+            # Calculate number of boxes that can fit - WITH VALIDATION
+            if box_width > 0 and box_height > 0 and width > 0 and height > 0:
+                boxes_width_fit = width / box_width
+                boxes_height_fit = height / box_height
+                boxes_per_pallet_crate = int(boxes_width_fit) * int(boxes_height_fit)
+                boxes_per_pallet_crate = max(1, boxes_per_pallet_crate)  # At least 1 box
+            else:
+                boxes_per_pallet_crate = 1  # Default to 1 if dimensions are invalid
             
             # Calculate total profiles per pallet/crate
             profiles_per_pallet_crate = boxes_per_pallet_crate * profiles_per_bundle
@@ -557,6 +564,7 @@ if packing_method == "Secondary":
             # Calculate costs per profile
             packing_cost_per_profile = cost / profiles_per_pallet_crate if profiles_per_pallet_crate else 0.0
             strapping_cost_per_profile = strapping_cost / profiles_per_pallet_crate if profiles_per_pallet_crate else 0.0
+        
         else:
             boxes_per_pallet_crate = 0
             profiles_per_pallet_crate = 0
@@ -656,6 +664,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
