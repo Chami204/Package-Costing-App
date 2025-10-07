@@ -650,13 +650,13 @@ if st.button("📊 Download Excel", use_container_width=True):
         st.error(f"Error generating Excel file: {str(e)}")
             
             # Add Reference Tables
-            interleaving_df.to_excel(writer, sheet_name='Interleaving Ref', index=False)
-            polybag_ref.to_excel(writer, sheet_name='Polybag Ref', index=False)
-            cardboard_ref.to_excel(writer, sheet_name='Cardboard Ref', index=False)
-            stretchwrap_ref.to_excel(writer, sheet_name='Stretchwrap Ref', index=False)
-            crate_cost_df.to_excel(writer, sheet_name='Crate Ref', index=False)
-            pallet_cost_df.to_excel(writer, sheet_name='Pallet Ref', index=False)
-            strapping_cost_df.to_excel(writer, sheet_name='Strapping Ref', index=False)
+                interleaving_df.to_excel(writer, sheet_name='Interleaving Ref', index=False)
+                polybag_ref.to_excel(writer, sheet_name='Polybag Ref', index=False)
+                cardboard_ref.to_excel(writer, sheet_name='Cardboard Ref', index=False)
+                stretchwrap_ref.to_excel(writer, sheet_name='Stretchwrap Ref', index=False)
+                crate_cost_df.to_excel(writer, sheet_name='Crate Ref', index=False)
+                pallet_cost_df.to_excel(writer, sheet_name='Pallet Ref', index=False)
+                strapping_cost_df.to_excel(writer, sheet_name='Strapping Ref', index=False)
             
             # Auto-adjust column widths
             for sheet_name in writer.sheets:
@@ -762,6 +762,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
