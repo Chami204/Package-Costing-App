@@ -571,6 +571,12 @@ if packing_method == "Secondary":
             packing_cost_per_profile = 0.0
             strapping_cost_per_profile = 0.0
 
+        secondary_cost = 0.0
+        for bundle_row in bundle_output_rows:
+            if bundle_row["SKU"] == sku_no:
+                secondary_cost = float(bundle_row["Total Cost (Rs/prof)"])
+                break
+
         packing_output_rows.append({
             "SKU No.": sku_no,
             "Method": method,
@@ -584,7 +590,7 @@ if packing_method == "Secondary":
             "Strapping Clips": f"{num_clips:.2f}" if method == "Crate" else "-",
             "Strapping Cost (LKR)": f"{strapping_cost:.2f}" if method == "Crate" else "-",
             "Strapping Cost per Profile (LKR)": f"{strapping_cost_per_profile:.2f}" if method == "Crate" else "-",
-            "Total Cost per Profile (LKR)": f"{packing_cost_per_profile + strapping_cost_per_profile:.2f}"
+            "Total Cost per Profile (LKR)": f"{packing_cost_per_profile + strapping_cost_per_profile + secondary_cost:.2f}"
         })
 
     if packing_output_rows:
@@ -665,6 +671,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
