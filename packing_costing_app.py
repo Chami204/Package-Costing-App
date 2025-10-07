@@ -43,12 +43,12 @@ material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Co
 def load_polybag_table():
     return pd.DataFrame({
         "Polybag Size": ["9 Inch"],
-        "Cost per m² (LKR/m²)": [12.8]
+        "Cost per m (LKR/m)": [12.8]
     })
 
 polybag_ref = load_polybag_table()
 ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.4  # Convert inches to mm
-polybag_cost_per_m2 = float(polybag_ref["Cost per m² (LKR/m²)"].iloc[0])
+polybag_cost_per_m = float(polybag_ref["Cost per m (LKR/m)"].iloc[0])
 polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
 
 #-------------------------------Carboard Box------------------------
@@ -182,7 +182,7 @@ def calculate_hidden(row):
     user_volume = W * H * L
     if L > 550:  # Use polybag
         # Calculate polybag cost proportionally
-        polybag_cost = (polybag_cost_per_m2 * (L / 1000)) / 1  # Divided by 1 profile (for primary packing)
+        polybag_cost = (polybag_cost_per_m * (L / 1000)) / 1  # Divided by 1 profile (for primary packing)
         cardboard_cost = 0.0
         packaging_type = "Polybag"
     else:  # Use cardboard box
@@ -325,7 +325,7 @@ if packing_method == "Secondary":
         # Packaging cost calculation - store original calculation for reference
         if L > 550:  # Use polybag
             # New polybag cost formula
-            polybag_cost = (bundle_area_m2 * polybag_cost_per_m2 * (L/1000)) / (polybag_size_m * profiles_per_bundle)
+            polybag_cost = (polybag_cost_per_m * (L / 1000)) / (profiles_per_bundle)
             original_packaging_cost = polybag_cost
             original_packaging_type = "Polybag"
         else:  # Use cardboard box
@@ -757,6 +757,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
