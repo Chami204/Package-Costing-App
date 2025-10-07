@@ -658,12 +658,18 @@ if st.button("📊 Download Complete Report", use_container_width=True):
             sections.append(secondary_df.to_csv(index=False))
             sections.append("")  # Empty line for separation
         
-        # 2. Final Crate/Pallet Cost Summary Table
-        if packing_method == "Secondary" and packing_output_rows:
+        # 2. Final Crate/Pallet Cost Summary Table - Use UPDATED table
+        if packing_method == "Secondary" and 'updated_final_rows' in locals() and updated_final_rows:
+            sections.append("FINAL CRATE/PALLET COST SUMMARY")
+            final_df = pd.DataFrame(updated_final_rows)
+            sections.append(final_df.to_csv(index=False))
+            sections.append("")  # Empty line for separation
+        elif packing_method == "Secondary" and packing_output_rows:
             sections.append("FINAL CRATE/PALLET COST SUMMARY")
             final_df = pd.DataFrame(packing_output_rows)
             sections.append(final_df.to_csv(index=False))
             sections.append("")  # Empty line for separation
+            
         
         # 3. Special Comments Section
         if packing_method == "Secondary":
@@ -798,6 +804,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
