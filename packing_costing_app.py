@@ -632,9 +632,15 @@ if packing_method == "Secondary":
             updated_row = row.copy()
             updated_row["Packing Cost per Profile (LKR)"] = f"{packing_cost_per_profile:.2f}"
             updated_row["Strapping Cost per Profile (LKR)"] = f"{strapping_cost_per_profile:.2f}" if row["Method"] == "Crate" else "-"
-            updated_row["Total Cost per Profile (LKR)"] = f"{packing_cost_per_profile + strapping_cost_per_profile + secondary_cost:.2f}"
+            # Get the UPDATED secondary cost for this SKU
+            updated_secondary_cost = 0.0
+            for updated_secondary_row in updated_output_rows:
+                if updated_secondary_row["SKU"] == row["SKU No."]:
+                    updated_secondary_cost = float(updated_secondary_row["Total Cost (Rs/prof)"])
+                    break
             
-            updated_final_rows.append(updated_row)
+            updated_row["Total Cost per Profile (LKR)"] = f"{packing_cost_per_profile + strapping_cost_per_profile + updated_secondary_cost:.2f}"            
+                        updated_final_rows.append(updated_row)
         
         # Display the updated dataframe
         st.dataframe(pd.DataFrame(updated_final_rows), use_container_width=True)
@@ -809,6 +815,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
