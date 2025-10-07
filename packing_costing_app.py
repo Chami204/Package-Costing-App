@@ -651,8 +651,13 @@ if st.button("📊 Download Complete Report", use_container_width=True):
         # Create a comprehensive CSV with all sections
         sections = []
         
-        # 1. Secondary Packing Cost (Per Profile) Table
-        if packing_method == "Secondary" and bundle_output_rows:
+        # 1. Secondary Packing Cost (Per Profile) Table - Use UPDATED table
+        if packing_method == "Secondary" and 'updated_output_rows' in locals() and updated_output_rows:
+            sections.append("SECONDARY PACKING COST (PER PROFILE)")
+            secondary_df = pd.DataFrame(updated_output_rows)
+            sections.append(secondary_df.to_csv(index=False))
+            sections.append("")  # Empty line for separation
+        elif packing_method == "Secondary" and bundle_output_rows:
             sections.append("SECONDARY PACKING COST (PER PROFILE)")
             secondary_df = pd.DataFrame(bundle_output_rows)
             sections.append(secondary_df.to_csv(index=False))
@@ -804,6 +809,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
