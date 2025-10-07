@@ -527,7 +527,7 @@ if packing_method == "Secondary":
             strapping_ref = strapping_cost_df.iloc[0]
             length_m = length / 1000
             num_clips = length_m / 0.5
-            strapping_cost = 2*(length_m+(float(row["Width (mm)"]/1000)) * float(strapping_ref["Cost (LKR/m)"]) * num_clips
+            strapping_cost = 2*(length_m+(float(row["Width (mm)"]/1000))) * float(strapping_ref["Cost (LKR/m)"]) * num_clips
 
         elif method == "Pallet":
             ref_pallet = pallet_cost_df.iloc[0]
@@ -798,6 +798,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
