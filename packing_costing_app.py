@@ -611,82 +611,44 @@ st.subheader("📥 Download Results", divider="grey")
 
 if st.button("📊 Download Excel", use_container_width=True):
     try:
-        # Create Excel file using pandas
+        # Create a simple Excel file with just the main result table
         import io
-        buffer = io.BytesIO()
         
-        # Use pandas to_excel with default engine (usually works without additional dependencies)
-        with pd.ExcelWriter(buffer, engine='xlwt') as writer:
-            # Add Primary Packing table if available
-            if packing_method == "Primary" and not hidden_output.empty:
-                primary_output.to_excel(writer, sheet_name='Primary Packing', index=False)
-            
-            # Add Secondary Packing table if available
-            if packing_method == "Secondary" and bundle_output_rows:
-                secondary_df = pd.DataFrame(bundle_output_rows)
-                secondary_df.to_excel(writer, sheet_name='Secondary Packing', index=False)
-            
-            # Add Final Packing table if available
-            if packing_method == "Secondary" and packing_output_rows:
-                final_df = pd.DataFrame(packing_output_rows)
-                final_df.to_excel(writer, sheet_name='Final Packing', index=False)
-            
-            # Add Reference Tables
-            interleaving_df.to_excel(writer, sheet_name='Interleaving Ref', index=False)
-            polybag_ref.to_excel(writer, sheet_name='Polybag Ref', index=False)
-            cardboard_ref.to_excel(writer, sheet_name='Cardboard Ref', index=False)
-            stretchwrap_ref.to_excel(writer, sheet_name='Stretchwrap Ref', index=False)
-            crate_cost_df.to_excel(writer, sheet_name='Crate Ref', index=False)
-            pallet_cost_df.to_excel(writer, sheet_name='Pallet Ref', index=False)
-            strapping_cost_df.to_excel(writer, sheet_name='Strapping Ref', index=False)
+        # Determine which table to export based on packing method
+        if packing_method == "Primary" and not hidden_output.empty:
+            df_to_export = primary_output
+            sheet_name = "Primary_Packing"
+        elif packing_method == "Secondary" and packing_output_rows:
+            df_to_export = pd.DataFrame(packing_output_rows)
+            sheet_name = "Final_Packing"
+        elif packing_method == "Secondary" and bundle_output_rows:
+            df_to_export = pd.DataFrame(bundle_output_rows)
+            sheet_name = "Secondary_Packing"
+        else:
+            st.warning("No data available to export")
+            df_to_export = None
         
-        buffer.seek(0)
-        
-        st.download_button(
-            label="⬇️ Click to Download Excel File",
-            data=buffer,
-            file_name="packing_costing_report.xls",
-            mime="application/vnd.ms-excel",
-            use_container_width=True
-        )
-        
-        st.success("Excel file generated successfully! Click the download button above.")
-        
-    except Exception as e:
-        st.error(f"Error generating Excel file: {str(e)}")
-        st.info("Trying alternative method...")
-        
-        # Fallback: Create a simple Excel file with just the main tables
-        try:
+        if df_to_export is not None:
+            # Convert to Excel
             buffer = io.BytesIO()
-            
-            # Create a simple Excel with available tables
-            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                if packing_method == "Primary" and not hidden_output.empty:
-                    primary_output.to_excel(writer, sheet_name='Primary Packing', index=False)
-                
-                if packing_method == "Secondary" and bundle_output_rows:
-                    secondary_df = pd.DataFrame(bundle_output_rows)
-                    secondary_df.to_excel(writer, sheet_name='Secondary Packing', index=False)
-                
-                if packing_method == "Secondary" and packing_output_rows:
-                    final_df = pd.DataFrame(packing_output_rows)
-                    final_df.to_excel(writer, sheet_name='Final Packing', index=False)
-            
+            df_to_export.to_excel(buffer, index=False, sheet_name=sheet_name)
             buffer.seek(0)
             
             st.download_button(
-                label="⬇️ Click to Download Excel File (Basic)",
+                label="⬇️ Click to Download Excel File",
                 data=buffer,
-                file_name="packing_costing_basic.xlsx",
+                file_name="packing_costing.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
             
-            st.success("Basic Excel file generated!")
+            st.success("Excel file ready for download!")
+        else:
+            st.warning("No data available to export")
             
-        except Exception as e2:
-            st.error(f"All Excel methods failed. Please install openpyxl: pip install openpyxl")
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+        st.info("To enable Excel export, please install: pip install openpyxl")
 
 
 # ----------------- Tabs for Reference Tables --------------------
@@ -762,6 +724,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
