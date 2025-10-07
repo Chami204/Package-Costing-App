@@ -2,10 +2,6 @@
 import streamlit as st
 import pandas as pd
 
-try:
-    import openpyxl
-except ImportError:
-    st.warning("openpyxl is required for Excel export. Install with: pip install openpyxl")
 
 # Page setup
 st.set_page_config(layout="wide", page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
@@ -761,6 +757,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
