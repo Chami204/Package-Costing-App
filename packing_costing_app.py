@@ -609,37 +609,80 @@ if packing_method == "Secondary":
 # ----------------- Data Download --------------------
 st.subheader("📥 Download Results", divider="grey")
 
-if st.button("📊 Download Data", use_container_width=True):
+if st.button("📊 Download Complete Report", use_container_width=True):
     try:
-        # Determine which table to export based on packing method
-        if packing_method == "Primary" and not hidden_output.empty:
-            df_to_export = primary_output
-            filename = "primary_packing_data.csv"
-        elif packing_method == "Secondary" and packing_output_rows:
-            df_to_export = pd.DataFrame(packing_output_rows)
-            filename = "final_packing_data.csv"
-        elif packing_method == "Secondary" and bundle_output_rows:
-            df_to_export = pd.DataFrame(bundle_output_rows)
-            filename = "secondary_packing_data.csv"
-        else:
-            st.warning("No data available to export")
-            df_to_export = None
+        # Create a comprehensive CSV with all sections
+        sections = []
         
-        if df_to_export is not None:
-            # Convert to CSV
-            csv_data = df_to_export.to_csv(index=False)
+        # 1. Secondary Packing Cost (Per Profile) Table
+        if packing_method == "Secondary" and bundle_output_rows:
+            sections.append("SECONDARY PACKING COST (PER PROFILE)")
+            secondary_df = pd.DataFrame(bundle_output_rows)
+            sections.append(secondary_df.to_csv(index=False))
+            sections.append("")  # Empty line for separation
+        
+        # 2. Final Crate/Pallet Cost Summary Table
+        if packing_method == "Secondary" and packing_output_rows:
+            sections.append("FINAL CRATE/PALLET COST SUMMARY")
+            final_df = pd.DataFrame(packing_output_rows)
+            sections.append(final_df.to_csv(index=False))
+            sections.append("")  # Empty line for separation
+        
+        # 3. Special Comments Section
+        if packing_method == "Secondary":
+            sections.append("SPECIAL COMMENTS")
+            
+            # Create comments data
+            comments_data = []
+            
+            # Packing Method Note
+            comments_data.append(["Packing Method Note", 
+                                f"Costing is done according to {packing_method} packing."])
+            
+            # Interleaving information
+            if not hidden_output.empty:
+                mat = hidden_output.iloc[0]["Interleaving Material"]
+                msg = hidden_output.iloc[0]["Check"]
+                comments_data.append(["Interleaving Material", f"The interleaving material is {mat}. {msg}"])
+            
+            # Protective Tape Advice
+            if not hidden_output.empty:
+                tape = hidden_output.iloc[0]["Protective Tape Advice"]
+                comments_data.append(["Protective Tape Advice", tape])
+            
+            # Additional note
+            comments_data.append(["Additional Note", 
+                                "Costing is inclusive of secondary packing - pallet or crate, however it is not inclusive of any labels artwork these will incur an additional charge."])
+            
+            # Convert comments to DataFrame and then to CSV
+            comments_df = pd.DataFrame(comments_data, columns=["Category", "Comment"])
+            sections.append(comments_df.to_csv(index=False))
+        
+        # Combine all sections
+        if sections:
+            complete_csv = "\n".join(sections)
             
             st.download_button(
-                label="⬇️ Click to Download CSV File",
-                data=csv_data,
-                file_name=filename,
+                label="⬇️ Download Complete Report (CSV)",
+                data=complete_csv,
+                file_name="packing_costing_complete_report.csv",
                 mime="text/csv",
                 use_container_width=True
             )
             
-            st.success("CSV file ready for download! You can open this in Excel.")
+            st.success("Complete report ready for download! Open in Excel to view all sections.")
+            
+            # Show preview of what's included
+            st.info("📋 Report includes:")
+            if packing_method == "Secondary" and bundle_output_rows:
+                st.write("• Secondary Packing Cost (Per Profile) Table")
+            if packing_method == "Secondary" and packing_output_rows:
+                st.write("• Final Crate/Pallet Cost Summary Table")
+            if packing_method == "Secondary":
+                st.write("• Special Comments Section")
+                
         else:
-            st.warning("No data available to export")
+            st.warning("No data available to export for secondary packing.")
             
     except Exception as e:
         st.error(f"Error generating download: {str(e)}")
@@ -718,6 +761,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
