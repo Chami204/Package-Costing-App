@@ -39,7 +39,11 @@ with tab1:
             "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
             "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
             "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
-            "Comment on fabrication": st.column_config.TextColumn("Comment on fabrication")
+            "Comment on fabrication": st.column_config.SelectboxColumn(
+                "Comment on fabrication",
+                options=["Fabricated", "Just Cutting"],
+                required=True
+            )
         }
     )
     
