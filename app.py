@@ -530,8 +530,8 @@ with tab2:
                 if packing_type == "polybag":
                     # CORRECTED: (polybag cost/(polybag size*24.5*profiles per bundle))*(profile length)
                     # Polybag size is in inches, convert to meters: 1 inch = 0.0254 meters
-                    polybag_size_m = polybag_data["Polybag size (inches)"] * 0.0254
-                    denominator = polybag_size_m * 24.5 * profiles_per_bundle
+                    polybag_size_m = polybag_data["Polybag size (inches)"] * 24.5
+                    denominator = polybag_size_m * profiles_per_bundle
                     if denominator > 0:
                         packing_cost_per_profile = (polybag_data["Cost/m (LKR/m)"] / denominator) * profile_length
                 
