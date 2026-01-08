@@ -75,32 +75,19 @@ if "strapping_cost_df" not in st.session_state:
     })
 
 #----------------Interleaving-------------------------
-def load_interleaving_table():
-    return st.session_state.interleaving_df
-
-interleaving_df = load_interleaving_table()
-material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
-
-#------------------Polybag-------------------------
-def load_polybag_table():
-    return st.session_state.polybag_ref
-
-polybag_ref = load_polybag_table()
-ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.4  # Convert inches to mm
-polybag_cost_per_m = float(polybag_ref["Cost per m (LKR/m)"].iloc[0])
-polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
-
-#----------------Interleaving-------------------------
+# Get the current interleaving dataframe
 interleaving_df = st.session_state.interleaving_df
 material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
 
 #------------------Polybag-------------------------
+# Get the current polybag reference
 polybag_ref = st.session_state.polybag_ref
 ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.4  # Convert inches to mm
 polybag_cost_per_m = float(polybag_ref["Cost per m (LKR/m)"].iloc[0])
 polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
 
 #-------------------------------Carboard Box------------------------
+# Get the current cardboard reference
 cardboard_ref = st.session_state.cardboard_ref
 ref_width = float(cardboard_ref["Width(mm)"].iloc[0])
 ref_height = float(cardboard_ref["Height(mm)"].iloc[0])
@@ -109,15 +96,18 @@ ref_cost = float(cardboard_ref["Cost(LKR)"].iloc[0])
 ref_volume = ref_width * ref_height * ref_length
 
 #---------------------------Stretchwrap------------------------------
+# Get the current stretchwrap reference
 stretchwrap_ref = st.session_state.stretchwrap_ref
 ref_stretch_area = float(stretchwrap_ref["Area(mm²)"].iloc[0])
 ref_stretch_cost = float(stretchwrap_ref["Cost(Rs/mm²)"].iloc[0])
 
 #----------------------Crate or Pallet Cost reference table---------------------------
+# Get the current crate and pallet references
 crate_cost_df = st.session_state.crate_cost_df
 pallet_cost_df = st.session_state.pallet_cost_df
 
 #-------------------------Strapping clips & straps cost------------------------------
+# Get the current strapping reference
 strapping_cost_df = st.session_state.strapping_cost_df
 
 
@@ -872,4 +862,5 @@ with tab7:
         st.data_editor(st.session_state.strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     else:
         st.dataframe(st.session_state.strapping_cost_df)
+
 
