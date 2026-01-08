@@ -245,6 +245,12 @@ with tab1:
 with tab2:
     st.header("Secondary Calculations")
     
+    # First, create material_cost_dict from the shared material_costs table
+    material_cost_dict = dict(zip(
+        st.session_state.material_costs["Material"],
+        st.session_state.material_costs["Cost/ m²"]
+    ))
+    
     # Section 1: SKU Table with dimensions
     st.subheader("SKU Table with dimensions")
     
