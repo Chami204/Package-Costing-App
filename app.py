@@ -12,6 +12,25 @@ st.set_page_config(
 # App title
 st.title("📦 Packing Costing Calculator")
 
+# Initialize session state for shared data
+if 'sku_data' not in st.session_state:
+    sku_columns = ["SKU No", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"]
+    st.session_state.sku_data = pd.DataFrame(columns=sku_columns)
+
+if 'material_costs' not in st.session_state:
+    st.session_state.material_costs = pd.DataFrame({
+        "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+        "Cost/ m²": [51.00, 34.65, 100.65, 14.38]
+    })
+
+if 'box_costs' not in st.session_state:
+    st.session_state.box_costs = pd.DataFrame({
+        "Length(mm)": [330],
+        "Width (mm)": [210],
+        "Height (mm)": [135],
+        "Cost (LKR)": [205.00]
+    })
+
 # Create tabs
 tab1, tab2 = st.tabs(["Primary Calculations", "Secondary Calculations"])
 
@@ -20,14 +39,6 @@ with tab1:
     
     # Sub topic 1 - SKU Table with dimensions
     st.subheader("SKU Table with dimensions")
-    
-    # Create initial empty dataframe for SKU table
-    sku_columns = ["SKU No", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"]
-    initial_sku_data = pd.DataFrame(columns=sku_columns)
-    
-    # Load or create session state for SKU data
-    if 'sku_data' not in st.session_state:
-        st.session_state.sku_data = initial_sku_data
     
     # Create editable dataframe for SKU input
     edited_sku_df = st.data_editor(
@@ -44,7 +55,8 @@ with tab1:
                 options=["Fabricated", "Just Cutting"],
                 required=True
             )
-        }
+        },
+        key="sku_editor_primary"
     )
     
     # Update session state with edited data
@@ -60,25 +72,29 @@ with tab1:
     with col1:
         finish = st.selectbox(
             "Finish",
-            ["Mill Finish", "Anodised", "PC", "WF"]
+            ["Mill Finish", "Anodised", "PC", "WF"],
+            key="finish_primary"
         )
     
     with col2:
         interleaving_required = st.selectbox(
             "Interleaving Required",
-            ["Yes", "No"]
+            ["Yes", "No"],
+            key="interleaving_primary"
         )
     
     with col3:
         eco_friendly = st.selectbox(
             "Eco-Friendly Packing Material",
-            ["Mac foam", "Stretch wrap", "Craft Paper"]
+            ["Mac foam", "Stretch wrap", "Craft Paper"],
+            key="eco_friendly_primary"
         )
     
     with col4:
         protective_tape = st.selectbox(
             "Protective Tape (Customer Specified)",
-            ["Yes", "No"]
+            ["Yes", "No"],
+            key="protective_tape_primary"
         )
     
     st.divider()
@@ -89,13 +105,6 @@ with tab1:
     # Table 1: Material Costs
     st.markdown("**Table 1: Primary Packing Material Costs**")
     
-    # Initialize material costs in session state
-    if 'material_costs' not in st.session_state:
-        st.session_state.material_costs = pd.DataFrame({
-            "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
-            "Cost/ m²": [51.00, 34.65, 100.65, 14.38]
-        })
-    
     # Create editable material costs table
     edited_material_df = st.data_editor(
         st.session_state.material_costs,
@@ -104,7 +113,8 @@ with tab1:
         column_config={
             "Material": st.column_config.TextColumn("Material", required=True),
             "Cost/ m²": st.column_config.NumberColumn("Cost/ m²", required=True, min_value=0, format="%.2f")
-        }
+        },
+        key="material_editor"
     )
     
     # Update session state
@@ -112,15 +122,6 @@ with tab1:
     
     # Table 2: Cardboard Box Cost
     st.markdown("**Table 2: Cardboard Box Cost**")
-    
-    # Initialize cardboard box costs in session state
-    if 'box_costs' not in st.session_state:
-        st.session_state.box_costs = pd.DataFrame({
-            "Length(mm)": [330],
-            "Width (mm)": [210],
-            "Height (mm)": [135],
-            "Cost (LKR)": [205.00]
-        })
     
     # Create editable box costs table
     edited_box_df = st.data_editor(
@@ -132,7 +133,8 @@ with tab1:
             "Width (mm)": st.column_config.NumberColumn("Width (mm)", required=True, min_value=0),
             "Height (mm)": st.column_config.NumberColumn("Height (mm)", required=True, min_value=0),
             "Cost (LKR)": st.column_config.NumberColumn("Cost (LKR)", required=True, min_value=0, format="%.2f")
-        }
+        },
+        key="box_editor"
     )
     
     # Update session state
@@ -186,7 +188,10 @@ with tab1:
                 
                 # Calculate Packing Cost (proportional to reference box)
                 sku_volume = width * height * length
-                packing_cost = (sku_volume / ref_volume) * ref_box["Cost (LKR)"]
+                if ref_volume > 0:
+                    packing_cost = (sku_volume / ref_volume) * ref_box["Cost (LKR)"]
+                else:
+                    packing_cost = 0
                 
                 # Calculate Total Cost
                 total_cost = interleaving_cost + protective_tape_cost + packing_cost
@@ -195,8 +200,8 @@ with tab1:
                 calculations_data.append({
                     "SKU": sku["SKU No"],
                     "SA(m²)": round(sa_m2, 4),
-                    "Interleaving cost": round(interleaving_cost, 2),
-                    "Protective tape cost": round(protective_tape_cost, 2),
+                    "Interleaving cost (LKR)": round(interleaving_cost, 2),
+                    "Protective tape cost (LKR)": round(protective_tape_cost, 2),
                     "Packing type": "Cardboard box",
                     "Packing Cost (LKR)": round(packing_cost, 2),
                     "Total Cost (LKR)": round(total_cost, 2)
@@ -241,10 +246,6 @@ with tab2:
     # Section 1: SKU Table with dimensions (same as tab1)
     st.subheader("SKU Table with dimensions")
     
-    # Use the same SKU data from session state
-    if 'sku_data' not in st.session_state:
-        st.session_state.sku_data = pd.DataFrame(columns=sku_columns)
-    
     # Create editable dataframe for SKU input
     edited_sku_df_secondary = st.data_editor(
         st.session_state.sku_data,
@@ -260,7 +261,8 @@ with tab2:
                 options=["Fabricated", "Just Cutting"],
                 required=True
             )
-        }
+        },
+        key="sku_editor_secondary"
     )
     
     # Update session state with edited data
@@ -314,19 +316,22 @@ with tab2:
     with sec_col1:
         pallet_type = st.selectbox(
             "Pallet Type",
-            ["Wooden Pallet", "Plastic Pallet", "Paper Pallet", "Metal Pallet"]
+            ["Wooden Pallet", "Plastic Pallet", "Paper Pallet", "Metal Pallet"],
+            key="pallet_type"
         )
     
     with sec_col2:
         crate_type = st.selectbox(
             "Crate Type",
-            ["Wooden Crate", "Plastic Crate", "Cardboard Crate", "Metal Crate"]
+            ["Wooden Crate", "Plastic Crate", "Cardboard Crate", "Metal Crate"],
+            key="crate_type"
         )
     
     with sec_col3:
         container_type = st.selectbox(
             "Container Type",
-            ["20ft Container", "40ft Container", "40ft HC Container"]
+            ["20ft Container", "40ft Container", "40ft HC Container"],
+            key="container_type"
         )
     
     # Cost inputs for secondary packing
@@ -339,7 +344,8 @@ with tab2:
             "Pallet Cost (LKR)",
             min_value=0.0,
             value=2500.0,
-            step=100.0
+            step=100.0,
+            key="pallet_cost"
         )
     
     with cost_col2:
@@ -347,7 +353,8 @@ with tab2:
             "Crate Cost (LKR)",
             min_value=0.0,
             value=5000.0,
-            step=500.0
+            step=500.0,
+            key="crate_cost"
         )
     
     with cost_col3:
@@ -355,7 +362,8 @@ with tab2:
             "Strapping/Covering Cost (LKR)",
             min_value=0.0,
             value=1500.0,
-            step=100.0
+            step=100.0,
+            key="strapping_cost"
         )
     
     st.divider()
@@ -436,7 +444,7 @@ with tab2:
             
             container_capacity = container_capacities.get(container_type, 33.0)
             
-            if total_volume > 0:
+            if total_volume > 0 and container_capacity > 0:
                 containers_needed = np.ceil(total_volume / container_capacity)
                 utilization_percentage = (total_volume / (container_capacity * containers_needed)) * 100
                 
@@ -477,7 +485,6 @@ with tab2:
     """
     
     st.info(notes_box)
-        
 
 # Footer
 st.divider()
