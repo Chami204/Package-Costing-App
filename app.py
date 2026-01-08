@@ -446,8 +446,8 @@ with tab2:
     # Initialize stretch wrap costs in session state
     if 'stretchwrap_costs' not in st.session_state:
         st.session_state.stretchwrap_costs = pd.DataFrame({
-            "Area (mm²)": [1000000],  # Default 1 m² = 1,000,000 mm²
-            "Cost (LKR/mm²)": [0.00001438]  # Default cost
+            "Area (mm²)": [210000],  # Default 1 m² = 1,000,000 mm²
+            "Cost (LKR/mm²)": [135]  # Default cost
         })
     
     # Create editable stretch wrap costs table
