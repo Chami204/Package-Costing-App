@@ -1,0 +1,247 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+
+# Set page configuration
+st.set_page_config(
+    page_title="Packing Costing Calculator",
+    page_icon="📦",
+    layout="wide"
+)
+
+# App title
+st.title("📦 Packing Costing Calculator")
+
+# Create tabs
+tab1, tab2 = st.tabs(["Primary Calculations", "Secondary Calculations"])
+
+with tab1:
+    st.header("Primary Calculations")
+    
+    # Sub topic 1 - SKU Table with dimensions
+    st.subheader("SKU Table with dimensions")
+    
+    # Create initial empty dataframe for SKU table
+    sku_columns = ["SKU No", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"]
+    initial_sku_data = pd.DataFrame(columns=sku_columns)
+    
+    # Load or create session state for SKU data
+    if 'sku_data' not in st.session_state:
+        st.session_state.sku_data = initial_sku_data
+    
+    # Create editable dataframe for SKU input
+    edited_sku_df = st.data_editor(
+        st.session_state.sku_data,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "SKU No": st.column_config.TextColumn("SKU No", required=True),
+            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
+            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
+            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
+            "Comment on fabrication": st.column_config.TextColumn("Comment on fabrication")
+        }
+    )
+    
+    # Update session state with edited data
+    st.session_state.sku_data = edited_sku_df
+    
+    st.divider()
+    
+    # Section 2: Common Packing selections
+    st.subheader("Common Packing Selections")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        finish = st.selectbox(
+            "Finish",
+            ["Mill Finish", "Anodised", "PC", "WF"]
+        )
+    
+    with col2:
+        interleaving_required = st.selectbox(
+            "Interleaving Required",
+            ["Yes", "No"]
+        )
+    
+    with col3:
+        eco_friendly = st.selectbox(
+            "Eco-Friendly Packing Material",
+            ["Mac foam", "Stretch wrap", "Craft Paper"]
+        )
+    
+    with col4:
+        protective_tape = st.selectbox(
+            "Protective Tape (Customer Specified)",
+            ["Yes", "No"]
+        )
+    
+    st.divider()
+    
+    # Section 3: Primary Packing Total Cost
+    st.subheader("Primary Packing Total Cost")
+    
+    # Table 1: Material Costs
+    st.markdown("**Table 1: Primary Packing Material Costs**")
+    
+    # Initialize material costs in session state
+    if 'material_costs' not in st.session_state:
+        st.session_state.material_costs = pd.DataFrame({
+            "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+            "Cost/ m²": [51.00, 34.65, 100.65, 14.38]
+        })
+    
+    # Create editable material costs table
+    edited_material_df = st.data_editor(
+        st.session_state.material_costs,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Material": st.column_config.TextColumn("Material", required=True),
+            "Cost/ m²": st.column_config.NumberColumn("Cost/ m²", required=True, min_value=0, format="%.2f")
+        }
+    )
+    
+    # Update session state
+    st.session_state.material_costs = edited_material_df
+    
+    # Table 2: Cardboard Box Cost
+    st.markdown("**Table 2: Cardboard Box Cost**")
+    
+    # Initialize cardboard box costs in session state
+    if 'box_costs' not in st.session_state:
+        st.session_state.box_costs = pd.DataFrame({
+            "Length(mm)": [330],
+            "Width (mm)": [210],
+            "Height (mm)": [135],
+            "Cost (LKR)": [205.00]
+        })
+    
+    # Create editable box costs table
+    edited_box_df = st.data_editor(
+        st.session_state.box_costs,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Length(mm)": st.column_config.NumberColumn("Length(mm)", required=True, min_value=0),
+            "Width (mm)": st.column_config.NumberColumn("Width (mm)", required=True, min_value=0),
+            "Height (mm)": st.column_config.NumberColumn("Height (mm)", required=True, min_value=0),
+            "Cost (LKR)": st.column_config.NumberColumn("Cost (LKR)", required=True, min_value=0, format="%.2f")
+        }
+    )
+    
+    # Update session state
+    st.session_state.box_costs = edited_box_df
+    
+    # Calculate and display Table 3: Primary Packing Total Cost
+    st.markdown("**Table 3: Primary Packing Total Cost**")
+    
+    if not st.session_state.sku_data.empty:
+        # Prepare calculations
+        calculations_data = []
+        
+        # Get material costs as dictionary for easy lookup
+        material_cost_dict = dict(zip(
+            st.session_state.material_costs["Material"],
+            st.session_state.material_costs["Cost/ m²"]
+        ))
+        
+        # Get reference box dimensions and cost
+        ref_box = st.session_state.box_costs.iloc[0]
+        ref_volume = ref_box["Length(mm)"] * ref_box["Width (mm)"] * ref_box["Height (mm)"]
+        
+        for _, sku in st.session_state.sku_data.iterrows():
+            try:
+                # Extract SKU dimensions
+                width = float(sku["Width/mm"])
+                height = float(sku["Height/mm"])
+                length = float(sku["Length/mm"])
+                
+                # Calculate Surface Area in m²
+                sa_m2 = (2 * ((width * height) + (width * length) + (height * length))) / (1000 * 1000)
+                
+                # Calculate Interleaving Cost
+                interleaving_cost = 0
+                if interleaving_required == "Yes":
+                    # Map eco_friendly selection to material name
+                    material_map = {
+                        "Mac foam": "McFoam",
+                        "Stretch wrap": "Stretchwrap",
+                        "Craft Paper": "Craft Paper"
+                    }
+                    selected_material = material_map.get(eco_friendly, "McFoam")
+                    cost_per_m2 = material_cost_dict.get(selected_material, 0)
+                    interleaving_cost = cost_per_m2 * sa_m2
+                
+                # Calculate Protective Tape Cost
+                protective_tape_cost = 0
+                if protective_tape == "Yes":
+                    cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
+                    protective_tape_cost = cost_per_m2 * sa_m2
+                
+                # Calculate Packing Cost (proportional to reference box)
+                sku_volume = width * height * length
+                packing_cost = (sku_volume / ref_volume) * ref_box["Cost (LKR)"]
+                
+                # Calculate Total Cost
+                total_cost = interleaving_cost + protective_tape_cost + packing_cost
+                
+                # Add to calculations data
+                calculations_data.append({
+                    "SKU": sku["SKU No"],
+                    "SA(m²)": round(sa_m2, 4),
+                    "Interleaving cost": round(interleaving_cost, 2),
+                    "Protective tape cost": round(protective_tape_cost, 2),
+                    "Packing type": "Cardboard box",
+                    "Packing Cost (LKR)": round(packing_cost, 2),
+                    "Total Cost (LKR)": round(total_cost, 2)
+                })
+                
+            except (ValueError, TypeError):
+                # Skip if dimensions are not valid numbers
+                continue
+        
+        if calculations_data:
+            calculations_df = pd.DataFrame(calculations_data)
+            st.dataframe(calculations_df, use_container_width=True)
+            
+            # Display total sum
+            total_sum = calculations_df["Total Cost (LKR)"].sum()
+            st.metric("**Total Primary Packing Cost**", f"LKR {total_sum:,.2f}")
+        else:
+            st.warning("Please enter valid SKU data with numeric dimensions.")
+    else:
+        st.info("Enter SKU data in the table above to see cost calculations.")
+    
+    st.divider()
+    
+    # Section 4: Special Comments Section
+    st.subheader("Special Comments Section")
+    
+    comments_box = f"""
+    **Costing is done according to primary packing. Therefore, this cost does not include any crate or palletizing charges. Please note that secondary packaging will incur an additional charge.**
+    
+    The interleaving material is **"{eco_friendly}"**.
+    
+    **Protective tape required to avoid rejects**
+    
+    **Costing is only inclusive of interleaving required & Cardboard Box/Polybag.**
+    """
+    
+    st.info(comments_box)
+
+with tab2:
+    st.header("Secondary Calculations")
+    st.info("Secondary calculations section will be implemented in the next phase.")
+    
+    # Placeholder for future implementation
+    st.write("This section will contain secondary packaging calculations including:")
+    st.write("- Palletizing costs")
+    st.write("- Crate packaging")
+    st.write("- Shipping container optimization")
+    st.write("- Bulk packaging calculations")
+
+# Footer
+st.divider()
+st.caption("Packing Costing Calculator v1.0 | All dimensions should be entered in millimeters (mm)")
