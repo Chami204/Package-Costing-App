@@ -40,7 +40,8 @@ with tab1:
                 options=["Fabricated", "Just Cutting"],
                 required=True
             )
-        }
+        },
+        key="sku_editor_primary"
     )
     
     st.divider()
@@ -53,25 +54,29 @@ with tab1:
     with col1:
         finish = st.selectbox(
             "Finish",
-            ["Mill Finish", "Anodised", "PC", "WF"]
+            ["Mill Finish", "Anodised", "PC", "WF"],
+            key="finish_primary"
         )
     
     with col2:
         interleaving_required = st.selectbox(
             "Interleaving Required",
-            ["Yes", "No"]
+            ["Yes", "No"],
+            key="interleaving_primary"
         )
     
     with col3:
         eco_friendly = st.selectbox(
             "Eco-Friendly Packing Material",
-            ["Mac foam", "Stretch wrap", "Craft Paper"]
+            ["Mac foam", "Stretch wrap", "Craft Paper"],
+            key="eco_friendly_primary"
         )
     
     with col4:
         protective_tape = st.selectbox(
             "Protective Tape (Customer Specified)",
-            ["Yes", "No"]
+            ["Yes", "No"],
+            key="protective_tape_primary"
         )
     
     st.divider()
@@ -95,7 +100,8 @@ with tab1:
         column_config={
             "Material": st.column_config.TextColumn("Material", required=True),
             "Cost/ m²": st.column_config.NumberColumn("Cost/ m²", required=True, min_value=0, format="%.2f")
-        }
+        },
+        key="material_editor_primary"
     )
     
     # Table 2: Cardboard Box Cost
@@ -118,7 +124,8 @@ with tab1:
             "Width (mm)": st.column_config.NumberColumn("Width (mm)", required=True, min_value=0),
             "Height (mm)": st.column_config.NumberColumn("Height (mm)", required=True, min_value=0),
             "Cost (LKR)": st.column_config.NumberColumn("Cost (LKR)", required=True, min_value=0, format="%.2f")
-        }
+        },
+        key="box_editor_primary"
     )
     
     # Calculate and display Table 3: Primary Packing Total Cost
@@ -233,7 +240,8 @@ with tab2:
                 options=["Fabricated", "Just Cutting"],
                 required=True
             )
-        }
+        },
+        key="sku_editor_secondary"
     )
     
     st.divider()
@@ -247,28 +255,28 @@ with tab2:
         finish_tab2 = st.selectbox(
             "Finish",
             ["Mill Finish", "Anodised", "PC", "WF"],
-            key="finish_tab2"
+            key="finish_secondary"
         )
     
     with col2:
         interleaving_required_tab2 = st.selectbox(
             "Interleaving Required",
             ["Yes", "No"],
-            key="interleaving_tab2"
+            key="interleaving_secondary"
         )
     
     with col3:
         eco_friendly_tab2 = st.selectbox(
             "Eco-Friendly Packing Material",
             ["Mac foam", "Stretch wrap", "Craft Paper"],
-            key="eco_friendly_tab2"
+            key="eco_friendly_secondary"
         )
     
     with col4:
         protective_tape_tab2 = st.selectbox(
             "Protective Tape (Customer Specified)",
             ["Yes", "No"],
-            key="protective_tape_tab2"
+            key="protective_tape_secondary"
         )
     
     # Secondary calculations placeholder
