@@ -756,13 +756,52 @@ with col1:
             st.session_state.save_clicked = False
         else:
             st.warning("Read-only mode. Enter correct password to unlock tables.")
+            
 with col2:
     if st.session_state.edit_mode:
         if st.button("💾 Save All Tables", use_container_width=True):
-            # Simulate saving logic
-            st.success("All tables saved!")
-            st.session_state.edit_mode = False
-            st.session_state.save_clicked = True
+            try:
+                # Get the CURRENT edited tables from session state
+                # Interleaving table
+                if "edit_interleaving" in st.session_state:
+                    interleaving_df = st.session_state.edit_interleaving
+                
+                # Polybag table
+                if "edit_polybag_table" in st.session_state:
+                    polybag_ref = st.session_state.edit_polybag_table
+                
+                # Cardboard Box table
+                if "edit_CardboardBox_table" in st.session_state:
+                    cardboard_ref = st.session_state.edit_CardboardBox_table
+                
+                # Stretchwrap table
+                if "edit_Stretchwrap_Cost_table" in st.session_state:
+                    stretchwrap_ref = st.session_state.edit_Stretchwrap_Cost_table
+                
+                # Crate Cost table
+                if "edit_crate_cost_edit" in st.session_state:
+                    crate_cost_df = st.session_state.edit_crate_cost_edit
+                
+                # Pallet Cost table
+                if "edit_pallet_cost_edit" in st.session_state:
+                    pallet_cost_df = st.session_state.edit_pallet_cost_edit
+                
+                # Strapping Cost table
+                if "edit_strapping_cost_edit" in st.session_state:
+                    strapping_cost_df = st.session_state.edit_strapping_cost_edit
+                
+                # Update the material cost lookup for interleaving
+                material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
+                
+                st.success("✅ All reference tables saved successfully!")
+                st.session_state.edit_mode = False
+                st.session_state.save_clicked = True
+                
+                # Clear cache to reload updated tables
+                st.cache_data.clear()
+                
+            except Exception as e:
+                st.error(f"Error saving tables: {str(e)}")
 
 #----------------------------------------Final tabs-----------------------------------------------
 
@@ -817,6 +856,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
