@@ -15,6 +15,45 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# Validate and fix session state dataframes if needed
+def validate_dataframe(df, default_df):
+    """Validate and fix dataframe structure"""
+    if not isinstance(df, pd.DataFrame):
+        return default_df.copy()
+    if df.empty:
+        return default_df.copy()
+    # Check if it has the basic structure of a dataframe
+    try:
+        # Try to access a common attribute
+        _ = df.columns
+        return df
+    except:
+        return default_df.copy()
+
+# Validate all dataframes
+if "interleaving_df" in st.session_state:
+    st.session_state.interleaving_df = validate_dataframe(
+        st.session_state.interleaving_df, 
+        pd.DataFrame({
+            "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+            "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
+        })
+    )
+
+
+
+
+if "polybag_ref" in st.session_state:
+    st.session_state.polybag_ref = validate_dataframe(
+        st.session_state.polybag_ref,
+        pd.DataFrame({
+            "Polybag Size": ["9 Inch"],
+            "Cost per m (LKR/m)": [12.8]
+        })
+    )
+
+# Add similar validation for all 7 dataframes...
+
 
 # ----- PASSWORD-PROTECTED REFERENCE TABLE SETUP -----
 EDIT_PASSWORD = "admin123"
@@ -804,6 +843,7 @@ with col2:
 
 #----------------------------------------Final tabs-----------------------------------------------
 
+
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📄 Interleaving Cost", 
     "👝 Polybag Cost", 
@@ -817,50 +857,73 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 with tab1:
     st.markdown("#### Interleaving Material Costs")
     if st.session_state.edit_mode:
-        st.data_editor(st.session_state.interleaving_df, num_rows="dynamic", key="edit_interleaving")
+        # Ensure dataframe is valid
+        if isinstance(st.session_state.interleaving_df, pd.DataFrame) and not st.session_state.interleaving_df.empty:
+            st.data_editor(st.session_state.interleaving_df, num_rows="dynamic", key="edit_interleaving")
+        else:
+            st.warning("Interleaving table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.interleaving_df)
 
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        st.data_editor(st.session_state.polybag_ref, num_rows="dynamic", key="edit_polybag_table")
+        if isinstance(st.session_state.polybag_ref, pd.DataFrame) and not st.session_state.polybag_ref.empty:
+            st.data_editor(st.session_state.polybag_ref, num_rows="dynamic", key="edit_polybag_table")
+        else:
+            st.warning("Polybag table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.polybag_ref)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        st.data_editor(st.session_state.cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
+        if isinstance(st.session_state.cardboard_ref, pd.DataFrame) and not st.session_state.cardboard_ref.empty:
+            st.data_editor(st.session_state.cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
+        else:
+            st.warning("Cardboard box table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.cardboard_ref)
 
 with tab4:
     st.markdown("#### Stretchwrap Cost")
     if st.session_state.edit_mode:
-        st.data_editor(st.session_state.stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
+        if isinstance(st.session_state.stretchwrap_ref, pd.DataFrame) and not st.session_state.stretchwrap_ref.empty:
+            st.data_editor(st.session_state.stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
+        else:
+            st.warning("Stretchwrap table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.stretchwrap_ref)
 
 with tab5:
     st.markdown("#### Crate Cost Reference")
     if st.session_state.edit_mode:
-        st.data_editor(st.session_state.crate_cost_df, num_rows="dynamic", key="edit_crate_cost_edit")
+        if isinstance(st.session_state.crate_cost_df, pd.DataFrame) and not st.session_state.crate_cost_df.empty:
+            st.data_editor(st.session_state.crate_cost_df, num_rows="dynamic", key="edit_crate_cost_edit")
+        else:
+            st.warning("Crate cost table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.crate_cost_df)
 
 with tab6:
     st.markdown("#### Pallet Cost Reference")
     if st.session_state.edit_mode:
-        st.data_editor(st.session_state.pallet_cost_df, num_rows="dynamic", key="edit_pallet_cost_edit")
+        if isinstance(st.session_state.pallet_cost_df, pd.DataFrame) and not st.session_state.pallet_cost_df.empty:
+            st.data_editor(st.session_state.pallet_cost_df, num_rows="dynamic", key="edit_pallet_cost_edit")
+        else:
+            st.warning("Pallet cost table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.pallet_cost_df)
 
 with tab7:
     st.markdown("#### PP Strapping Cost Reference")
     if st.session_state.edit_mode:
-        st.data_editor(st.session_state.strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
+        if isinstance(st.session_state.strapping_cost_df, pd.DataFrame) and not st.session_state.strapping_cost_df.empty:
+            st.data_editor(st.session_state.strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
+        else:
+            st.warning("Strapping cost table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.strapping_cost_df)
+
 
 
