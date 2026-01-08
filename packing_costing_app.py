@@ -843,47 +843,121 @@ with col2:
         if st.button("💾 Save All Tables", use_container_width=True):
             try:
                 # Update session state with edited tables
+                success = True
+                error_messages = []
+                
+                # 1. Interleaving table
                 if "edit_interleaving" in st.session_state:
-                    st.session_state.interleaving_df = st.session_state.edit_interleaving
-                    # Update material_cost_lookup
-                    material_cost_lookup = dict(zip(st.session_state.interleaving_df["Material"], 
-                                                    st.session_state.interleaving_df["Cost per m² (LKR)"]))
+                    try:
+                        edited_df = st.session_state.edit_interleaving
+                        # Check if required columns exist
+                        if "Material" in edited_df.columns and "Cost per m² (LKR)" in edited_df.columns:
+                            st.session_state.interleaving_df = edited_df.copy()
+                            # Update material_cost_lookup
+                            material_cost_lookup.clear()
+                            material_cost_lookup.update(
+                                dict(zip(st.session_state.interleaving_df["Material"], 
+                                        st.session_state.interleaving_df["Cost per m² (LKR)"]))
+                            )
+                        else:
+                            error_messages.append("Interleaving table: Missing required columns 'Material' or 'Cost per m² (LKR)'")
+                            success = False
+                    except Exception as e:
+                        error_messages.append(f"Interleaving table error: {str(e)}")
+                        success = False
                 
+                # 2. Polybag table
                 if "edit_polybag_table" in st.session_state:
-                    st.session_state.polybag_ref = st.session_state.edit_polybag_table
-                    # Update polybag cost
-                    polybag_cost_per_m = float(st.session_state.polybag_ref["Cost per m (LKR/m)"].iloc[0])
+                    try:
+                        edited_df = st.session_state.edit_polybag_table
+                        if "Polybag Size" in edited_df.columns and "Cost per m (LKR/m)" in edited_df.columns:
+                            st.session_state.polybag_ref = edited_df.copy()
+                            # Update polybag cost
+                            if not edited_df.empty:
+                                polybag_cost_per_m = float(edited_df["Cost per m (LKR/m)"].iloc[0])
+                        else:
+                            error_messages.append("Polybag table: Missing required columns")
+                    except Exception as e:
+                        error_messages.append(f"Polybag table error: {str(e)}")
                 
+                # 3. Cardboard box table
                 if "edit_CardboardBox_table" in st.session_state:
-                    st.session_state.cardboard_ref = st.session_state.edit_CardboardBox_table
-                    # Update cardboard reference values
-                    ref_width = float(st.session_state.cardboard_ref["Width(mm)"].iloc[0])
-                    ref_height = float(st.session_state.cardboard_ref["Height(mm)"].iloc[0])
-                    ref_length = float(st.session_state.cardboard_ref["Length(mm)"].iloc[0])
-                    ref_cost = float(st.session_state.cardboard_ref["Cost(LKR)"].iloc[0])
-                    ref_volume = ref_width * ref_height * ref_length
+                    try:
+                        edited_df = st.session_state.edit_CardboardBox_table
+                        required_cols = ["Width(mm)", "Height(mm)", "Length(mm)", "Cost(LKR)"]
+                        if all(col in edited_df.columns for col in required_cols):
+                            st.session_state.cardboard_ref = edited_df.copy()
+                            # Update cardboard reference values
+                            if not edited_df.empty:
+                                ref_width = float(edited_df["Width(mm)"].iloc[0])
+                                ref_height = float(edited_df["Height(mm)"].iloc[0])
+                                ref_length = float(edited_df["Length(mm)"].iloc[0])
+                                ref_cost = float(edited_df["Cost(LKR)"].iloc[0])
+                                ref_volume = ref_width * ref_height * ref_length
+                        else:
+                            error_messages.append("Cardboard table: Missing required columns")
+                    except Exception as e:
+                        error_messages.append(f"Cardboard table error: {str(e)}")
                 
+                # 4. Stretchwrap table
                 if "edit_Stretchwrap_Cost_table" in st.session_state:
-                    st.session_state.stretchwrap_ref = st.session_state.edit_Stretchwrap_Cost_table
-                    # Update stretchwrap reference values
-                    ref_stretch_area = float(st.session_state.stretchwrap_ref["Area(mm²)"].iloc[0])
-                    ref_stretch_cost = float(st.session_state.stretchwrap_ref["Cost(Rs/mm²)"].iloc[0])
+                    try:
+                        edited_df = st.session_state.edit_Stretchwrap_Cost_table
+                        if "Area(mm²)" in edited_df.columns and "Cost(Rs/mm²)" in edited_df.columns:
+                            st.session_state.stretchwrap_ref = edited_df.copy()
+                            # Update stretchwrap reference values
+                            if not edited_df.empty:
+                                ref_stretch_area = float(edited_df["Area(mm²)"].iloc[0])
+                                ref_stretch_cost = float(edited_df["Cost(Rs/mm²)"].iloc[0])
+                        else:
+                            error_messages.append("Stretchwrap table: Missing required columns")
+                    except Exception as e:
+                        error_messages.append(f"Stretchwrap table error: {str(e)}")
                 
+                # 5. Crate cost table
                 if "edit_crate_cost_edit" in st.session_state:
-                    st.session_state.crate_cost_df = st.session_state.edit_crate_cost_edit
+                    try:
+                        edited_df = st.session_state.edit_crate_cost_edit
+                        required_cols = ["Width (mm)", "Height (mm)", "Length (mm)", "Cost (LKR)"]
+                        if all(col in edited_df.columns for col in required_cols):
+                            st.session_state.crate_cost_df = edited_df.copy()
+                        else:
+                            error_messages.append("Crate table: Missing required columns")
+                    except Exception as e:
+                        error_messages.append(f"Crate table error: {str(e)}")
                 
+                # 6. Pallet cost table
                 if "edit_pallet_cost_edit" in st.session_state:
-                    st.session_state.pallet_cost_df = st.session_state.edit_pallet_cost_edit
+                    try:
+                        edited_df = st.session_state.edit_pallet_cost_edit
+                        if "Width (mm)" in edited_df.columns and "Height (mm)" in edited_df.columns and "Cost (LKR)" in edited_df.columns:
+                            st.session_state.pallet_cost_df = edited_df.copy()
+                        else:
+                            error_messages.append("Pallet table: Missing required columns")
+                    except Exception as e:
+                        error_messages.append(f"Pallet table error: {str(e)}")
                 
+                # 7. Strapping cost table
                 if "edit_strapping_cost_edit" in st.session_state:
-                    st.session_state.strapping_cost_df = st.session_state.edit_strapping_cost_edit
+                    try:
+                        edited_df = st.session_state.edit_strapping_cost_edit
+                        if "Strapping Length (m)" in edited_df.columns and "Cost (LKR/m)" in edited_df.columns:
+                            st.session_state.strapping_cost_df = edited_df.copy()
+                        else:
+                            error_messages.append("Strapping table: Missing required columns")
+                    except Exception as e:
+                        error_messages.append(f"Strapping table error: {str(e)}")
                 
-                st.success("✅ All reference tables saved successfully!")
-                st.session_state.edit_mode = False
-                st.session_state.save_clicked = True
+                if success:
+                    st.session_state.edit_mode = False
+                    st.session_state.save_clicked = True
+                    st.success("✅ All reference tables saved successfully!")
+                else:
+                    st.error(f"Some tables could not be saved: {', '.join(error_messages)}")
                 
             except Exception as e:
                 st.error(f"Error saving tables: {str(e)}")
+                st.info("Try resetting the tables or check the column names.")
 
 #----------------------------------------Final tabs-----------------------------------------------
 
@@ -968,6 +1042,7 @@ with tab7:
             st.warning("Strapping cost table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.strapping_cost_df)
+
 
 
 
