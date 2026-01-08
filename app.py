@@ -528,10 +528,10 @@ with tab2:
                 # Calculate Packing cost(LKR/profile)
                 packing_cost_per_profile = 0
                 if packing_type == "polybag":
-                    # CORRECTED: (polybag cost/(polybag size*24.5*profiles per bundle))*(profile length)
+                    # (polybag cost/(polybag size*24.5*profiles per bundle))*(profile length)
                     # Polybag size is in inches, convert to meters: 1 inch = 0.0254 meters
-                    polybag_size_m = polybag_data["Polybag size (inches)"] * 24.5
-                    denominator = polybag_size_m * profiles_per_bundle
+                    polybag_size_m = polybag_data["Polybag size (inches)"] * 0.0254
+                    denominator = polybag_size_m * 24.5 * profiles_per_bundle
                     if denominator > 0:
                         packing_cost_per_profile = (polybag_data["Cost/m (LKR/m)"] / denominator) * profile_length
                 
@@ -545,12 +545,16 @@ with tab2:
                             packing_cost_per_profile = (box_data["Cost (LKR)"] / (box_volume * profiles_per_bundle)) * \
                                                       (bundle_height * bundle_width * profile_length)
                 
-                # Calculate Stretchwrap cost (LKR/prof.)
+                # Calculate Stretchwrap cost (LKR/prof.) - CORRECTED CONDITION
                 stretchwrap_cost_per_profile = 0
-                if stretchwrap_data["Area (mm²)"] > 0 and profiles_per_bundle > 0:
-                    stretchwrap_cost_per_profile = (stretchwrap_data["Cost (LKR/mm²)"] / 
-                                                   (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) * \
-                                                  (profile_width * profile_height)
+                # Only calculate stretchwrap cost if user selected "Stretch wrap" in Eco-Friendly Packing Material
+                if eco_friendly_tab2 == "Stretch wrap":
+                    if stretchwrap_data["Area (mm²)"] > 0 and profiles_per_bundle > 0:
+                        stretchwrap_cost_per_profile = (stretchwrap_data["Cost (LKR/mm²)"] / 
+                                                       (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) * \
+                                                      (profile_width * profile_height)
+                # If user selected "Mac foam" or "Craft Paper", stretchwrap cost should be zero
+                # (This is already set to 0 by default)
                 
                 # Calculate Protective tape cost (LKR/profile)
                 protective_tape_cost_per_profile = 0
@@ -605,6 +609,12 @@ with tab2:
             # Calculate and display total summary
             total_cost_all = sum(item["Total cost per profile"] for item in secondary_calculations_data)
             st.metric("**Total Secondary Packing Cost (All SKUs)**", f"LKR {total_cost_all:,.4f}")
+            
+            # Display note about stretchwrap cost
+            if eco_friendly_tab2 in ["Mac foam", "Craft Paper"]:
+                st.info(f"**Note:** Stretchwrap cost is 0 because '{eco_friendly_tab2}' was selected as the Eco-Friendly Packing Material.")
+            elif eco_friendly_tab2 == "Stretch wrap":
+                st.info(f"**Note:** Stretchwrap cost is calculated because 'Stretch wrap' was selected as the Eco-Friendly Packing Material.")
         else:
             st.warning("Unable to calculate costs. Please check all input data is valid.")
     else:
