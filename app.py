@@ -212,4 +212,54 @@ with tab1:
 
 with tab2:
     st.header("Secondary Calculations")
-    st.info("Secondary calculations section")
+    
+    # SKU input table (same as tab1)
+    st.subheader("SKU Table with dimensions")
+    
+    edited_sku_df_tab2 = st.data_editor(
+        initial_sku_data,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "SKU No": st.column_config.TextColumn("SKU No", required=True),
+            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
+            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
+            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
+            "Comment on fabrication": st.column_config.SelectboxColumn(
+                "Comment on fabrication",
+                options=["Fabricated", "Just Cutting"],
+                required=True
+            )
+        }
+    )
+    
+    st.divider()
+    
+    # Common packing selections (same as tab1)
+    st.subheader("Common Packing Selections")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        finish_tab2 = st.selectbox(
+            "Finish",
+            ["Mill Finish", "Anodised", "PC", "WF"]
+        )
+    
+    with col2:
+        interleaving_required_tab2 = st.selectbox(
+            "Interleaving Required",
+            ["Yes", "No"]
+        )
+    
+    with col3:
+        eco_friendly_tab2 = st.selectbox(
+            "Eco-Friendly Packing Material",
+            ["Mac foam", "Stretch wrap", "Craft Paper"]
+        )
+    
+    with col4:
+        protective_tape_tab2 = st.selectbox(
+            "Protective Tape (Customer Specified)",
+            ["Yes", "No"]
+        )
