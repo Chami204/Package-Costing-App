@@ -65,6 +65,50 @@ if "save_clicked" not in st.session_state:
     st.session_state.save_clicked = False
 
 
+# Add a reset button to fix corrupted data
+if st.session_state.edit_mode:
+    if st.button("🔄 Reset All Tables to Default", use_container_width=True):
+        # Reset all tables to default
+        st.session_state.interleaving_df = pd.DataFrame({
+            "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+            "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
+        })
+        st.session_state.polybag_ref = pd.DataFrame({
+            "Polybag Size": ["9 Inch"],
+            "Cost per m (LKR/m)": [12.8]
+        })
+        st.session_state.cardboard_ref = pd.DataFrame({
+            "Width(mm)": ["210"],
+            "Height(mm)": ["135"],
+            "Length(mm)": ["330"],
+            "Cost(LKR)": [205]
+        })
+        st.session_state.stretchwrap_ref = pd.DataFrame({
+            "Area(mm²)": [210000],
+            "Cost(Rs/mm²)": [135]
+        })
+        st.session_state.crate_cost_df = pd.DataFrame({
+            "Width (mm)": [480],
+            "Height (mm)": [590],
+            "Length (mm)": [2000],
+            "Cost (LKR)": [5000.0]
+        })
+        st.session_state.pallet_cost_df = pd.DataFrame({
+            "Width (mm)": [2000],
+            "Height (mm)": [600],
+            "Cost (LKR)": [3000.0]
+        })
+        st.session_state.strapping_cost_df = pd.DataFrame({
+            "Strapping Length (m)": [1.0],
+            "Cost (LKR/m)": [15.0]
+        })
+        st.success("All tables reset to default values!")
+        st.rerun()
+
+
+
+
+
 # Initialize session state for tables if not exists
 if "interleaving_df" not in st.session_state:
     st.session_state.interleaving_df = pd.DataFrame({
@@ -924,6 +968,7 @@ with tab7:
             st.warning("Strapping cost table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.strapping_cost_df)
+
 
 
 
