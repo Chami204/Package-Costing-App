@@ -90,11 +90,18 @@ ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.
 polybag_cost_per_m = float(polybag_ref["Cost per m (LKR/m)"].iloc[0])
 polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
 
-#-------------------------------Carboard Box------------------------
-def load_CardboardBox_table():
-    return st.session_state.cardboard_ref
+#----------------Interleaving-------------------------
+interleaving_df = st.session_state.interleaving_df
+material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
 
-cardboard_ref = load_CardboardBox_table()
+#------------------Polybag-------------------------
+polybag_ref = st.session_state.polybag_ref
+ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.4  # Convert inches to mm
+polybag_cost_per_m = float(polybag_ref["Cost per m (LKR/m)"].iloc[0])
+polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
+
+#-------------------------------Carboard Box------------------------
+cardboard_ref = st.session_state.cardboard_ref
 ref_width = float(cardboard_ref["Width(mm)"].iloc[0])
 ref_height = float(cardboard_ref["Height(mm)"].iloc[0])
 ref_length = float(cardboard_ref["Length(mm)"].iloc[0])
@@ -102,29 +109,17 @@ ref_cost = float(cardboard_ref["Cost(LKR)"].iloc[0])
 ref_volume = ref_width * ref_height * ref_length
 
 #---------------------------Stretchwrap------------------------------
-def load_stretchwrap_table():
-    return st.session_state.stretchwrap_ref
-
-stretchwrap_ref = load_stretchwrap_table()
+stretchwrap_ref = st.session_state.stretchwrap_ref
 ref_stretch_area = float(stretchwrap_ref["Area(mm²)"].iloc[0])
 ref_stretch_cost = float(stretchwrap_ref["Cost(Rs/mm²)"].iloc[0])
 
-
 #----------------------Crate or Pallet Cost reference table---------------------------
-def load_crate_cost_table():
-    return st.session_state.crate_cost_df
-
-def load_pallet_cost_table():
-    return st.session_state.pallet_cost_df
-
-crate_cost_df = load_crate_cost_table()
-pallet_cost_df = load_pallet_cost_table()
+crate_cost_df = st.session_state.crate_cost_df
+pallet_cost_df = st.session_state.pallet_cost_df
 
 #-------------------------Strapping clips & straps cost------------------------------
-def load_strapping_cost_table():
-    return st.session_state.strapping_cost_df
+strapping_cost_df = st.session_state.strapping_cost_df
 
-strapping_cost_df = load_strapping_cost_table()
 
 # --------------------------=INPUT TABLE SETUP ------------------------
 input_data = pd.DataFrame({
@@ -832,48 +827,49 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 with tab1:
     st.markdown("#### Interleaving Material Costs")
     if st.session_state.edit_mode:
-        interleaving_df = st.data_editor(st.session_state.interleaving_df, num_rows="dynamic", key="edit_interleaving")
+        st.data_editor(st.session_state.interleaving_df, num_rows="dynamic", key="edit_interleaving")
     else:
         st.dataframe(st.session_state.interleaving_df)
 
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        polybag_ref = st.data_editor(st.session_state.polybag_ref, num_rows="dynamic", key="edit_polybag_table")
+        st.data_editor(st.session_state.polybag_ref, num_rows="dynamic", key="edit_polybag_table")
     else:
         st.dataframe(st.session_state.polybag_ref)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        cardboard_ref = st.data_editor(st.session_state.cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
+        st.data_editor(st.session_state.cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
     else:
         st.dataframe(st.session_state.cardboard_ref)
 
 with tab4:
     st.markdown("#### Stretchwrap Cost")
     if st.session_state.edit_mode:
-        stretchwrap_ref = st.data_editor(st.session_state.stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
+        st.data_editor(st.session_state.stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
     else:
         st.dataframe(st.session_state.stretchwrap_ref)
 
 with tab5:
     st.markdown("#### Crate Cost Reference")
     if st.session_state.edit_mode:
-        crate_cost_df = st.data_editor(st.session_state.crate_cost_df, num_rows="dynamic", key="edit_crate_cost_edit")
+        st.data_editor(st.session_state.crate_cost_df, num_rows="dynamic", key="edit_crate_cost_edit")
     else:
         st.dataframe(st.session_state.crate_cost_df)
 
 with tab6:
     st.markdown("#### Pallet Cost Reference")
     if st.session_state.edit_mode:
-        pallet_cost_df = st.data_editor(st.session_state.pallet_cost_df, num_rows="dynamic", key="edit_pallet_cost_edit")
+        st.data_editor(st.session_state.pallet_cost_df, num_rows="dynamic", key="edit_pallet_cost_edit")
     else:
         st.dataframe(st.session_state.pallet_cost_df)
 
 with tab7:
     st.markdown("#### PP Strapping Cost Reference")
     if st.session_state.edit_mode:
-        strapping_cost_df = st.data_editor(st.session_state.strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
+        st.data_editor(st.session_state.strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     else:
         st.dataframe(st.session_state.strapping_cost_df)
+
