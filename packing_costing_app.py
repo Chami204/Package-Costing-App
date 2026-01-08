@@ -760,12 +760,19 @@ with col1:
 with col2:
     if st.session_state.edit_mode:
         if st.button("💾 Save All Tables", use_container_width=True):
-            # Clear the cache so tables reload
-            st.cache_data.clear()
-            st.success("All tables saved! The app will reload with updated values.")
-            st.session_state.edit_mode = False
-            st.session_state.save_clicked = True
-            st.rerun()
+            try:
+                # Note: In Streamlit, data_editor doesn't actually modify the original dataframe
+                # until the user interacts with it. The session state contains the edited data.
+                # We need to check if session state has the edited data and update our dataframes.
+                
+                # Clear cache to reload updated tables
+                st.cache_data.clear()
+                
+                # Force a rerun to reload data from cache functions
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"Error saving tables: {str(e)}")
 
 #----------------------------------------Final tabs-----------------------------------------------
 
@@ -820,6 +827,7 @@ with tab7:
     if st.session_state.edit_mode:
         strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
     st.dataframe(strapping_cost_df)
+
 
 
 
