@@ -235,71 +235,71 @@ with tab1:
     
     st.info(comments_box)
 
-with tab2:
-    # Sub topic 1 - SKU Table with dimensions
-    st.subheader("SKU Table with dimensions")
-    
-    # Create initial empty dataframe for SKU table
-    sku_columns = ["SKU No", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"]
-    initial_sku_data = pd.DataFrame(columns=sku_columns)
-    
-    # Load or create session state for SKU data
-    if 'sku_data' not in st.session_state:
-        st.session_state.sku_data = initial_sku_data
-    
-    # Create editable dataframe for SKU input
-    edited_sku_df = st.data_editor(
-        st.session_state.sku_data,
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "SKU No": st.column_config.TextColumn("SKU No", required=True),
-            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
-            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
-            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
-            "Comment on fabrication": st.column_config.SelectboxColumn(
-                "Comment on fabrication",
-                options=["Fabricated", "Just Cutting"],
-                required=True
+    with tab2:
+        # Sub topic 1 - SKU Table with dimensions
+        st.subheader("SKU Table with dimensions")
+        
+        # Create initial empty dataframe for SKU table
+        sku_columns = ["SKU No", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"]
+        initial_sku_data = pd.DataFrame(columns=sku_columns)
+        
+        # Load or create session state for SKU data
+        if 'sku_data' not in st.session_state:
+            st.session_state.sku_data = initial_sku_data
+        
+        # Create editable dataframe for SKU input
+        edited_sku_df = st.data_editor(
+            st.session_state.sku_data,
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "SKU No": st.column_config.TextColumn("SKU No", required=True),
+                "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
+                "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
+                "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
+                "Comment on fabrication": st.column_config.SelectboxColumn(
+                    "Comment on fabrication",
+                    options=["Fabricated", "Just Cutting"],
+                    required=True
+                )
+            }
+        )
+        
+        # Update session state with edited data
+        st.session_state.sku_data = edited_sku_df
+        
+        st.divider()
+        
+        # Section 2: Common Packing selections
+        st.subheader("Common Packing Selections")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            finish = st.selectbox(
+                "Finish",
+                ["Mill Finish", "Anodised", "PC", "WF"]
             )
-        }
-    )
-    
-    # Update session state with edited data
-    st.session_state.sku_data = edited_sku_df
-    
-    st.divider()
-    
-    # Section 2: Common Packing selections
-    st.subheader("Common Packing Selections")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        finish = st.selectbox(
-            "Finish",
-            ["Mill Finish", "Anodised", "PC", "WF"]
-        )
-    
-    with col2:
-        interleaving_required = st.selectbox(
-            "Interleaving Required",
-            ["Yes", "No"]
-        )
-    
-    with col3:
-        eco_friendly = st.selectbox(
-            "Eco-Friendly Packing Material",
-            ["Mac foam", "Stretch wrap", "Craft Paper"]
-        )
-    
-    with col4:
-        protective_tape = st.selectbox(
-            "Protective Tape (Customer Specified)",
-            ["Yes", "No"]
-        )
-    
-    st.divider()
+        
+        with col2:
+            interleaving_required = st.selectbox(
+                "Interleaving Required",
+                ["Yes", "No"]
+            )
+        
+        with col3:
+            eco_friendly = st.selectbox(
+                "Eco-Friendly Packing Material",
+                ["Mac foam", "Stretch wrap", "Craft Paper"]
+            )
+        
+        with col4:
+            protective_tape = st.selectbox(
+                "Protective Tape (Customer Specified)",
+                ["Yes", "No"]
+            )
+        
+        st.divider()
     
         
 
