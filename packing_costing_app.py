@@ -1,7 +1,6 @@
-#for lasting 4-------------
+#for lasting 5-------------
 import streamlit as st
 import pandas as pd
-
 
 # Page setup
 st.set_page_config(layout="wide", page_title="🎯💰 Packing Costing App", page_icon="🎯💰")
@@ -27,24 +26,64 @@ if "save_clicked" not in st.session_state:
     st.session_state.save_clicked = False
 
 
-#----------------Interleaving-------------------------
-@st.cache_data
-def load_interleaving_table():
-    return pd.DataFrame({
+# Initialize session state for tables if not exists
+if "interleaving_df" not in st.session_state:
+    st.session_state.interleaving_df = pd.DataFrame({
         "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
         "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
     })
+
+if "polybag_ref" not in st.session_state:
+    st.session_state.polybag_ref = pd.DataFrame({
+        "Polybag Size": ["9 Inch"],
+        "Cost per m (LKR/m)": [12.8]
+    })
+
+if "cardboard_ref" not in st.session_state:
+    st.session_state.cardboard_ref = pd.DataFrame({
+        "Width(mm)": ["210"],
+        "Height(mm)": ["135"],
+        "Length(mm)": ["330"],
+        "Cost(LKR)": [205]
+    })
+
+if "stretchwrap_ref" not in st.session_state:
+    st.session_state.stretchwrap_ref = pd.DataFrame({
+        "Area(mm²)": [210000],
+        "Cost(Rs/mm²)": [135]
+    })
+
+if "crate_cost_df" not in st.session_state:
+    st.session_state.crate_cost_df = pd.DataFrame({
+        "Width (mm)": [480],
+        "Height (mm)": [590],
+        "Length (mm)": [2000],
+        "Cost (LKR)": [5000.0]
+    })
+
+if "pallet_cost_df" not in st.session_state:
+    st.session_state.pallet_cost_df = pd.DataFrame({
+        "Width (mm)": [2000],
+        "Height (mm)": [600],
+        "Cost (LKR)": [3000.0]
+    })
+
+if "strapping_cost_df" not in st.session_state:
+    st.session_state.strapping_cost_df = pd.DataFrame({
+        "Strapping Length (m)": [1.0],
+        "Cost (LKR/m)": [15.0]
+    })
+
+#----------------Interleaving-------------------------
+def load_interleaving_table():
+    return st.session_state.interleaving_df
 
 interleaving_df = load_interleaving_table()
 material_cost_lookup = dict(zip(interleaving_df["Material"], interleaving_df["Cost per m² (LKR)"]))
 
 #------------------Polybag-------------------------
-@st.cache_data
 def load_polybag_table():
-    return pd.DataFrame({
-        "Polybag Size": ["9 Inch"],
-        "Cost per m (LKR/m)": [12.8]
-    })
+    return st.session_state.polybag_ref
 
 polybag_ref = load_polybag_table()
 ref_polybag_length = float(polybag_ref["Polybag Size"].iloc[0].split()[0]) * 25.4  # Convert inches to mm
@@ -52,14 +91,8 @@ polybag_cost_per_m = float(polybag_ref["Cost per m (LKR/m)"].iloc[0])
 polybag_size_m = ref_polybag_length / 1000  # Convert mm to m
 
 #-------------------------------Carboard Box------------------------
-@st.cache_data
 def load_CardboardBox_table():
-    return pd.DataFrame({
-        "Width(mm)": ["210"],
-        "Height(mm)": ["135"],
-        "Length(mm)": ["330"],
-        "Cost(LKR)": [205]
-    })
+    return st.session_state.cardboard_ref
 
 cardboard_ref = load_CardboardBox_table()
 ref_width = float(cardboard_ref["Width(mm)"].iloc[0])
@@ -69,12 +102,8 @@ ref_cost = float(cardboard_ref["Cost(LKR)"].iloc[0])
 ref_volume = ref_width * ref_height * ref_length
 
 #---------------------------Stretchwrap------------------------------
-@st.cache_data
 def load_stretchwrap_table():
-    return pd.DataFrame({
-        "Area(mm²)": [210000],
-        "Cost(Rs/mm²)": [135]
-    })
+    return st.session_state.stretchwrap_ref
 
 stretchwrap_ref = load_stretchwrap_table()
 ref_stretch_area = float(stretchwrap_ref["Area(mm²)"].iloc[0])
@@ -82,33 +111,18 @@ ref_stretch_cost = float(stretchwrap_ref["Cost(Rs/mm²)"].iloc[0])
 
 
 #----------------------Crate or Pallet Cost reference table---------------------------
-@st.cache_data
 def load_crate_cost_table():
-    return pd.DataFrame({
-        "Width (mm)": [480],
-        "Height (mm)": [590],
-        "Length (mm)": [2000],
-        "Cost (LKR)": [5000.0]
-    })
-    
-@st.cache_data
+    return st.session_state.crate_cost_df
+
 def load_pallet_cost_table():
-    return pd.DataFrame({
-        "Width (mm)": [2000],
-        "Height (mm)": [600],
-        "Cost (LKR)": [3000.0]
-    })
+    return st.session_state.pallet_cost_df
 
 crate_cost_df = load_crate_cost_table()
 pallet_cost_df = load_pallet_cost_table()
 
 #-------------------------Strapping clips & straps cost------------------------------
-@st.cache_data
 def load_strapping_cost_table():
-    return pd.DataFrame({
-        "Strapping Length (m)": [1.0],
-        "Cost (LKR/m)": [15.0]
-    })
+    return st.session_state.strapping_cost_df
 
 strapping_cost_df = load_strapping_cost_table()
 
@@ -756,20 +770,49 @@ with col1:
             st.session_state.save_clicked = False
         else:
             st.warning("Read-only mode. Enter correct password to unlock tables.")
-            
 with col2:
     if st.session_state.edit_mode:
         if st.button("💾 Save All Tables", use_container_width=True):
             try:
-                # Note: In Streamlit, data_editor doesn't actually modify the original dataframe
-                # until the user interacts with it. The session state contains the edited data.
-                # We need to check if session state has the edited data and update our dataframes.
+                # Update session state with edited tables
+                if "edit_interleaving" in st.session_state:
+                    st.session_state.interleaving_df = st.session_state.edit_interleaving
+                    # Update material_cost_lookup
+                    material_cost_lookup = dict(zip(st.session_state.interleaving_df["Material"], 
+                                                    st.session_state.interleaving_df["Cost per m² (LKR)"]))
                 
-                # Clear cache to reload updated tables
-                st.cache_data.clear()
+                if "edit_polybag_table" in st.session_state:
+                    st.session_state.polybag_ref = st.session_state.edit_polybag_table
+                    # Update polybag cost
+                    polybag_cost_per_m = float(st.session_state.polybag_ref["Cost per m (LKR/m)"].iloc[0])
                 
-                # Force a rerun to reload data from cache functions
-                st.rerun()
+                if "edit_CardboardBox_table" in st.session_state:
+                    st.session_state.cardboard_ref = st.session_state.edit_CardboardBox_table
+                    # Update cardboard reference values
+                    ref_width = float(st.session_state.cardboard_ref["Width(mm)"].iloc[0])
+                    ref_height = float(st.session_state.cardboard_ref["Height(mm)"].iloc[0])
+                    ref_length = float(st.session_state.cardboard_ref["Length(mm)"].iloc[0])
+                    ref_cost = float(st.session_state.cardboard_ref["Cost(LKR)"].iloc[0])
+                    ref_volume = ref_width * ref_height * ref_length
+                
+                if "edit_Stretchwrap_Cost_table" in st.session_state:
+                    st.session_state.stretchwrap_ref = st.session_state.edit_Stretchwrap_Cost_table
+                    # Update stretchwrap reference values
+                    ref_stretch_area = float(st.session_state.stretchwrap_ref["Area(mm²)"].iloc[0])
+                    ref_stretch_cost = float(st.session_state.stretchwrap_ref["Cost(Rs/mm²)"].iloc[0])
+                
+                if "edit_crate_cost_edit" in st.session_state:
+                    st.session_state.crate_cost_df = st.session_state.edit_crate_cost_edit
+                
+                if "edit_pallet_cost_edit" in st.session_state:
+                    st.session_state.pallet_cost_df = st.session_state.edit_pallet_cost_edit
+                
+                if "edit_strapping_cost_edit" in st.session_state:
+                    st.session_state.strapping_cost_df = st.session_state.edit_strapping_cost_edit
+                
+                st.success("✅ All reference tables saved successfully!")
+                st.session_state.edit_mode = False
+                st.session_state.save_clicked = True
                 
             except Exception as e:
                 st.error(f"Error saving tables: {str(e)}")
@@ -789,79 +832,48 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 with tab1:
     st.markdown("#### Interleaving Material Costs")
     if st.session_state.edit_mode:
-        interleaving_df = st.data_editor(interleaving_df, num_rows="dynamic", key="edit_interleaving")
-    st.dataframe(interleaving_df)
+        interleaving_df = st.data_editor(st.session_state.interleaving_df, num_rows="dynamic", key="edit_interleaving")
+    else:
+        st.dataframe(st.session_state.interleaving_df)
 
 with tab2:
     st.markdown("#### Polybag Cost")
     if st.session_state.edit_mode:
-        polybag_ref = st.data_editor(polybag_ref, num_rows="dynamic", key="edit_polybag_table")
-    st.dataframe(polybag_ref)
+        polybag_ref = st.data_editor(st.session_state.polybag_ref, num_rows="dynamic", key="edit_polybag_table")
+    else:
+        st.dataframe(st.session_state.polybag_ref)
 
 with tab3:
     st.markdown("#### Cardboard Box Cost")
     if st.session_state.edit_mode:
-        cardboard_ref = st.data_editor(cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
-    st.dataframe(cardboard_ref)
+        cardboard_ref = st.data_editor(st.session_state.cardboard_ref, num_rows="dynamic", key="edit_CardboardBox_table")
+    else:
+        st.dataframe(st.session_state.cardboard_ref)
 
 with tab4:
     st.markdown("#### Stretchwrap Cost")
     if st.session_state.edit_mode:
-        stretchwrap_ref = st.data_editor(stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
-    st.dataframe(stretchwrap_ref)
+        stretchwrap_ref = st.data_editor(st.session_state.stretchwrap_ref, num_rows="dynamic", key="edit_Stretchwrap_Cost_table")
+    else:
+        st.dataframe(st.session_state.stretchwrap_ref)
 
 with tab5:
     st.markdown("#### Crate Cost Reference")
     if st.session_state.edit_mode:
-        crate_cost_df = st.data_editor(crate_cost_df, num_rows="dynamic", key="edit_crate_cost_edit")
-    st.dataframe(crate_cost_df)
+        crate_cost_df = st.data_editor(st.session_state.crate_cost_df, num_rows="dynamic", key="edit_crate_cost_edit")
+    else:
+        st.dataframe(st.session_state.crate_cost_df)
 
 with tab6:
     st.markdown("#### Pallet Cost Reference")
     if st.session_state.edit_mode:
-        pallet_cost_df = st.data_editor(pallet_cost_df, num_rows="dynamic", key="edit_pallet_cost_edit")
-    st.dataframe(pallet_cost_df)
+        pallet_cost_df = st.data_editor(st.session_state.pallet_cost_df, num_rows="dynamic", key="edit_pallet_cost_edit")
+    else:
+        st.dataframe(st.session_state.pallet_cost_df)
 
 with tab7:
     st.markdown("#### PP Strapping Cost Reference")
     if st.session_state.edit_mode:
-        strapping_cost_df = st.data_editor(strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
-    st.dataframe(strapping_cost_df)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        strapping_cost_df = st.data_editor(st.session_state.strapping_cost_df, num_rows="dynamic", key="edit_strapping_cost_edit")
+    else:
+        st.dataframe(st.session_state.strapping_cost_df)
