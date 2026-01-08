@@ -1,4 +1,4 @@
-#for lasting 5-------------
+#for lasting 6-------------
 import streamlit as st
 import pandas as pd
 
@@ -15,45 +15,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Validate and fix session state dataframes if needed
-def validate_dataframe(df, default_df):
-    """Validate and fix dataframe structure"""
-    if not isinstance(df, pd.DataFrame):
-        return default_df.copy()
-    if df.empty:
-        return default_df.copy()
-    # Check if it has the basic structure of a dataframe
-    try:
-        # Try to access a common attribute
-        _ = df.columns
-        return df
-    except:
-        return default_df.copy()
-
-# Validate all dataframes
-if "interleaving_df" in st.session_state:
-    st.session_state.interleaving_df = validate_dataframe(
-        st.session_state.interleaving_df, 
-        pd.DataFrame({
-            "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
-            "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
-        })
-    )
-
-
-
-
-if "polybag_ref" in st.session_state:
-    st.session_state.polybag_ref = validate_dataframe(
-        st.session_state.polybag_ref,
-        pd.DataFrame({
-            "Polybag Size": ["9 Inch"],
-            "Cost per m (LKR/m)": [12.8]
-        })
-    )
-
-# Add similar validation for all 7 dataframes...
-
 
 # ----- PASSWORD-PROTECTED REFERENCE TABLE SETUP -----
 EDIT_PASSWORD = "admin123"
@@ -63,50 +24,6 @@ if "edit_mode" not in st.session_state:
 
 if "save_clicked" not in st.session_state:
     st.session_state.save_clicked = False
-
-
-# Add a reset button to fix corrupted data
-if st.session_state.edit_mode:
-    if st.button("🔄 Reset All Tables to Default", use_container_width=True):
-        # Reset all tables to default
-        st.session_state.interleaving_df = pd.DataFrame({
-            "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
-            "Cost per m² (LKR)": [51.00, 34.65, 100.65, 14.38]
-        })
-        st.session_state.polybag_ref = pd.DataFrame({
-            "Polybag Size": ["9 Inch"],
-            "Cost per m (LKR/m)": [12.8]
-        })
-        st.session_state.cardboard_ref = pd.DataFrame({
-            "Width(mm)": ["210"],
-            "Height(mm)": ["135"],
-            "Length(mm)": ["330"],
-            "Cost(LKR)": [205]
-        })
-        st.session_state.stretchwrap_ref = pd.DataFrame({
-            "Area(mm²)": [210000],
-            "Cost(Rs/mm²)": [135]
-        })
-        st.session_state.crate_cost_df = pd.DataFrame({
-            "Width (mm)": [480],
-            "Height (mm)": [590],
-            "Length (mm)": [2000],
-            "Cost (LKR)": [5000.0]
-        })
-        st.session_state.pallet_cost_df = pd.DataFrame({
-            "Width (mm)": [2000],
-            "Height (mm)": [600],
-            "Cost (LKR)": [3000.0]
-        })
-        st.session_state.strapping_cost_df = pd.DataFrame({
-            "Strapping Length (m)": [1.0],
-            "Cost (LKR/m)": [15.0]
-        })
-        st.success("All tables reset to default values!")
-        st.rerun()
-
-
-
 
 
 # Initialize session state for tables if not exists
@@ -192,7 +109,6 @@ pallet_cost_df = st.session_state.pallet_cost_df
 #-------------------------Strapping clips & straps cost------------------------------
 # Get the current strapping reference
 strapping_cost_df = st.session_state.strapping_cost_df
-
 
 # --------------------------=INPUT TABLE SETUP ------------------------
 input_data = pd.DataFrame({
@@ -961,7 +877,6 @@ with col2:
 
 #----------------------------------------Final tabs-----------------------------------------------
 
-
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📄 Interleaving Cost", 
     "👝 Polybag Cost", 
@@ -975,7 +890,6 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
 with tab1:
     st.markdown("#### Interleaving Material Costs")
     if st.session_state.edit_mode:
-        # Ensure dataframe is valid
         if isinstance(st.session_state.interleaving_df, pd.DataFrame) and not st.session_state.interleaving_df.empty:
             st.data_editor(st.session_state.interleaving_df, num_rows="dynamic", key="edit_interleaving")
         else:
@@ -1042,8 +956,3 @@ with tab7:
             st.warning("Strapping cost table data is not available or corrupted")
     else:
         st.dataframe(st.session_state.strapping_cost_df)
-
-
-
-
-
