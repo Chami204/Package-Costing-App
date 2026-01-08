@@ -279,6 +279,83 @@ with tab2:
             key="protective_tape_secondary"
         )
     
+    st.divider()
+    
+    # New Section: Input Bundling Data
+    st.subheader("Input Bundling Data")
+    
+    # Section 1 - Number of layers
+    st.markdown("**Section 1 - Number of layers**")
+    
+    # Initialize bundling data in session state
+    if 'bundling_data' not in st.session_state:
+        st.session_state.bundling_data = pd.DataFrame(columns=[
+            "Number of rows/bundle", 
+            "Number of layer/bundle", 
+            "width prof.type", 
+            "height prof.type"
+        ])
+    
+    # Create callback to update height prof.type based on width selection
+    def update_height_prof_type(df):
+        if not df.empty:
+            for idx, row in df.iterrows():
+                width_prof = row["width prof.type"]
+                if width_prof == "W/mm":
+                    df.at[idx, "height prof.type"] = "H/mm"
+                elif width_prof == "H/mm":
+                    df.at[idx, "height prof.type"] = "W/mm"
+        return df
+    
+    # Create editable bundling data table
+    edited_bundling_df = st.data_editor(
+        st.session_state.bundling_data,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Number of rows/bundle": st.column_config.NumberColumn("Number of rows/bundle", required=True, min_value=1),
+            "Number of layer/bundle": st.column_config.NumberColumn("Number of layer/bundle", required=True, min_value=1),
+            "width prof.type": st.column_config.SelectboxColumn(
+                "width prof.type",
+                options=["W/mm", "H/mm"],
+                required=True
+            ),
+            "height prof.type": st.column_config.TextColumn("height prof.type", required=True, disabled=True)
+        },
+        key="bundling_editor"
+    )
+    
+    # Update height prof.type based on width prof.type selection
+    updated_bundling_df = update_height_prof_type(edited_bundling_df.copy())
+    st.session_state.bundling_data = updated_bundling_df
+    
+    st.divider()
+    
+    # Section 2 - Size of bundle
+    st.markdown("**Section 2 - Size of bundle**")
+    
+    # Initialize bundle size data in session state
+    if 'bundle_size_data' not in st.session_state:
+        st.session_state.bundle_size_data = pd.DataFrame(columns=[
+            "Bundle width/mm", 
+            "Bundle Height/mm"
+        ])
+    
+    # Create editable bundle size table
+    edited_bundle_size_df = st.data_editor(
+        st.session_state.bundle_size_data,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Bundle width/mm": st.column_config.NumberColumn("Bundle width/mm", required=True, min_value=0),
+            "Bundle Height/mm": st.column_config.NumberColumn("Bundle Height/mm", required=True, min_value=0)
+        },
+        key="bundle_size_editor"
+    )
+    
+    # Update session state
+    st.session_state.bundle_size_data = edited_bundle_size_df
+    
     # Secondary calculations placeholder
     st.divider()
     st.subheader("Secondary Packing Calculations")
