@@ -580,8 +580,7 @@ with tab2:
                     if eco_friendly_tab2 == "Stretch wrap":
                         if stretchwrap_data["Area (mm²)"] > 0 and profiles_per_bundle > 0:
                             stretchwrap_cost_per_profile = (stretchwrap_data["Cost (LKR/mm²)"] / 
-                                                           (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) * 
-                                                          (profile_width * profile_height)
+                                                           (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) *sa_m2
                     # If user selected "Mac foam" or "Craft Paper", stretchwrap cost should be zero
                     # (This is already set to 0 by default)
                     
