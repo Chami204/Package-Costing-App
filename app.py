@@ -579,10 +579,30 @@ with tab2:
                     # Only calculate stretchwrap cost if user selected "Stretch wrap" in Eco-Friendly Packing Material
                     if eco_friendly_tab2 == "Stretch wrap":
                         if stretchwrap_data["Area (mm²)"] > 0 and profiles_per_bundle > 0:
+                            # Get bundle dimensions based on method used
+                            if use_method1:
+                                bundling_data = st.session_state.bundling_data.iloc[0]
+                                rows_per_bundle = float(bundling_data["Number of rows/bundle"])
+                                layers_per_bundle = float(bundling_data["Number of layer/bundle"])
+                                
+                                width_prof_type = bundling_data["width prof.type"]
+                                if width_prof_type == "W/mm":
+                                    # Width is profile width, height is profile height
+                                    bundle_width = profile_width * rows_per_bundle
+                                    bundle_height = profile_height * layers_per_bundle
+                                else:  # "H/mm"
+                                    # Width is profile height, height is profile width
+                                    bundle_width = profile_height * rows_per_bundle
+                                    bundle_height = profile_width * layers_per_bundle
+                                    
+                            else:  # use_method2
+                                bundle_size_data = st.session_state.bundle_size_data.iloc[0]
+                                bundle_width = float(bundle_size_data["Bundle width/mm"])
+                                bundle_height = float(bundle_size_data["Bundle Height/mm"])
+                            
                             stretchwrap_cost_per_profile = (stretchwrap_data["Cost (LKR/mm²)"] / 
-                                                           (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) *(profile_width * profile_height)
-                    # If user selected "Mac foam" or "Craft Paper", stretchwrap cost should be zero
-                    # (This is already set to 0 by default)
+                                                           (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) * \
+                                                          (bundle_width * bundle_height)  # <-- CORRECTED: Use bundle dimensions
                     
                     # Calculate Protective tape cost (LKR/profile)
                     protective_tape_cost_per_profile = 0
