@@ -216,8 +216,11 @@ with tab2:
     # SKU input table (same as tab1)
     st.subheader("SKU Table with dimensions")
     
+    # Create empty dataframe for SKU table
+    initial_sku_data_tab2 = pd.DataFrame(columns=sku_columns)
+    
     edited_sku_df_tab2 = st.data_editor(
-        initial_sku_data,
+        initial_sku_data_tab2,
         num_rows="dynamic",
         use_container_width=True,
         column_config={
@@ -243,23 +246,32 @@ with tab2:
     with col1:
         finish_tab2 = st.selectbox(
             "Finish",
-            ["Mill Finish", "Anodised", "PC", "WF"]
+            ["Mill Finish", "Anodised", "PC", "WF"],
+            key="finish_tab2"
         )
     
     with col2:
         interleaving_required_tab2 = st.selectbox(
             "Interleaving Required",
-            ["Yes", "No"]
+            ["Yes", "No"],
+            key="interleaving_tab2"
         )
     
     with col3:
         eco_friendly_tab2 = st.selectbox(
             "Eco-Friendly Packing Material",
-            ["Mac foam", "Stretch wrap", "Craft Paper"]
+            ["Mac foam", "Stretch wrap", "Craft Paper"],
+            key="eco_friendly_tab2"
         )
     
     with col4:
         protective_tape_tab2 = st.selectbox(
             "Protective Tape (Customer Specified)",
-            ["Yes", "No"]
+            ["Yes", "No"],
+            key="protective_tape_tab2"
         )
+    
+    # Secondary calculations placeholder
+    st.divider()
+    st.subheader("Secondary Packing Calculations")
+    st.info("Secondary packing calculations will be added here.")
