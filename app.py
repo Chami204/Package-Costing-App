@@ -74,53 +74,82 @@ st.title("📦 Packing Costing Calculator")
 
 
 # Create download button
+# Create download button function
 def create_excel_report():
+    # This function should return Excel file data
+    try:
+        # Check if there's any data to export
+        if st.session_state.edited_primary_calc is None or st.session_state.edited_primary_calc.empty:
+            raise Exception("No data available for export")
+        
+        # Create an Excel writer
+        from io import BytesIO
+        output = BytesIO()
+        
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            # Write primary calculations
+            if st.session_state.edited_primary_calc is not None:
+                st.session_state.edited_primary_calc.to_excel(writer, sheet_name='Primary_Calculations', index=False)
+            
+            # Write other data as needed
+            if not st.session_state.bundling_data.empty:
+                st.session_state.bundling_data.to_excel(writer, sheet_name='Bundling_Data', index=False)
+            
+            # Add more sheets as needed...
+            
+        output.seek(0)
+        return output.getvalue()
+    except Exception as e:
+        raise e
 
-# Add download button at the top
-    col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("📥 Download Complete Report (Excel)", type="primary", use_container_width=True):
-                try:
-                    # Check if openpyxl is available
-                    try:
-                        import openpyxl
-                        excel_data = create_excel_report()
-                        st.download_button(
-                            label="⬇️ Click to Download Excel File",
-                            data=excel_data,
-                            file_name="packing_costing_report.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            use_container_width=True
-                        )
-                    except ImportError:
-                        st.error("""
-                        **Missing Dependency: openpyxl**
-                        
-                        To download Excel files, you need to install the `openpyxl` package.
-                        
-                        **Installation Instructions:**
-                        
-                        1. **For local installation:** Run this command in your terminal:
-                        ```
-                        pip install openpyxl
-                        ```
-                        
-                        2. **For requirements.txt:** Add this line:
-                        ```
-                        openpyxl>=3.1.2
-                        ```
-                        
-                        3. **For Streamlit Cloud:** Add `openpyxl` to your requirements.txt file
-                        
-                        After installing, refresh the app and try again.
-                        """)
-                    except Exception as e:
-                        if "No data available" in str(e):
-                            st.warning("⚠️ No data to export. Please enter data in Primary or Secondary tabs before downloading.")
-                        else:
-                            st.error(f"Error generating report: {str(e)}")
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
+# App title
+st.title("📦 Packing Costing Calculator")
+
+# Add download button at the top - CORRECTED INDENTATION
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if st.button("📥 Download Complete Report (Excel)", type="primary", use_container_width=True):
+        try:
+            # Check if openpyxl is available
+            try:
+                import openpyxl
+                excel_data = create_excel_report()
+                st.download_button(
+                    label="⬇️ Click to Download Excel File",
+                    data=excel_data,
+                    file_name="packing_costing_report.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+            except ImportError:
+                st.error("""
+                **Missing Dependency: openpyxl**
+                
+                To download Excel files, you need to install the `openpyxl` package.
+                
+                **Installation Instructions:**
+                
+                1. **For local installation:** Run this command in your terminal:
+                ```
+                pip install openpyxl
+                ```
+                
+                2. **For requirements.txt:** Add this line:
+                ```
+                openpyxl>=3.1.2
+                ```
+                
+                3. **For Streamlit Cloud:** Add `openpyxl` to your requirements.txt file
+                
+                After installing, refresh the app and try again.
+                """)
+            except Exception as e:
+                if "No data available" in str(e):
+                    st.warning("⚠️ No data to export. Please enter data in Primary or Secondary tabs before downloading.")
+                else:
+                    st.error(f"Error generating report: {str(e)}")
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
 
 
 # Create tabs
