@@ -77,50 +77,50 @@ st.title("📦 Packing Costing Calculator")
 def create_excel_report():
 
 # Add download button at the top
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    if st.button("📥 Download Complete Report (Excel)", type="primary", use_container_width=True):
-        try:
-            # Check if openpyxl is available
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("📥 Download Complete Report (Excel)", type="primary", use_container_width=True):
             try:
-                import openpyxl
-                excel_data = create_excel_report()
-                st.download_button(
-                    label="⬇️ Click to Download Excel File",
-                    data=excel_data,
-                    file_name="packing_costing_report.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-            except ImportError:
-                st.error("""
-                **Missing Dependency: openpyxl**
-                
-                To download Excel files, you need to install the `openpyxl` package.
-                
-                **Installation Instructions:**
-                
-                1. **For local installation:** Run this command in your terminal:
-                ```
-                pip install openpyxl
-                ```
-                
-                2. **For requirements.txt:** Add this line:
-                ```
-                openpyxl>=3.1.2
-                ```
-                
-                3. **For Streamlit Cloud:** Add `openpyxl` to your requirements.txt file
-                
-                After installing, refresh the app and try again.
-                """)
+                # Check if openpyxl is available
+                try:
+                    import openpyxl
+                    excel_data = create_excel_report()
+                    st.download_button(
+                        label="⬇️ Click to Download Excel File",
+                        data=excel_data,
+                        file_name="packing_costing_report.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True
+                    )
+                except ImportError:
+                    st.error("""
+                    **Missing Dependency: openpyxl**
+                    
+                    To download Excel files, you need to install the `openpyxl` package.
+                    
+                    **Installation Instructions:**
+                    
+                    1. **For local installation:** Run this command in your terminal:
+                    ```
+                    pip install openpyxl
+                    ```
+                    
+                    2. **For requirements.txt:** Add this line:
+                    ```
+                    openpyxl>=3.1.2
+                    ```
+                    
+                    3. **For Streamlit Cloud:** Add `openpyxl` to your requirements.txt file
+                    
+                    After installing, refresh the app and try again.
+                    """)
+                except Exception as e:
+                    if "No data available" in str(e):
+                        st.warning("⚠️ No data to export. Please enter data in Primary or Secondary tabs before downloading.")
+                    else:
+                        st.error(f"Error generating report: {str(e)}")
             except Exception as e:
-                if "No data available" in str(e):
-                    st.warning("⚠️ No data to export. Please enter data in Primary or Secondary tabs before downloading.")
-                else:
-                    st.error(f"Error generating report: {str(e)}")
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
+                st.error(f"Error: {str(e)}")
 
 # Create tabs
 tab1, tab2 = st.tabs(["Primary Calculations", "Secondary Calculations"])
