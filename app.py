@@ -12,6 +12,147 @@ st.set_page_config(
 # App title
 st.title("📦 Packing Costing Calculator")
 
+
+# Create download button
+def create_excel_report():
+    """Create Excel report with primary and secondary calculations"""
+    from io import BytesIO
+    
+    # Create an Excel writer
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        # Sheet 1: Primary Calculations
+        if 'sku_data' in locals() and not edited_sku_df.empty:
+            # Create a summary dataframe for primary calculations
+            primary_summary = pd.DataFrame({
+                'Primary Calculations Summary': ['Primary Packing Costing Report']
+            })
+            primary_summary.to_excel(writer, sheet_name='Primary Calculations', index=False, startrow=0)
+            
+            # Add SKU Table
+            edited_sku_df.to_excel(writer, sheet_name='Primary Calculations', index=False, startrow=3)
+            
+            # Add spacing
+            writer.sheets['Primary Calculations'].cell(row=len(edited_sku_df) + 6, column=1).value = 'Common Packing Selections'
+            writer.sheets['Primary Calculations'].cell(row=len(edited_sku_df) + 7, column=1).value = f'Finish: {finish}'
+            writer.sheets['Primary Calculations'].cell(row=len(edited_sku_df) + 8, column=1).value = f'Interleaving Required: {interleaving_required}'
+            writer.sheets['Primary Calculations'].cell(row=len(edited_sku_df) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly}'
+            writer.sheets['Primary Calculations'].cell(row=len(edited_sku_df) + 10, column=1).value = f'Protective Tape: {protective_tape}'
+            
+            # Add Material Costs
+            edited_material_df.to_excel(writer, sheet_name='Primary Calculations', index=False, 
+                                       startrow=len(edited_sku_df) + 13)
+            
+            # Add Cardboard Box Costs
+            edited_box_df.to_excel(writer, sheet_name='Primary Calculations', index=False,
+                                  startrow=len(edited_sku_df) + len(edited_material_df) + 16)
+            
+            # Add Primary Packing Total Cost
+            if 'calculations_df' in locals():
+                calculations_df.to_excel(writer, sheet_name='Primary Calculations', index=False,
+                                        startrow=len(edited_sku_df) + len(edited_material_df) + len(edited_box_df) + 19)
+        
+        # Sheet 2: Secondary Calculations
+        if 'edited_sku_df_tab2' in locals() and not edited_sku_df_tab2.empty:
+            # Create a summary dataframe for secondary calculations
+            secondary_summary = pd.DataFrame({
+                'Secondary Calculations Summary': ['Secondary Packing Costing Report']
+            })
+            secondary_summary.to_excel(writer, sheet_name='Secondary Calculations', index=False, startrow=0)
+            
+            # Add SKU Table
+            edited_sku_df_tab2.to_excel(writer, sheet_name='Secondary Calculations', index=False, startrow=3)
+            
+            # Add Common Packing Selections
+            writer.sheets['Secondary Calculations'].cell(row=len(edited_sku_df_tab2) + 6, column=1).value = 'Common Packing Selections'
+            writer.sheets['Secondary Calculations'].cell(row=len(edited_sku_df_tab2) + 7, column=1).value = f'Finish: {finish_tab2}'
+            writer.sheets['Secondary Calculations'].cell(row=len(edited_sku_df_tab2) + 8, column=1).value = f'Interleaving Required: {interleaving_required_tab2}'
+            writer.sheets['Secondary Calculations'].cell(row=len(edited_sku_df_tab2) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly_tab2}'
+            writer.sheets['Secondary Calculations'].cell(row=len(edited_sku_df_tab2) + 10, column=1).value = f'Protective Tape: {protective_tape_tab2}'
+            
+            # Add Bundling Data if available
+            if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
+                st.session_state.bundling_data.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                       startrow=len(edited_sku_df_tab2) + 13, 
+                                                       header=True)
+            
+            # Add Bundle Size Data if available
+            if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
+                start_row = len(edited_sku_df_tab2) + len(st.session_state.bundling_data) + 16 if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty else len(edited_sku_df_tab2) + 13
+                st.session_state.bundle_size_data.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                          startrow=start_row,
+                                                          header=True)
+            
+            # Add Secondary Packing Cost Per Profile if available
+            if 'secondary_calculations_df' in locals():
+                # Find the next available row
+                next_row = len(edited_sku_df_tab2) + 16
+                if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
+                    next_row += len(st.session_state.bundling_data) + 3
+                if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
+                    next_row += len(st.session_state.bundle_size_data) + 3
+                
+                writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Secondary Packing Cost Per Profile'
+                secondary_calculations_df.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                  startrow=next_row + 2)
+            
+            # Add Crate/Pallet Dimensions if available
+            if 'crate_pallet_data' in st.session_state and not st.session_state.crate_pallet_data.empty:
+                # Find the next available row
+                next_row = len(edited_sku_df_tab2) + 16
+                if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
+                    next_row += len(st.session_state.bundling_data) + 3
+                if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
+                    next_row += len(st.session_state.bundle_size_data) + 3
+                if 'secondary_calculations_df' in locals():
+                    next_row += len(secondary_calculations_df) + 5
+                
+                writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Crate/Pallet Dimensions'
+                st.session_state.crate_pallet_data.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                           startrow=next_row + 2)
+            
+            # Add Crate/Pallet Cost Calculations if available
+            if 'crate_pallet_calculations_df' in locals():
+                # Find the next available row
+                next_row = len(edited_sku_df_tab2) + 16
+                if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
+                    next_row += len(st.session_state.bundling_data) + 3
+                if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
+                    next_row += len(st.session_state.bundle_size_data) + 3
+                if 'secondary_calculations_df' in locals():
+                    next_row += len(secondary_calculations_df) + 5
+                if 'crate_pallet_data' in st.session_state and not st.session_state.crate_pallet_data.empty:
+                    next_row += len(st.session_state.crate_pallet_data) + 5
+                
+                writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Crate/Pallet Cost Calculations'
+                crate_pallet_calculations_df.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                     startrow=next_row + 2)
+    
+    # Get the Excel data
+    output.seek(0)
+    return output.getvalue()
+
+# Add download button at the top
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if st.button("📥 Download Complete Report (Excel)", type="primary", use_container_width=True):
+        try:
+            excel_data = create_excel_report()
+            st.download_button(
+                label="⬇️ Click to Download Excel File",
+                data=excel_data,
+                file_name="packing_costing_report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Error generating report: {str(e)}")
+
+
+
+
+
+
 # Create tabs
 tab1, tab2 = st.tabs(["Primary Calculations", "Secondary Calculations"])
 
