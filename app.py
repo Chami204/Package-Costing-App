@@ -77,7 +77,7 @@ st.title("📦 Packing Costing Calculator")
 def create_excel_report():
 
 # Add download button at the top
-    col1, col2, col3 = st.columns([1, 2, 1])
+col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("📥 Download Complete Report (Excel)", type="primary", use_container_width=True):
             try:
@@ -121,6 +121,7 @@ def create_excel_report():
                         st.error(f"Error generating report: {str(e)}")
             except Exception as e:
                 st.error(f"Error: {str(e)}")
+
 
 # Create tabs
 tab1, tab2 = st.tabs(["Primary Calculations", "Secondary Calculations"])
