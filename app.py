@@ -428,7 +428,7 @@ with tab1:
                 # Recalculate costs based on new dimensions
                 recalculated_df = recalculate_costs(edited_df)
                 st.session_state.edited_primary_calc = recalculated_df
-                st.rerun()
+               
             
             # Display the updated dataframe
             st.dataframe(st.session_state.edited_primary_calc, use_container_width=True)
