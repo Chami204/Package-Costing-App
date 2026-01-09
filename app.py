@@ -672,65 +672,65 @@ with tab2:
     else:
         st.info("Enter SKU data to see secondary packing cost calculations.")
 
-    st.divider()
-    
-        # New Section: Crate/Pallet dimensions table
-        st.subheader("Crate/Pallet Dimensions Table")
+        st.divider()
         
-        # Initialize crate/pallet data in session state
-        if 'crate_pallet_data' not in st.session_state:
-            st.session_state.crate_pallet_data = pd.DataFrame(columns=[
-                "SKU", 
-                "packing method", 
-                "Width/mm", 
-                "Height/mm", 
-                "Length/mm"
-            ])
-        
-        # Create dataframe with SKUs from the SKU input table
-        if not edited_sku_df_tab2.empty:
-            # Get unique SKUs from the SKU table
-            sku_list = edited_sku_df_tab2["SKU No"].unique().tolist()
+            # New Section: Crate/Pallet dimensions table
+            st.subheader("Crate/Pallet Dimensions Table")
             
-            # Check if crate_pallet_data needs to be updated with new SKUs
-            existing_skus = st.session_state.crate_pallet_data["SKU"].unique().tolist() if not st.session_state.crate_pallet_data.empty else []
+            # Initialize crate/pallet data in session state
+            if 'crate_pallet_data' not in st.session_state:
+                st.session_state.crate_pallet_data = pd.DataFrame(columns=[
+                    "SKU", 
+                    "packing method", 
+                    "Width/mm", 
+                    "Height/mm", 
+                    "Length/mm"
+                ])
             
-            # Add new SKUs that aren't already in the crate/pallet table
-            new_skus = [sku for sku in sku_list if sku not in existing_skus]
-            
-            if new_skus:
-                new_rows = []
-                for sku in new_skus:
-                    new_rows.append({
-                        "SKU": sku,
-                        "packing method": "pallet",  # default value
-                        "Width/mm": 0,
-                        "Height/mm": 0,
-                        "Length/mm": 0
-                    })
+            # Create dataframe with SKUs from the SKU input table
+            if not edited_sku_df_tab2.empty:
+                # Get unique SKUs from the SKU table
+                sku_list = edited_sku_df_tab2["SKU No"].unique().tolist()
                 
-                if new_rows:
-                    new_df = pd.DataFrame(new_rows)
-                    st.session_state.crate_pallet_data = pd.concat([st.session_state.crate_pallet_data, new_df], ignore_index=True)
-        
-        # Create editable crate/pallet dimensions table
-        edited_crate_pallet_df = st.data_editor(
-            st.session_state.crate_pallet_data,
-            num_rows="dynamic",
-            use_container_width=True,
-            column_config={
-                "SKU": st.column_config.TextColumn("SKU", required=True),
-                "packing method": st.column_config.SelectboxColumn(
-                    "packing method",
-                    options=["pallet", "crate"],
-                    required=True
-                ),
-                "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
-                "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
-                "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0)
-            },
-            key="crate_pallet_editor"
-        )
-        
-        # Update session state
-        st.session_state.crate_pallet_data = edited_crate_pallet_df
+                # Check if crate_pallet_data needs to be updated with new SKUs
+                existing_skus = st.session_state.crate_pallet_data["SKU"].unique().tolist() if not st.session_state.crate_pallet_data.empty else []
+                
+                # Add new SKUs that aren't already in the crate/pallet table
+                new_skus = [sku for sku in sku_list if sku not in existing_skus]
+                
+                if new_skus:
+                    new_rows = []
+                    for sku in new_skus:
+                        new_rows.append({
+                            "SKU": sku,
+                            "packing method": "pallet",  # default value
+                            "Width/mm": 0,
+                            "Height/mm": 0,
+                            "Length/mm": 0
+                        })
+                    
+                    if new_rows:
+                        new_df = pd.DataFrame(new_rows)
+                        st.session_state.crate_pallet_data = pd.concat([st.session_state.crate_pallet_data, new_df], ignore_index=True)
+            
+            # Create editable crate/pallet dimensions table
+            edited_crate_pallet_df = st.data_editor(
+                st.session_state.crate_pallet_data,
+                num_rows="dynamic",
+                use_container_width=True,
+                column_config={
+                    "SKU": st.column_config.TextColumn("SKU", required=True),
+                    "packing method": st.column_config.SelectboxColumn(
+                        "packing method",
+                        options=["pallet", "crate"],
+                        required=True
+                    ),
+                    "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
+                    "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
+                    "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0)
+                },
+                key="crate_pallet_editor"
+            )
+            
+            # Update session state
+            st.session_state.crate_pallet_data = edited_crate_pallet_df
