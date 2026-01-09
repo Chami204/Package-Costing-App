@@ -48,8 +48,8 @@ def create_excel_report():
                                   startrow=len(edited_sku_df) + len(edited_material_df) + 16)
             
             # Add Primary Packing Total Cost
-            if 'primary_calc_final' in st.session_state:
-                st.session_state.primary_calc_final.to_excel(writer, sheet_name='Primary Calculations', index=False,
+            if 'edited_primary_calc' in st.session_state:
+                st.session_state.edited_primary_calc.to_excel(writer, sheet_name='Primary Calculations', index=False,
                                                             startrow=len(edited_sku_df) + len(edited_material_df) + len(edited_box_df) + 19)
             elif 'calculations_df' in locals():
                 calculations_df.to_excel(writer, sheet_name='Primary Calculations', index=False,
@@ -351,9 +351,61 @@ with tab1:
             # Store reference box data for calculations
             ref_box = edited_box_df.iloc[0]
             
-            # Create editable dataframe for calculations with callback
-            edited_calc_df = st.data_editor(
-                calculations_df,
+            # Initialize session state for edited data if not exists
+            if 'edited_primary_calc' not in st.session_state:
+                st.session_state.edited_primary_calc = calculations_df.copy()
+            
+            # Function to recalculate costs based on edited dimensions
+            def recalculate_costs(df):
+                ref_length = ref_box["Length(mm)"]
+                ref_width = ref_box["Width (mm)"]
+                ref_height = ref_box["Height (mm)"]
+                ref_cost = ref_box["Cost (LKR)"]
+                
+                # Calculate reference box volume
+                if ref_length > 0 and ref_width > 0 and ref_height > 0:
+                    ref_volume = ref_length * ref_width * ref_height
+                    cost_per_volume = ref_cost / ref_volume
+                else:
+                    cost_per_volume = 0
+                
+                # Recalculate for each row
+                updated_df = df.copy()
+                for idx, row in updated_df.iterrows():
+                    try:
+                        # Get box dimensions
+                        box_length = float(row["Box length/mm"])
+                        box_width = float(row["Box width/mm"])
+                        box_height = float(row["Box height/mm"])
+                        
+                        # Calculate box volume
+                        box_volume = box_length * box_width * box_height
+                        
+                        # Recalculate packing cost
+                        if cost_per_volume > 0:
+                            new_packing_cost = cost_per_volume * box_volume
+                        else:
+                            new_packing_cost = 0
+                        
+                        # Get original costs that shouldn't change
+                        interleaving_cost = float(row["Interleaving cost"])
+                        protective_tape_cost = float(row["Protective tape cost"])
+                        
+                        # Calculate new total cost
+                        new_total_cost = interleaving_cost + protective_tape_cost + new_packing_cost
+                        
+                        # Update the row
+                        updated_df.at[idx, "Packing Cost (LKR)"] = round(new_packing_cost, 2)
+                        updated_df.at[idx, "Total Cost"] = round(new_total_cost, 2)
+                        
+                    except (ValueError, TypeError):
+                        continue
+                
+                return updated_df
+            
+            # Create editable dataframe
+            edited_df = st.data_editor(
+                st.session_state.edited_primary_calc,
                 num_rows="fixed",
                 use_container_width=True,
                 column_config={
@@ -365,73 +417,24 @@ with tab1:
                     "Box height/mm": st.column_config.NumberColumn("Box height/mm", required=True, min_value=0, format="%.2f"),
                     "Box width/mm": st.column_config.NumberColumn("Box width/mm", required=True, min_value=0, format="%.2f"),
                     "Box length/mm": st.column_config.NumberColumn("Box length/mm", required=True, min_value=0, format="%.2f"),
-                    "Packing Cost (LKR)": st.column_config.NumberColumn("Packing Cost (LKR)", required=True, min_value=0, format="%.2f"),
-                    "Total Cost": st.column_config.NumberColumn("Total Cost", required=True, min_value=0, format="%.2f")
+                    "Packing Cost (LKR)": st.column_config.NumberColumn("Packing Cost (LKR)", required=True, min_value=0, format="%.2f", disabled=True),
+                    "Total Cost": st.column_config.NumberColumn("Total Cost", required=True, min_value=0, format="%.2f", disabled=True)
                 },
                 key="primary_calculations_editor"
             )
             
-            # Process the edited dataframe to update calculations
-            updated_rows = []
-            for idx, row in edited_calc_df.iterrows():
-                try:
-                    # Get the edited box dimensions
-                    edited_height = float(row["Box height/mm"])
-                    edited_width = float(row["Box width/mm"])
-                    edited_length = float(row["Box length/mm"])
-                    
-                    # Keep original values for other fields
-                    sku = row["SKU"]
-                    sa_m2 = float(row["SA(m²)"])
-                    interleaving_cost = float(row["Interleaving cost"])
-                    protective_tape_cost = float(row["Protective tape cost"])
-                    
-                    # Recalculate packing cost with edited dimensions
-                    if ref_box["Length(mm)"] > 0 and ref_box["Width (mm)"] > 0 and ref_box["Height (mm)"] > 0:
-                        # ((Table 2: Cardboard Box Cost Cost LKR)/width*height*length)*(edited Box height/mm*Box width/mm*Box length/mm)
-                        edited_packing_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"])) * (edited_width * edited_height * edited_length)
-                    else:
-                        edited_packing_cost = 0
-                    
-                    # Recalculate total cost
-                    edited_total_cost = interleaving_cost + protective_tape_cost + edited_packing_cost
-                    
-                    # Create updated row
-                    updated_row = {
-                        "SKU": sku,
-                        "SA(m²)": sa_m2,
-                        "Interleaving cost": interleaving_cost,
-                        "Protective tape cost": protective_tape_cost,
-                        "Packing type": "Cardboard box",
-                        "Box height/mm": edited_height,
-                        "Box width/mm": edited_width,
-                        "Box length/mm": edited_length,
-                        "Packing Cost (LKR)": round(edited_packing_cost, 2),
-                        "Total Cost": round(edited_total_cost, 2)
-                    }
-                    
-                    updated_rows.append(updated_row)
-                    
-                except (ValueError, TypeError):
-                    # If there's an error with the row, keep it as is
-                    updated_rows.append(row.to_dict())
+            # Check if data has been edited and recalculate
+            if not edited_df.equals(st.session_state.edited_primary_calc):
+                # Recalculate costs based on new dimensions
+                recalculated_df = recalculate_costs(edited_df)
+                st.session_state.edited_primary_calc = recalculated_df
+                st.rerun()
             
-            # Create final dataframe with updated calculations
-            final_df = pd.DataFrame(updated_rows)
+            # Display the updated dataframe
+            st.dataframe(st.session_state.edited_primary_calc, use_container_width=True)
             
-            # Update the displayed dataframe with recalculated values
-            # We need to use a callback to update the data_editor
-            # Since Streamlit doesn't support direct updates, we'll use session state
-            if 'primary_calc_final' not in st.session_state:
-                st.session_state.primary_calc_final = final_df
-            
-            # Check if data has changed and update session state
-            if not st.session_state.primary_calc_final.equals(final_df):
-                st.session_state.primary_calc_final = final_df
-                st.rerun()  # Rerun to show updated values
-            
-            # Display final calculated totals
-            total_sum = final_df["Total Cost"].sum()
+            # Display total summary
+            total_sum = st.session_state.edited_primary_calc["Total Cost"].sum()
             st.metric("**Total Primary Packing Cost**", f"LKR {total_sum:,.2f}")
             
         else:
