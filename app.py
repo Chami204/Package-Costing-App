@@ -1171,16 +1171,14 @@ with tab2:
                     total_clip_cost = number_of_strapping_clips * strapping_clip_data["Cost"]
                     strapping_clip_cost_per_profile = total_clip_cost / profiles_per_crate_pallet
                 
-                # Calculate PP strapping cost
-                pp_strapping_cost = 0
-                if pp_strapping_data["Strapping Length/m"] > 0:
-                    cost_per_m = pp_strapping_data["Cost (LKR/m)"] / pp_strapping_data["Strapping Length/m"]
-                    pp_strapping_cost = cost_per_m * profile_length
-                
                 # Calculate PP strapping cost per profile
+                # Formula: ((number of strapping clips * 2) * (crate/pallet width + height)) / profiles per pallet/crate
                 pp_strapping_cost_per_profile = 0
                 if profiles_per_crate_pallet > 0:
-                    pp_strapping_cost_per_profile = pp_strapping_cost / profiles_per_crate_pallet
+                    pp_strapping_cost_per_profile = ((number_of_strapping_clips * 2) * (crate_pallet_width + crate_pallet_height)) / profiles_per_crate_pallet
+                
+                # PP strapping cost (for display, not used in calculation)
+                pp_strapping_cost = pp_strapping_cost_per_profile * profiles_per_crate_pallet
                 
                 # Calculate Total cost
                 total_cost = packing_cost_per_profile + strapping_clip_cost_per_profile + pp_strapping_cost_per_profile
