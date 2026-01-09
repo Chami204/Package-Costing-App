@@ -315,7 +315,12 @@ with tab1:
                 
                 # Calculate Packing Cost
                 sku_volume = width * height * length
-                packing_cost = (sku_volume / ref_volume) * ref_box["Cost (LKR)"]
+                # Calculate Packing Cost - Updated formula
+                if ref_box["Length(mm)"] > 0 and ref_box["Width (mm)"] > 0 and ref_box["Height (mm)"] > 0:
+                # ((Table 2: Cardboard Box Cost Cost LKR)/width*height*length)*(Table 3: Primary Packing Total Cost Box height/mm*Box width/mm*Box length/mm)
+                    packing_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"])) * (width * height * length)
+                else:
+                    packing_cost = 0
                 
                 # Calculate Total Cost
                 total_cost = interleaving_cost + protective_tape_cost + packing_cost
@@ -326,6 +331,9 @@ with tab1:
                     "Interleaving cost": round(interleaving_cost, 2),
                     "Protective tape cost": round(protective_tape_cost, 2),
                     "Packing type": "Cardboard box",
+                    "Box height/mm": round(height, 2),
+                    "Box width/mm": round(width, 2),
+                    "Box length/mm": round(length, 2),
                     "Packing Cost (LKR)": round(packing_cost, 2),
                     "Total Cost": round(total_cost, 2)
                 })
