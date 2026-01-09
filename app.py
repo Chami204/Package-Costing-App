@@ -672,9 +672,9 @@ with tab2:
     else:
         st.info("Enter SKU data to see secondary packing cost calculations.")
 
-            st.divider()
+        st.divider()
             
-                # New Section: Crate/Pallet dimensions table
+            # New Section: Crate/Pallet dimensions table
                 st.subheader("Crate/Pallet Dimensions Table")
                 
                 # Initialize crate/pallet data in session state
