@@ -32,14 +32,31 @@ def reset_calculation_flags():
 st.title("📦 Packing Costing Calculator")
 
 # Create download button
-# Create download button
 def create_excel_report():
     """Create Excel report with primary and secondary calculations"""
     from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Border, Side, Alignment, Font, PatternFill
+    from openpyxl.utils.dataframe import dataframe_to_rows
     
     # Create an Excel writer
     output = BytesIO()
+    
+    # Create border style
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Create heading style
+    heading_font = Font(name='Calibri', size=12, bold=True, color='FFFFFF')
+    heading_fill = PatternFill(start_color='4B0082', end_color='4B0082', fill_type='solid')  # Dark purple
+    
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        workbook = writer.book
+        
         # Sheet 1: Primary Calculations
         if 'primary_calculations' in st.session_state and not st.session_state.primary_calculations.empty:
             # Get primary selections from session state
@@ -54,27 +71,93 @@ def create_excel_report():
             })
             primary_summary.to_excel(writer, sheet_name='Primary Calculations', index=False, startrow=0)
             
-            # Add SKU Table
-            st.session_state.primary_sku_data.to_excel(writer, sheet_name='Primary Calculations', index=False, startrow=3)
+            # Format the primary summary
+            ws = writer.sheets['Primary Calculations']
+            ws['A1'].font = heading_font
+            ws['A1'].fill = heading_fill
+            ws['A1'].alignment = Alignment(horizontal='center')
+            ws.column_dimensions['A'].width = 35
             
-            # Add spacing
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 6, column=1).value = 'Common Packing Selections'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 7, column=1).value = f'Finish: {finish_primary}'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 8, column=1).value = f'Interleaving Required: {interleaving_primary}'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly_primary}'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 10, column=1).value = f'Protective Tape: {protective_tape_primary}'
+            # Add SKU Table
+            start_row = 4
+            ws.cell(row=start_row, column=1, value="SKU Table with dimensions").font = heading_font
+            ws.cell(row=start_row, column=1).fill = heading_fill
+            st.session_state.primary_sku_data.to_excel(writer, sheet_name='Primary Calculations', index=False, startrow=start_row + 1)
+            
+            # Apply borders to SKU table
+            sku_data_rows = len(st.session_state.primary_sku_data)
+            sku_data_cols = len(st.session_state.primary_sku_data.columns)
+            for row in range(start_row + 2, start_row + sku_data_rows + 3):
+                for col in range(1, sku_data_cols + 1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.border = thin_border
+            
+            # Add Common Packing Selections heading
+            common_start_row = start_row + sku_data_rows + 5
+            ws.cell(row=common_start_row, column=1, value="Common Packing Selections").font = heading_font
+            ws.cell(row=common_start_row, column=1).fill = heading_fill
+            
+            # Add Common Packing Selections details
+            ws.cell(row=common_start_row + 1, column=1, value=f'Finish: {finish_primary}')
+            ws.cell(row=common_start_row + 2, column=1, value=f'Interleaving Required: {interleaving_primary}')
+            ws.cell(row=common_start_row + 3, column=1, value=f'Eco-Friendly Material: {eco_friendly_primary}')
+            ws.cell(row=common_start_row + 4, column=1, value=f'Protective Tape: {protective_tape_primary}')
+            
+            # Apply borders to common selections
+            for row in range(common_start_row + 1, common_start_row + 5):
+                cell = ws.cell(row=row, column=1)
+                cell.border = thin_border
+            
+            # Add Material Costs heading
+            material_start_row = common_start_row + 6
+            ws.cell(row=material_start_row, column=1, value="Table 1: Primary Packing Material Costs").font = heading_font
+            ws.cell(row=material_start_row, column=1).fill = heading_fill
             
             # Add Material Costs
             st.session_state.primary_material_costs.to_excel(writer, sheet_name='Primary Calculations', index=False, 
-                                       startrow=len(st.session_state.primary_sku_data) + 13)
+                                   startrow=material_start_row + 1)
+            
+            # Apply borders to material costs table
+            material_rows = len(st.session_state.primary_material_costs)
+            material_cols = len(st.session_state.primary_material_costs.columns)
+            for row in range(material_start_row + 2, material_start_row + material_rows + 3):
+                for col in range(1, material_cols + 1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.border = thin_border
+            
+            # Add Cardboard Box Cost heading
+            box_start_row = material_start_row + material_rows + 4
+            ws.cell(row=box_start_row, column=1, value="Table 2: Cardboard Box Cost").font = heading_font
+            ws.cell(row=box_start_row, column=1).fill = heading_fill
             
             # Add Cardboard Box Costs
             st.session_state.primary_box_costs.to_excel(writer, sheet_name='Primary Calculations', index=False,
-                                  startrow=len(st.session_state.primary_sku_data) + len(st.session_state.primary_material_costs) + 16)
+                              startrow=box_start_row + 1)
+            
+            # Apply borders to box costs table
+            box_rows = len(st.session_state.primary_box_costs)
+            box_cols = len(st.session_state.primary_box_costs.columns)
+            for row in range(box_start_row + 2, box_start_row + box_rows + 3):
+                for col in range(1, box_cols + 1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.border = thin_border
+            
+            # Add Primary Packing Total Cost heading
+            calc_start_row = box_start_row + box_rows + 4
+            ws.cell(row=calc_start_row, column=1, value="Table 3: Primary Packing Total Cost").font = heading_font
+            ws.cell(row=calc_start_row, column=1).fill = heading_fill
             
             # Add Primary Packing Total Cost
             st.session_state.primary_calculations.to_excel(writer, sheet_name='Primary Calculations', index=False,
-                                                        startrow=len(st.session_state.primary_sku_data) + len(st.session_state.primary_material_costs) + len(st.session_state.primary_box_costs) + 19)
+                                                    startrow=calc_start_row + 1)
+            
+            # Apply borders to calculations table
+            calc_rows = len(st.session_state.primary_calculations)
+            calc_cols = len(st.session_state.primary_calculations.columns)
+            for row in range(calc_start_row + 2, calc_start_row + calc_rows + 3):
+                for col in range(1, calc_cols + 1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.border = thin_border
         
         # Sheet 2: Secondary Calculations
         if 'secondary_calculations' in st.session_state and not st.session_state.secondary_calculations.empty:
@@ -90,72 +173,290 @@ def create_excel_report():
             })
             secondary_summary.to_excel(writer, sheet_name='Secondary Calculations', index=False, startrow=0)
             
-            # Add SKU Table
-            st.session_state.secondary_sku_data.to_excel(writer, sheet_name='Secondary Calculations', index=False, startrow=3)
+            # Format the secondary summary
+            ws2 = writer.sheets['Secondary Calculations']
+            ws2['A1'].font = heading_font
+            ws2['A1'].fill = heading_fill
+            ws2['A1'].alignment = Alignment(horizontal='center')
+            ws2.column_dimensions['A'].width = 35
             
-            # Add Common Packing Selections
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 6, column=1).value = 'Common Packing Selections'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 7, column=1).value = f'Finish: {finish_secondary}'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 8, column=1).value = f'Interleaving Required: {interleaving_secondary}'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly_secondary}'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 10, column=1).value = f'Protective Tape: {protective_tape_secondary}'
+            # Add SKU Table heading
+            start_row_sec = 4
+            ws2.cell(row=start_row_sec, column=1, value="SKU Table with dimensions").font = heading_font
+            ws2.cell(row=start_row_sec, column=1).fill = heading_fill
+            
+            # Add SKU Table
+            st.session_state.secondary_sku_data.to_excel(writer, sheet_name='Secondary Calculations', index=False, startrow=start_row_sec + 1)
+            
+            # Apply borders to SKU table
+            sku_data_rows_sec = len(st.session_state.secondary_sku_data)
+            sku_data_cols_sec = len(st.session_state.secondary_sku_data.columns)
+            for row in range(start_row_sec + 2, start_row_sec + sku_data_rows_sec + 3):
+                for col in range(1, sku_data_cols_sec + 1):
+                    cell = ws2.cell(row=row, column=col)
+                    cell.border = thin_border
+            
+            # Add Common Packing Selections heading
+            common_start_row_sec = start_row_sec + sku_data_rows_sec + 5
+            ws2.cell(row=common_start_row_sec, column=1, value="Common Packing Selections").font = heading_font
+            ws2.cell(row=common_start_row_sec, column=1).fill = heading_fill
+            
+            # Add Common Packing Selections details
+            ws2.cell(row=common_start_row_sec + 1, column=1, value=f'Finish: {finish_secondary}')
+            ws2.cell(row=common_start_row_sec + 2, column=1, value=f'Interleaving Required: {interleaving_secondary}')
+            ws2.cell(row=common_start_row_sec + 3, column=1, value=f'Eco-Friendly Material: {eco_friendly_secondary}')
+            ws2.cell(row=common_start_row_sec + 4, column=1, value=f'Protective Tape: {protective_tape_secondary}')
+            
+            # Apply borders to common selections
+            for row in range(common_start_row_sec + 1, common_start_row_sec + 5):
+                cell = ws2.cell(row=row, column=1)
+                cell.border = thin_border
             
             # Add Bundling Data if available
+            current_row = common_start_row_sec + 6
             if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
+                ws2.cell(row=current_row, column=1, value="Section 1 - Number of layers (Method 1)").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
                 st.session_state.bundling_data.to_excel(writer, sheet_name='Secondary Calculations', index=False,
-                                                       startrow=len(st.session_state.secondary_sku_data) + 13, 
+                                                       startrow=current_row + 1, 
                                                        header=True)
+                
+                # Apply borders to bundling data
+                bundling_rows = len(st.session_state.bundling_data)
+                bundling_cols = len(st.session_state.bundling_data.columns)
+                for row in range(current_row + 2, current_row + bundling_rows + 3):
+                    for col in range(1, bundling_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += bundling_rows + 5
             
             # Add Bundle Size Data if available
             if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
-                start_row = len(st.session_state.secondary_sku_data) + len(st.session_state.bundling_data) + 16 if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty else len(st.session_state.secondary_sku_data) + 13
+                ws2.cell(row=current_row, column=1, value="Section 2 - Size of bundle (Method 2)").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
                 st.session_state.bundle_size_data.to_excel(writer, sheet_name='Secondary Calculations', index=False,
-                                                          startrow=start_row,
+                                                          startrow=current_row + 1,
                                                           header=True)
+                
+                # Apply borders to bundle size data
+                bundle_size_rows = len(st.session_state.bundle_size_data)
+                bundle_size_cols = len(st.session_state.bundle_size_data.columns)
+                for row in range(current_row + 2, current_row + bundle_size_rows + 3):
+                    for col in range(1, bundle_size_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += bundle_size_rows + 5
+            
+            # Add Cost Tables heading
+            ws2.cell(row=current_row, column=1, value="Secondary Packing Cost Tables").font = heading_font
+            ws2.cell(row=current_row, column=1).fill = heading_fill
+            current_row += 2
+            
+            # Add Material Costs
+            if 'secondary_material_costs' in st.session_state and not st.session_state.secondary_material_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 1: Primary Packing Material Costs").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.secondary_material_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                       startrow=current_row + 1)
+                
+                # Apply borders
+                mat_rows = len(st.session_state.secondary_material_costs)
+                mat_cols = len(st.session_state.secondary_material_costs.columns)
+                for row in range(current_row + 2, current_row + mat_rows + 3):
+                    for col in range(1, mat_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += mat_rows + 5
+            
+            # Add Box Costs
+            if 'secondary_box_costs' in st.session_state and not st.session_state.secondary_box_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 2: Cardboard Box Cost").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.secondary_box_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                       startrow=current_row + 1)
+                
+                # Apply borders
+                box_rows_sec = len(st.session_state.secondary_box_costs)
+                box_cols_sec = len(st.session_state.secondary_box_costs.columns)
+                for row in range(current_row + 2, current_row + box_rows_sec + 3):
+                    for col in range(1, box_cols_sec + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += box_rows_sec + 5
+            
+            # Add Polybag Costs
+            if 'polybag_costs' in st.session_state and not st.session_state.polybag_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 3: Polybag Cost").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.polybag_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                       startrow=current_row + 1)
+                
+                # Apply borders
+                polybag_rows = len(st.session_state.polybag_costs)
+                polybag_cols = len(st.session_state.polybag_costs.columns)
+                for row in range(current_row + 2, current_row + polybag_rows + 3):
+                    for col in range(1, polybag_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += polybag_rows + 5
+            
+            # Add Stretchwrap Costs
+            if 'stretchwrap_costs' in st.session_state and not st.session_state.stretchwrap_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 4: Stretch wrap cost").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.stretchwrap_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                       startrow=current_row + 1)
+                
+                # Apply borders
+                stretch_rows = len(st.session_state.stretchwrap_costs)
+                stretch_cols = len(st.session_state.stretchwrap_costs.columns)
+                for row in range(current_row + 2, current_row + stretch_rows + 3):
+                    for col in range(1, stretch_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += stretch_rows + 5
+            
+            # Add Crate/Pallet Cost Tables
+            current_row += 2
+            ws2.cell(row=current_row, column=1, value="Crate/Pallet Cost Tables").font = heading_font
+            ws2.cell(row=current_row, column=1).fill = heading_fill
+            current_row += 2
+            
+            # Add Crate Costs
+            if 'crate_costs' in st.session_state and not st.session_state.crate_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 1: Crate Cost").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.crate_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                     startrow=current_row + 1)
+                
+                # Apply borders
+                crate_rows = len(st.session_state.crate_costs)
+                crate_cols = len(st.session_state.crate_costs.columns)
+                for row in range(current_row + 2, current_row + crate_rows + 3):
+                    for col in range(1, crate_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += crate_rows + 5
+            
+            # Add Pallet Costs
+            if 'pallet_costs' in st.session_state and not st.session_state.pallet_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 2: Pallet Cost").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.pallet_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                     startrow=current_row + 1)
+                
+                # Apply borders
+                pallet_rows = len(st.session_state.pallet_costs)
+                pallet_cols = len(st.session_state.pallet_costs.columns)
+                for row in range(current_row + 2, current_row + pallet_rows + 3):
+                    for col in range(1, pallet_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += pallet_rows + 5
+            
+            # Add Strapping Clip Costs
+            if 'strapping_clip_costs' in st.session_state and not st.session_state.strapping_clip_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 3: Strapping Clip Cost").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.strapping_clip_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                             startrow=current_row + 1)
+                
+                # Apply borders
+                clip_rows = len(st.session_state.strapping_clip_costs)
+                clip_cols = len(st.session_state.strapping_clip_costs.columns)
+                for row in range(current_row + 2, current_row + clip_rows + 3):
+                    for col in range(1, clip_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += clip_rows + 5
+            
+            # Add PP Strapping Costs
+            if 'pp_strapping_costs' in st.session_state and not st.session_state.pp_strapping_costs.empty:
+                ws2.cell(row=current_row, column=1, value="Table 4: PP Strapping Cost").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
+                
+                st.session_state.pp_strapping_costs.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+                                                           startrow=current_row + 1)
+                
+                # Apply borders
+                pp_rows = len(st.session_state.pp_strapping_costs)
+                pp_cols = len(st.session_state.pp_strapping_costs.columns)
+                for row in range(current_row + 2, current_row + pp_rows + 3):
+                    for col in range(1, pp_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += pp_rows + 5
+            
+            # Add Secondary Packing Cost Per Profile heading
+            current_row += 2
+            ws2.cell(row=current_row, column=1, value="Secondary Packing Cost Per Profile").font = heading_font
+            ws2.cell(row=current_row, column=1).fill = heading_fill
             
             # Add Secondary Packing Cost Per Profile
-            # Find the next available row
-            next_row = len(st.session_state.secondary_sku_data) + 16
-            if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
-                next_row += len(st.session_state.bundling_data) + 3
-            if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
-                next_row += len(st.session_state.bundle_size_data) + 3
-            
-            writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Secondary Packing Cost Per Profile'
             st.session_state.secondary_calculations.to_excel(writer, sheet_name='Secondary Calculations', index=False,
-                                                  startrow=next_row + 2)
+                                                  startrow=current_row + 2)
+            
+            # Apply borders to calculations table
+            sec_calc_rows = len(st.session_state.secondary_calculations)
+            sec_calc_cols = len(st.session_state.secondary_calculations.columns)
+            for row in range(current_row + 3, current_row + sec_calc_rows + 4):
+                for col in range(1, sec_calc_cols + 1):
+                    cell = ws2.cell(row=row, column=col)
+                    cell.border = thin_border
             
             # Add Crate/Pallet Dimensions if available
+            current_row += sec_calc_rows + 6
             if 'crate_pallet_data' in st.session_state and not st.session_state.crate_pallet_data.empty:
-                # Find the next available row
-                next_row = len(st.session_state.secondary_sku_data) + 16
-                if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
-                    next_row += len(st.session_state.bundling_data) + 3
-                if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
-                    next_row += len(st.session_state.bundle_size_data) + 3
-                if 'secondary_calculations' in st.session_state and not st.session_state.secondary_calculations.empty:
-                    next_row += len(st.session_state.secondary_calculations) + 5
+                ws2.cell(row=current_row, column=1, value="Crate/Pallet Dimensions").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
                 
-                writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Crate/Pallet Dimensions'
                 st.session_state.crate_pallet_data.to_excel(writer, sheet_name='Secondary Calculations', index=False,
-                                                           startrow=next_row + 2)
+                                                           startrow=current_row + 2)
+                
+                # Apply borders
+                cp_dim_rows = len(st.session_state.crate_pallet_data)
+                cp_dim_cols = len(st.session_state.crate_pallet_data.columns)
+                for row in range(current_row + 3, current_row + cp_dim_rows + 4):
+                    for col in range(1, cp_dim_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
+                
+                current_row += cp_dim_rows + 6
             
             # Add Crate/Pallet Cost Calculations if available
             if 'crate_pallet_calculations' in st.session_state and not st.session_state.crate_pallet_calculations.empty:
-                # Find the next available row
-                next_row = len(st.session_state.secondary_sku_data) + 16
-                if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
-                    next_row += len(st.session_state.bundling_data) + 3
-                if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
-                    next_row += len(st.session_state.bundle_size_data) + 3
-                if 'secondary_calculations' in st.session_state and not st.session_state.secondary_calculations.empty:
-                    next_row += len(st.session_state.secondary_calculations) + 5
-                if 'crate_pallet_data' in st.session_state and not st.session_state.crate_pallet_data.empty:
-                    next_row += len(st.session_state.crate_pallet_data) + 5
+                ws2.cell(row=current_row, column=1, value="Crate/Pallet Cost Calculations").font = heading_font
+                ws2.cell(row=current_row, column=1).fill = heading_fill
                 
-                writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Crate/Pallet Cost Calculations'
                 st.session_state.crate_pallet_calculations.to_excel(writer, sheet_name='Secondary Calculations', index=False,
-                                                     startrow=next_row + 2)
+                                                     startrow=current_row + 2)
+                
+                # Apply borders
+                cp_calc_rows = len(st.session_state.crate_pallet_calculations)
+                cp_calc_cols = len(st.session_state.crate_pallet_calculations.columns)
+                for row in range(current_row + 3, current_row + cp_calc_rows + 4):
+                    for col in range(1, cp_calc_cols + 1):
+                        cell = ws2.cell(row=row, column=col)
+                        cell.border = thin_border
     
     # Get the Excel data
     output.seek(0)
