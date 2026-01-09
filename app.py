@@ -32,6 +32,7 @@ def reset_calculation_flags():
 st.title("📦 Packing Costing Calculator")
 
 # Create download button
+# Create download button
 def create_excel_report():
     """Create Excel report with primary and secondary calculations"""
     from io import BytesIO
@@ -41,6 +42,12 @@ def create_excel_report():
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         # Sheet 1: Primary Calculations
         if 'primary_calculations' in st.session_state and not st.session_state.primary_calculations.empty:
+            # Get primary selections from session state
+            finish_primary = st.session_state.get("finish_primary", "Mill Finish")
+            interleaving_primary = st.session_state.get("interleaving_primary", "No")
+            eco_friendly_primary = st.session_state.get("eco_friendly_primary", "Mac foam")
+            protective_tape_primary = st.session_state.get("protective_tape_primary", "No")
+            
             # Create a summary dataframe for primary calculations
             primary_summary = pd.DataFrame({
                 'Primary Calculations Summary': ['Primary Packing Costing Report']
@@ -52,10 +59,10 @@ def create_excel_report():
             
             # Add spacing
             writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 6, column=1).value = 'Common Packing Selections'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 7, column=1).value = f'Finish: {finish}'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 8, column=1).value = f'Interleaving Required: {interleaving_required}'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly}'
-            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 10, column=1).value = f'Protective Tape: {protective_tape}'
+            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 7, column=1).value = f'Finish: {finish_primary}'
+            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 8, column=1).value = f'Interleaving Required: {interleaving_primary}'
+            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly_primary}'
+            writer.sheets['Primary Calculations'].cell(row=len(st.session_state.primary_sku_data) + 10, column=1).value = f'Protective Tape: {protective_tape_primary}'
             
             # Add Material Costs
             st.session_state.primary_material_costs.to_excel(writer, sheet_name='Primary Calculations', index=False, 
@@ -71,6 +78,12 @@ def create_excel_report():
         
         # Sheet 2: Secondary Calculations
         if 'secondary_calculations' in st.session_state and not st.session_state.secondary_calculations.empty:
+            # Get secondary selections from session state
+            finish_secondary = st.session_state.get("finish_secondary", "Mill Finish")
+            interleaving_secondary = st.session_state.get("interleaving_secondary", "No")
+            eco_friendly_secondary = st.session_state.get("eco_friendly_secondary", "Mac foam")
+            protective_tape_secondary = st.session_state.get("protective_tape_secondary", "No")
+            
             # Create a summary dataframe for secondary calculations
             secondary_summary = pd.DataFrame({
                 'Secondary Calculations Summary': ['Secondary Packing Costing Report']
@@ -82,10 +95,10 @@ def create_excel_report():
             
             # Add Common Packing Selections
             writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 6, column=1).value = 'Common Packing Selections'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 7, column=1).value = f'Finish: {finish_tab2}'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 8, column=1).value = f'Interleaving Required: {interleaving_required_tab2}'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly_tab2}'
-            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 10, column=1).value = f'Protective Tape: {protective_tape_tab2}'
+            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 7, column=1).value = f'Finish: {finish_secondary}'
+            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 8, column=1).value = f'Interleaving Required: {interleaving_secondary}'
+            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 9, column=1).value = f'Eco-Friendly Material: {eco_friendly_secondary}'
+            writer.sheets['Secondary Calculations'].cell(row=len(st.session_state.secondary_sku_data) + 10, column=1).value = f'Protective Tape: {protective_tape_secondary}'
             
             # Add Bundling Data if available
             if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
@@ -100,17 +113,16 @@ def create_excel_report():
                                                           startrow=start_row,
                                                           header=True)
             
-            # Add Secondary Packing Cost Per Profile if available
-            if 'secondary_calculations' in st.session_state:
-                # Find the next available row
-                next_row = len(st.session_state.secondary_sku_data) + 16
-                if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
-                    next_row += len(st.session_state.bundling_data) + 3
-                if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
-                    next_row += len(st.session_state.bundle_size_data) + 3
-                
-                writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Secondary Packing Cost Per Profile'
-                st.session_state.secondary_calculations.to_excel(writer, sheet_name='Secondary Calculations', index=False,
+            # Add Secondary Packing Cost Per Profile
+            # Find the next available row
+            next_row = len(st.session_state.secondary_sku_data) + 16
+            if 'bundling_data' in st.session_state and not st.session_state.bundling_data.empty:
+                next_row += len(st.session_state.bundling_data) + 3
+            if 'bundle_size_data' in st.session_state and not st.session_state.bundle_size_data.empty:
+                next_row += len(st.session_state.bundle_size_data) + 3
+            
+            writer.sheets['Secondary Calculations'].cell(row=next_row, column=1).value = 'Secondary Packing Cost Per Profile'
+            st.session_state.secondary_calculations.to_excel(writer, sheet_name='Secondary Calculations', index=False,
                                                   startrow=next_row + 2)
             
             # Add Crate/Pallet Dimensions if available
