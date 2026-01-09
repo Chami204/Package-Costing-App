@@ -1138,24 +1138,24 @@ with tab2:
                 # Calculate crate/pallet cost(LKR)
                 crate_pallet_cost = 0
                 if packing_method == "pallet":
-                    # cost = (Pallet Cost / (pallet width*height)) * (Crate/Pallet Dimensions Table width*height)
-                    pallet_area = pallet_data["Pallet width/mm"] * pallet_data["Pallet Height/mm"]
-                    if pallet_area > 0:
-                        cost_per_mm2 = pallet_data["Cost (LKR)"] / pallet_area
-                        crate_pallet_area = crate_pallet_width * crate_pallet_height
-                        crate_pallet_cost = cost_per_mm2 * crate_pallet_area
+                    # (((Crate/Pallet Dimensions Table width*height*length) / (Table 2: Pallet Cost width*height*length)) * Table 2: Pallet Cost cost)
+                    crate_pallet_volume = crate_pallet_width * crate_pallet_height * crate_pallet_length
+                    pallet_ref_volume = pallet_data["Pallet width/mm"] * pallet_data["Pallet Height/mm"] * crate_pallet_length
+                    
+                    if pallet_ref_volume > 0:
+                        crate_pallet_cost = (crate_pallet_volume / pallet_ref_volume) * pallet_data["Cost (LKR)"]
                 
                 elif packing_method == "crate":
-                    # cost = (Pallet Cost / (pallet width*height*length)) * (Crate/Pallet Dimensions Table width*height*length)
-                    # Note: You mentioned "table 2: Pallet Cost" but for crates we should use crate cost table?
-                    # Based on your formula, using pallet cost for both pallet and crate calculations
-                    pallet_volume = pallet_data["Pallet width/mm"] * pallet_data["Pallet Height/mm"] * crate_pallet_length
-                    if pallet_volume > 0:
-                        cost_per_mm3 = pallet_data["Cost (LKR)"] / pallet_volume
-                        crate_volume = crate_pallet_width * crate_pallet_height * crate_pallet_length
-                        crate_pallet_cost = cost_per_mm3 * crate_volume
+                    # (((Crate/Pallet Dimensions Table width*height*length) / (Table 1: Crate Cost width*height*length)) * Table 1: Crate Cost cost)
+                    crate_pallet_volume = crate_pallet_width * crate_pallet_height * crate_pallet_length
+                    crate_ref_volume = crate_data["Crate width/mm"] * crate_data["Crate Height/mm"] * crate_data["Crate Length/mm"]
+                    
+                    if crate_ref_volume > 0:
+                        crate_pallet_cost = (crate_pallet_volume / crate_ref_volume) * crate_data["Cost (LKR)"]
+                        
                 
                 # Calculate packing cost per profile(LKR/prof)
+                # Formula: crate_pallet_cost / profiles per pallet/crate
                 packing_cost_per_profile = 0
                 if profiles_per_crate_pallet > 0:
                     packing_cost_per_profile = crate_pallet_cost / profiles_per_crate_pallet
