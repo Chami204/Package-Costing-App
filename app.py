@@ -102,8 +102,7 @@ def create_excel_report():
     except Exception as e:
         raise e
 
-# App title
-st.title("📦 Packing Costing Calculator")
+
 
 # Add download button at the top - CORRECTED INDENTATION
 col1, col2, col3 = st.columns([1, 2, 1])
