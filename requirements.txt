@@ -3,3 +3,4 @@ pandas
 streamlit
 pandas
 streamlit-extras
+openpyxl>=3.1.2
