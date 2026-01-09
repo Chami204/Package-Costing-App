@@ -972,4 +972,30 @@ with tab2:
     else:
         st.info("Enter SKU data and crate/pallet dimensions to see crate/pallet cost calculations.")
 
+    st.divider()
+    
+    # New Section: Special Comments under Secondary Packing
+    st.subheader("Special Comments under Secondary Packing")
+    
+    # Determine protective tape comment based on finish selection
+    protective_tape_comment = ""
+    if finish_tab2 in ["PC", "WF", "Anodised"]:
+        protective_tape_comment = "Protective tape required to avoid rejects"
+    else:
+        protective_tape_comment = "Protective tape is not mandatory"
+    
+    # Create the comments box
+    comments_box = f"""
+    **Packing Method Note:**
+    
+    1. Costing is done according to Secondary packing.
+    
+    2. The interleaving material is **"{eco_friendly_tab2}"**.
+    
+    3. {protective_tape_comment}
+    
+    4. Costing is inclusive of secondary packing - pallet or crate, however it is not inclusive of any labels or artwork. These will incur an additional charge.
+    """
+    
+    st.info(comments_box)
 
