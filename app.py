@@ -511,30 +511,27 @@ with tab1:
         },
         key="sku_editor_primary"
     )
-# Add this function before the Primary Calculations tab section or inside it
-def calculate_total_weight(df):
-    """Calculate total weight per profile based on unit weight and length"""
-    df_copy = df.copy()
-    for idx, row in df_copy.iterrows():
-        try:
-            unit_weight = float(row["Unit weight(kg/m)"])
-            length_mm = float(row["Length/mm"])
-            # Calculate: Unit weight(kg/m) * 1000 * (Length/mm)
-            # Note: Length in mm needs to be converted to meters: Length(mm) / 1000
-            # So the formula becomes: Unit weight(kg/m) * (Length(mm) / 1000)
-            total_weight = unit_weight * (length_mm / 1000)
-            df_copy.at[idx, "total weight per profile (kg)"] = round(total_weight, 4)
-        except (ValueError, TypeError):
-            df_copy.at[idx, "total weight per profile (kg)"] = 0
-    return df_copy
 
-# Update the session state with calculated weights
-if not edited_sku_df.equals(st.session_state.primary_sku_data):
-    # Recalculate total weights
-    edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
-    st.session_state.primary_sku_data = edited_sku_df_with_weights
-    st.rerun()
-
+    def calculate_total_weight(df):
+        """Calculate total weight per profile based on unit weight and length"""
+        df_copy = df.copy()
+        for idx, row in df_copy.iterrows():
+            try:
+                unit_weight = float(row["Unit weight(kg/m)"])
+                length_mm = float(row["Length/mm"])
+                # Calculate: Unit weight(kg/m) * (Length(mm) / 1000)
+                total_weight = unit_weight * (length_mm / 1000)
+                df_copy.at[idx, "total weight per profile (kg)"] = round(total_weight, 4)
+            except (ValueError, TypeError):
+                df_copy.at[idx, "total weight per profile (kg)"] = 0
+        return df_copy
+    
+    # Update the session state with calculated weights
+    if not edited_sku_df.equals(st.session_state.primary_sku_data):
+        # Recalculate total weights
+        edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
+        st.session_state.primary_sku_data = edited_sku_df_with_weights
+        st.rerun()
     
     # Update session state
     st.session_state.primary_sku_data = edited_sku_df
