@@ -522,14 +522,30 @@ with tab1:
                     return round(num / 100) * 100
                 
                 # Calculate box dimensions if they're 0 or not set
-                if pd.isna(row["Box Width/mm"]) or float(row["Box Width/mm"]) == 0:
-                    df_copy.at[idx, "Box Width/mm"] = round_to_nearest_100(width)
-                if pd.isna(row["Box Height/mm"]) or float(row["Box Height/mm"]) == 0:
-                    df_copy.at[idx, "Box Height/mm"] = round_to_nearest_100(height)
-                if pd.isna(row["Box Length/mm"]) or float(row["Box Length/mm"]) == 0:
-                    df_copy.at[idx, "Box Length/mm"] = round_to_nearest_100(length)
+                box_width_val = row["Box Width/mm"]
+                box_height_val = row["Box Height/mm"]
+                box_length_val = row["Box Length/mm"]
                 
-                # Get box dimensions
+                # Check if box dimensions are NaN, empty, or 0
+                if pd.isna(box_width_val) or float(box_width_val) == 0:
+                    df_copy.at[idx, "Box Width/mm"] = round_to_nearest_100(width)
+                else:
+                    # Keep existing value if already set
+                    df_copy.at[idx, "Box Width/mm"] = float(box_width_val)
+                    
+                if pd.isna(box_height_val) or float(box_height_val) == 0:
+                    df_copy.at[idx, "Box Height/mm"] = round_to_nearest_100(height)
+                else:
+                    # Keep existing value if already set
+                    df_copy.at[idx, "Box Height/mm"] = float(box_height_val)
+                    
+                if pd.isna(box_length_val) or float(box_length_val) == 0:
+                    df_copy.at[idx, "Box Length/mm"] = round_to_nearest_100(length)
+                else:
+                    # Keep existing value if already set
+                    df_copy.at[idx, "Box Length/mm"] = float(box_length_val)
+                
+                # Get box dimensions (after update)
                 box_width = float(df_copy.at[idx, "Box Width/mm"])
                 box_height = float(df_copy.at[idx, "Box Height/mm"])
                 box_length = float(df_copy.at[idx, "Box Length/mm"])
@@ -561,10 +577,24 @@ with tab1:
                     df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
                     
             except (ValueError, TypeError, ZeroDivisionError):
-                df_copy.at[idx, "Box Width/mm"] = 0
-                df_copy.at[idx, "Box Height/mm"] = 0
-                df_copy.at[idx, "Box Length/mm"] = 0
-                df_copy.at[idx, "Number of profiles per box"] = 0
+                # Set default values if there's an error
+                try:
+                    width = float(row["Width/mm"])
+                    height = float(row["Height/mm"])
+                    length = float(row["Length/mm"])
+                    
+                    def round_to_nearest_100(num):
+                        return round(num / 100) * 100
+                    
+                    df_copy.at[idx, "Box Width/mm"] = round_to_nearest_100(width)
+                    df_copy.at[idx, "Box Height/mm"] = round_to_nearest_100(height)
+                    df_copy.at[idx, "Box Length/mm"] = round_to_nearest_100(length)
+                    df_copy.at[idx, "Number of profiles per box"] = 0
+                except:
+                    df_copy.at[idx, "Box Width/mm"] = 0
+                    df_copy.at[idx, "Box Height/mm"] = 0
+                    df_copy.at[idx, "Box Length/mm"] = 0
+                    df_copy.at[idx, "Number of profiles per box"] = 0
         
         return df_copy
     
@@ -633,10 +663,10 @@ with tab1:
     
     # Update the session state with calculated weights and box dimensions
     if not edited_sku_df.equals(st.session_state.primary_sku_data):
-        # Recalculate total weights
-        edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
-        # Recalculate box dimensions and profiles
-        edited_sku_df_with_all = calculate_box_and_profiles(edited_sku_df_with_weights)
+        # First calculate box dimensions and profiles
+        edited_sku_df_with_box = calculate_box_and_profiles(edited_sku_df)
+        # Then calculate total weights
+        edited_sku_df_with_all = calculate_total_weight(edited_sku_df_with_box)
         st.session_state.primary_sku_data = edited_sku_df_with_all
         st.rerun()
     
