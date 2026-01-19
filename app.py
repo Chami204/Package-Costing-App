@@ -489,7 +489,7 @@ with tab1:
     
     # Initialize session state for primary SKU data
     if 'primary_sku_data' not in st.session_state:
-        st.session_state.primary_sku_data = pd.DataFrame(columns=["SKU No", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"])
+        st.session_state.primary_sku_data = pd.DataFrame(columns=["SKU No","Unit weight(kg/m)","total weight per profile (kg)", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"])
     
     # Create editable dataframe for SKU input
     edited_sku_df = st.data_editor(
@@ -498,6 +498,8 @@ with tab1:
         use_container_width=True,
         column_config={
             "SKU No": st.column_config.TextColumn("SKU No", required=True),
+            "Unit weight(kg/m)": st.column_config.NumberColumn("Unit weight(kg/m)", required=True, min_value=0, format="%.4f"),
+            "total weight per profile (kg)": st.column_config.NumberColumn("total weight per profile (kg)", required=True, min_value=0, format="%.4f", disabled=True),
             "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
             "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
             "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
@@ -509,6 +511,30 @@ with tab1:
         },
         key="sku_editor_primary"
     )
+# Add this function before the Primary Calculations tab section or inside it
+def calculate_total_weight(df):
+    """Calculate total weight per profile based on unit weight and length"""
+    df_copy = df.copy()
+    for idx, row in df_copy.iterrows():
+        try:
+            unit_weight = float(row["Unit weight(kg/m)"])
+            length_mm = float(row["Length/mm"])
+            # Calculate: Unit weight(kg/m) * 1000 * (Length/mm)
+            # Note: Length in mm needs to be converted to meters: Length(mm) / 1000
+            # So the formula becomes: Unit weight(kg/m) * (Length(mm) / 1000)
+            total_weight = unit_weight * (length_mm / 1000)
+            df_copy.at[idx, "total weight per profile (kg)"] = round(total_weight, 4)
+        except (ValueError, TypeError):
+            df_copy.at[idx, "total weight per profile (kg)"] = 0
+    return df_copy
+
+# Update the session state with calculated weights
+if not edited_sku_df.equals(st.session_state.primary_sku_data):
+    # Recalculate total weights
+    edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
+    st.session_state.primary_sku_data = edited_sku_df_with_weights
+    st.rerun()
+
     
     # Update session state
     st.session_state.primary_sku_data = edited_sku_df
@@ -638,6 +664,8 @@ with tab1:
                     width = float(sku["Width/mm"])
                     height = float(sku["Height/mm"])
                     length = float(sku["Length/mm"])
+                    unit_weight = float(sku["Unit weight(kg/m)"])
+                    total_weight = float(sku["total weight per profile (kg)"])
                     
                     # Calculate Surface Area in m²
                     sa_m2 = (2 * ((width * height) + (width * length) + (height * length))) / (1000 * 1000)
@@ -673,6 +701,8 @@ with tab1:
                     
                     calculations_data.append({
                         "SKU": sku["SKU No"],
+                        "Unit weight(kg/m)": round(unit_weight, 4),
+                        "Total weight (kg)": round(total_weight, 4),
                         "SA(m²)": round(sa_m2, 4),
                         "Interleaving cost": round(interleaving_cost, 2),
                         "Protective tape cost": round(protective_tape_cost, 2),
@@ -701,6 +731,8 @@ with tab1:
                     use_container_width=True,
                     column_config={
                         "SKU": st.column_config.TextColumn("SKU", required=True, disabled=True),
+                        "Unit weight(kg/m)": st.column_config.NumberColumn("Unit weight(kg/m)", required=True, min_value=0, format="%.4f", disabled=True),
+                        "Total weight (kg)": st.column_config.NumberColumn("Total weight (kg)", required=True, min_value=0, format="%.4f", disabled=True),
                         "SA(m²)": st.column_config.NumberColumn("SA(m²)", required=True, min_value=0, format="%.4f", disabled=True),
                         "Interleaving cost": st.column_config.NumberColumn("Interleaving cost", required=True, min_value=0, format="%.2f", disabled=True),
                         "Protective tape cost": st.column_config.NumberColumn("Protective tape cost", required=True, min_value=0, format="%.2f", disabled=True),
