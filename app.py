@@ -597,7 +597,7 @@ with tab1:
                 # Round to nearest tenth (one decimal place)
                 def round_to_nearest_tenth(num):
                     """Round to nearest tenth (one decimal place)"""
-                    return round(num, 1)
+                    return round(num, 10)
                 
                 box_width = round_to_nearest_tenth(width)
                 box_height = round_to_nearest_tenth(height)
