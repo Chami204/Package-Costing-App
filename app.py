@@ -508,9 +508,9 @@ with tab1:
             "SKU No": st.column_config.TextColumn("SKU No", required=True),
             "Unit weight(kg/m)": st.column_config.NumberColumn("Unit weight(kg/m)", required=True, min_value=0, format="%.4f"),
             "total weight per profile (kg)": st.column_config.NumberColumn("total weight per profile (kg)", required=True, min_value=0, format="%.4f", disabled=True),
-            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
-            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
-            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
+            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
             "Comment on fabrication": st.column_config.SelectboxColumn(
                 "Comment on fabrication",
                 options=["Fabricated", "Just Cutting"],
@@ -559,7 +559,7 @@ with tab1:
     
     # Function to auto-calculate box dimensions from SKU data
     def calculate_box_dimensions(sku_df, box_df):
-        """Calculate box dimensions from SKU data and round to nearest 2nd real number"""
+        """Calculate box dimensions from SKU data and round to nearest tenth"""
         if sku_df.empty:
             return box_df
         
@@ -581,9 +581,9 @@ with tab1:
                 if idx >= len(box_df_copy):
                     # Add new row if needed
                     new_row = {
-                        "Box Width/mm": 0,
-                        "Box Height/mm": 0,
-                        "Box Length/mm": 0,
+                        "Box Width/mm": 0.0,
+                        "Box Height/mm": 0.0,
+                        "Box Length/mm": 0.0,
                         "W/mm": "Profiles are arranged in W direction",
                         "H/mm": "Profiles are arranged in height direction"
                     }
@@ -594,22 +594,22 @@ with tab1:
                 height = float(sku_row["Height/mm"])
                 length = float(sku_row["Length/mm"])
                 
-                # Round to nearest 2nd real number without decimals
-                def round_to_second_real(num):
-                    """Round to nearest 2nd real number (round to nearest 10)"""
-                    return round(num / 10) * 10
+                # Round to nearest tenth (one decimal place)
+                def round_to_nearest_tenth(num):
+                    """Round to nearest tenth (one decimal place)"""
+                    return round(num, 1)
                 
-                box_width = round_to_second_real(width)
-                box_height = round_to_second_real(height)
-                box_length = round_to_second_real(length)
+                box_width = round_to_nearest_tenth(width)
+                box_height = round_to_nearest_tenth(height)
+                box_length = round_to_nearest_tenth(length)
                 
                 # Update the box dimensions if they're currently 0 or different
                 if box_df_copy.at[idx, "Box Width/mm"] == 0:
-                    box_df_copy.at[idx, "Box Width/mm"] = int(box_width)
+                    box_df_copy.at[idx, "Box Width/mm"] = box_width
                 if box_df_copy.at[idx, "Box Height/mm"] == 0:
-                    box_df_copy.at[idx, "Box Height/mm"] = int(box_height)
+                    box_df_copy.at[idx, "Box Height/mm"] = box_height
                 if box_df_copy.at[idx, "Box Length/mm"] == 0:
-                    box_df_copy.at[idx, "Box Length/mm"] = int(box_length)
+                    box_df_copy.at[idx, "Box Length/mm"] = box_length
                     
             except (ValueError, TypeError):
                 continue
@@ -642,22 +642,22 @@ with tab1:
                 "Box Width/mm", 
                 required=True, 
                 min_value=0,
-                step=10,  # Step by 10 since we're rounding to nearest 10
-                format="%d"  # Integer format
+                step=0.1,  # Changed to allow decimals
+                format="%.1f"  # Changed to show one decimal
             ),
             "Box Height/mm": st.column_config.NumberColumn(
                 "Box Height/mm", 
                 required=True, 
                 min_value=0,
-                step=10,
-                format="%d"
+                step=0.1,  # Changed to allow decimals
+                format="%.1f"  # Changed to show one decimal
             ),
             "Box Length/mm": st.column_config.NumberColumn(
                 "Box Length/mm", 
                 required=True, 
                 min_value=0,
-                step=10,
-                format="%d"
+                step=0.1,  # Changed to allow decimals
+                format="%.1f"  # Changed to show one decimal
             ),
             "W/mm": st.column_config.SelectboxColumn(
                 "W/mm",
@@ -991,9 +991,9 @@ with tab2:
         use_container_width=True,
         column_config={
             "SKU No": st.column_config.TextColumn("SKU No", required=True),
-            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
-            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
-            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0),
+            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
             "Comment on fabrication": st.column_config.SelectboxColumn(
                 "Comment on fabrication",
                 options=["Fabricated", "Just Cutting"],
@@ -1106,8 +1106,8 @@ with tab2:
         num_rows="dynamic",
         use_container_width=True,
         column_config={
-            "Bundle width/mm": st.column_config.NumberColumn("Bundle width/mm", required=True, min_value=0),
-            "Bundle Height/mm": st.column_config.NumberColumn("Bundle Height/mm", required=True, min_value=0)
+            "Bundle width/mm": st.column_config.NumberColumn("Bundle width/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Bundle Height/mm": st.column_config.NumberColumn("Bundle Height/mm", required=True, min_value=0, format="%.1f")  # Changed to allow decimals
         },
         key="bundle_size_editor"
     )
@@ -1282,9 +1282,9 @@ with tab2:
                 options=["pallet", "crate"],
                 required=True
             ),
-            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0),
-            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0),
-            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0)
+            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0, format="%.1f")  # Changed to allow decimals
         },
         key="crate_pallet_editor"
     )
