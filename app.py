@@ -258,11 +258,9 @@ def update_h_direction(df):
             df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
     return df_copy
 
-
-
-            
+           
             # Add SKU Table
-            start_row = 4
+        start_row = 4
             ws.cell(row=start_row, column=1, value="SKU Table with dimensions").font = heading_font
             ws.cell(row=start_row, column=1).fill = heading_fill
             st.session_state.primary_sku_data.to_excel(writer, sheet_name='Primary Calculations', index=False, startrow=start_row + 1)
