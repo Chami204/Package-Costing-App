@@ -77,190 +77,9 @@ def create_excel_report():
             ws['A1'].fill = heading_fill
             ws['A1'].alignment = Alignment(horizontal='center')
             ws.column_dimensions['A'].width = 35
-
-            # After the SKU table and before st.divider(), add this:
-
-# ======== ADD CARD BOARD BOX DIMENSIONS TABLE HERE ========
-st.subheader("Cardboard Box Dimensions")
-
-# Initialize session state for cardboard box dimensions
-if 'cardboard_box_data' not in st.session_state:
-    st.session_state.cardboard_box_data = pd.DataFrame(columns=[
-        "Box Width/mm", 
-        "Box Height/mm", 
-        "Box Length/mm", 
-        "W/mm", 
-        "H/mm"
-    ])
-
-# Function to auto-calculate box dimensions from SKU data
-def calculate_box_dimensions(sku_df, box_df):
-    """Calculate box dimensions from SKU data and round to nearest 2nd real number"""
-    if sku_df.empty:
-        return box_df
-    
-    # Create a copy of the box dataframe
-    box_df_copy = box_df.copy()
-    
-    # Reset the dataframe if SKU count changed
-    if len(box_df_copy) != len(sku_df):
-        box_df_copy = pd.DataFrame(columns=[
-            "Box Width/mm", 
-            "Box Height/mm", 
-            "Box Length/mm", 
-            "W/mm", 
-            "H/mm"
-        ])
-    
-    for idx, sku_row in sku_df.iterrows():
-        try:
-            if idx >= len(box_df_copy):
-                # Add new row if needed
-                new_row = {
-                    "Box Width/mm": 0,
-                    "Box Height/mm": 0,
-                    "Box Length/mm": 0,
-                    "W/mm": "Profiles are arranged in W direction",
-                    "H/mm": "Profiles are arranged in height direction"
-                }
-                box_df_copy = pd.concat([box_df_copy, pd.DataFrame([new_row])], ignore_index=True)
             
-            # Get SKU dimensions
-            width = float(sku_row["Width/mm"])
-            height = float(sku_row["Height/mm"])
-            length = float(sku_row["Length/mm"])
-            
-            # Round to nearest 2nd real number without decimals
-            def round_to_second_real(num):
-                """Round to nearest 2nd real number (round to nearest 10)"""
-                return round(num / 10) * 10
-            
-            box_width = round_to_second_real(width)
-            box_height = round_to_second_real(height)
-            box_length = round_to_second_real(length)
-            
-            # Update the box dimensions if they're currently 0 or different
-            if box_df_copy.at[idx, "Box Width/mm"] == 0:
-                box_df_copy.at[idx, "Box Width/mm"] = int(box_width)
-            if box_df_copy.at[idx, "Box Height/mm"] == 0:
-                box_df_copy.at[idx, "Box Height/mm"] = int(box_height)
-            if box_df_copy.at[idx, "Box Length/mm"] == 0:
-                box_df_copy.at[idx, "Box Length/mm"] = int(box_length)
-                
-        except (ValueError, TypeError):
-            continue
-    
-    return box_df_copy
-
-# Calculate initial box dimensions
-calculated_box_df = calculate_box_dimensions(st.session_state.primary_sku_data, st.session_state.cardboard_box_data)
-st.session_state.cardboard_box_data = calculated_box_df
-
-# Create callback to update H/mm based on W/mm selection
-def update_h_direction(df):
-    """Update H/mm based on W/mm selection"""
-    df_copy = df.copy()
-    for idx, row in df_copy.iterrows():
-        w_direction = row["W/mm"]
-        if w_direction == "Profiles are arranged in W direction":
-            df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-        elif w_direction == "Profiles are arranged in height direction":
-            df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-    return df_copy
-
-# After the SKU table and before st.divider(), add this:
-
-# ======== ADD CARD BOARD BOX DIMENSIONS TABLE HERE ========
-st.subheader("Cardboard Box Dimensions")
-
-# Initialize session state for cardboard box dimensions
-if 'cardboard_box_data' not in st.session_state:
-    st.session_state.cardboard_box_data = pd.DataFrame(columns=[
-        "Box Width/mm", 
-        "Box Height/mm", 
-        "Box Length/mm", 
-        "W/mm", 
-        "H/mm"
-    ])
-
-# Function to auto-calculate box dimensions from SKU data
-def calculate_box_dimensions(sku_df, box_df):
-    """Calculate box dimensions from SKU data and round to nearest 2nd real number"""
-    if sku_df.empty:
-        return box_df
-    
-    # Create a copy of the box dataframe
-    box_df_copy = box_df.copy()
-    
-    # Reset the dataframe if SKU count changed
-    if len(box_df_copy) != len(sku_df):
-        box_df_copy = pd.DataFrame(columns=[
-            "Box Width/mm", 
-            "Box Height/mm", 
-            "Box Length/mm", 
-            "W/mm", 
-            "H/mm"
-        ])
-    
-    for idx, sku_row in sku_df.iterrows():
-        try:
-            if idx >= len(box_df_copy):
-                # Add new row if needed
-                new_row = {
-                    "Box Width/mm": 0,
-                    "Box Height/mm": 0,
-                    "Box Length/mm": 0,
-                    "W/mm": "Profiles are arranged in W direction",
-                    "H/mm": "Profiles are arranged in height direction"
-                }
-                box_df_copy = pd.concat([box_df_copy, pd.DataFrame([new_row])], ignore_index=True)
-            
-            # Get SKU dimensions
-            width = float(sku_row["Width/mm"])
-            height = float(sku_row["Height/mm"])
-            length = float(sku_row["Length/mm"])
-            
-            # Round to nearest 2nd real number without decimals
-            def round_to_second_real(num):
-                """Round to nearest 2nd real number (round to nearest 10)"""
-                return round(num / 10) * 10
-            
-            box_width = round_to_second_real(width)
-            box_height = round_to_second_real(height)
-            box_length = round_to_second_real(length)
-            
-            # Update the box dimensions if they're currently 0 or different
-            if box_df_copy.at[idx, "Box Width/mm"] == 0:
-                box_df_copy.at[idx, "Box Width/mm"] = int(box_width)
-            if box_df_copy.at[idx, "Box Height/mm"] == 0:
-                box_df_copy.at[idx, "Box Height/mm"] = int(box_height)
-            if box_df_copy.at[idx, "Box Length/mm"] == 0:
-                box_df_copy.at[idx, "Box Length/mm"] = int(box_length)
-                
-        except (ValueError, TypeError):
-            continue
-    
-    return box_df_copy
-
-# Calculate initial box dimensions
-calculated_box_df = calculate_box_dimensions(st.session_state.primary_sku_data, st.session_state.cardboard_box_data)
-st.session_state.cardboard_box_data = calculated_box_df
-
-# Create callback to update H/mm based on W/mm selection
-def update_h_direction(df):
-    """Update H/mm based on W/mm selection"""
-    df_copy = df.copy()
-    for idx, row in df_copy.iterrows():
-        w_direction = row["W/mm"]
-        if w_direction == "Profiles are arranged in W direction":
-            df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-        elif w_direction == "Profiles are arranged in height direction":
-            df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-    return df_copy
-
-           
             # Add SKU Table
-        start_row = 4
+            start_row = 4
             ws.cell(row=start_row, column=1, value="SKU Table with dimensions").font = heading_font
             ws.cell(row=start_row, column=1).fill = heading_fill
             st.session_state.primary_sku_data.to_excel(writer, sheet_name='Primary Calculations', index=False, startrow=start_row + 1)
@@ -668,9 +487,17 @@ with tab1:
     # Sub topic 1 - SKU Table with dimensions
     st.subheader("SKU Table with dimensions")
     
-    # Initialize session state for primary SKU data
+    # Initialize session state for primary SKU data with new columns
     if 'primary_sku_data' not in st.session_state:
-        st.session_state.primary_sku_data = pd.DataFrame(columns=["SKU No","Unit weight(kg/m)","total weight per profile (kg)", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"])
+        st.session_state.primary_sku_data = pd.DataFrame(columns=[
+            "SKU No", 
+            "Unit weight(kg/m)", 
+            "total weight per profile (kg)", 
+            "Width/mm", 
+            "Height/mm", 
+            "Length/mm", 
+            "Comment on fabrication"
+        ])
     
     # Create editable dataframe for SKU input
     edited_sku_df = st.data_editor(
@@ -692,7 +519,8 @@ with tab1:
         },
         key="sku_editor_primary"
     )
-
+    
+    # Callback function to auto-calculate total weight
     def calculate_total_weight(df):
         """Calculate total weight per profile based on unit weight and length"""
         df_copy = df.copy()
@@ -713,9 +541,10 @@ with tab1:
         edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
         st.session_state.primary_sku_data = edited_sku_df_with_weights
         st.rerun()
-    # After the SKU table and before st.divider(), add this:
-
-    # ======== ADD CARD BOARD BOX DIMENSIONS TABLE HERE ========
+    
+    # =================================================================
+    # ============ ADD CARD BOARD BOX DIMENSIONS TABLE HERE ============
+    # =================================================================
     st.subheader("Cardboard Box Dimensions")
     
     # Initialize session state for cardboard box dimensions
@@ -860,11 +689,6 @@ with tab1:
         st.session_state.cardboard_box_data = recalculated_box_df
         st.rerun()
     # ======== END OF CARD BOARD BOX DIMENSIONS TABLE ========
-    
-    st.divider()
-
-    # Update session state
-    st.session_state.primary_sku_data = edited_sku_df
     
     st.divider()
     
