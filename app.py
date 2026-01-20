@@ -936,13 +936,13 @@ with tab1:
                         }
                         selected_material = material_map.get(eco_friendly, "McFoam")
                         cost_per_m2 = material_cost_dict.get(selected_material, 0)
-                        interleaving_cost = (cost_per_m2 * sa_m2)/df['number of profiles per box']
+                        interleaving_cost = (cost_per_m2 * sa_m2)/profiles_per_box
                     
                     # Calculate Protective Tape Cost
                     protective_tape_cost = 0
                     if protective_tape == "Yes":
                         cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
-                        protective_tape_cost = (cost_per_m2 * sa_m2)/df['number of profiles per box']
+                        protective_tape_cost = (cost_per_m2 * sa_m2)/profiles_per_box
                     
                     # Calculate Packing Cost - UPDATED FORMULA
                     # Using box dimensions from SKU table divided by number of profiles per box
