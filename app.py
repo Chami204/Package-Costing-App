@@ -978,7 +978,8 @@ with tab1:
                         "Box length/mm": round(box_length, 0),
                         "Profiles per box": int(profiles_per_box),
                         "Packing Cost (LKR)": round(packing_cost, 2),
-                        "Total Cost": round(total_cost, 2)
+                        "Total Cost per profile/LKR": round(total_cost, 2),
+                        "Cost/kg (LKR)": round(cost_per_kg, 2)
                     })
                     
                 except (ValueError, TypeError, ZeroDivisionError):
@@ -1009,7 +1010,8 @@ with tab1:
                         "Box length/mm": st.column_config.NumberColumn("Box length/mm", required=True, min_value=0, format="%.0f"),
                         "Profiles per box": st.column_config.NumberColumn("Profiles per box", required=True, min_value=0, format="%.2f", disabled=True),
                         "Packing Cost (LKR)": st.column_config.NumberColumn("Packing Cost (LKR)", required=True, min_value=0, format="%.2f", disabled=True),
-                        "Total Cost": st.column_config.NumberColumn("Total Cost", required=True, min_value=0, format="%.2f", disabled=True)
+                        "Total Cost per profile/LKR": st.column_config.NumberColumn("Total Cost per profile/LKR", required=True, min_value=0, format="%.2f", disabled=True),  # ← CHANGED
+                        "Cost/kg (LKR)": st.column_config.NumberColumn("Cost/kg (LKR)", required=True, min_value=0, format="%.2f", disabled=True)  # ← NEW
                     },
                     key="primary_calculations_editor"
                 )
@@ -1069,10 +1071,6 @@ with tab1:
                 
                 # Display the updated dataframe
                 st.dataframe(st.session_state.primary_calculations, use_container_width=True)
-                
-                # Display total summary
-                total_sum = st.session_state.primary_calculations["Total Cost"].sum()
-                st.metric("**Total Primary Packing Cost**", f"LKR {total_sum:,.2f}")
                 
             else:
                 st.warning("Enter valid SKU data")
