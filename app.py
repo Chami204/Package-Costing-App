@@ -145,6 +145,30 @@ def create_excel_report():
             # Add Primary Packing Total Cost heading
             calc_start_row = box_start_row + box_rows + 4
             ws.cell(row=calc_start_row, column=1, value="Table 3: Primary Packing Total Cost").font = heading_font
+
+            
+            # Add Special Comments Section
+            comments_start_row = calc_start_row + calc_rows + 5
+            ws.cell(row=comments_start_row, column=1, value="Special Comments Section").font = heading_font
+            ws.cell(row=comments_start_row, column=1).fill = heading_fill
+            
+            # Get the comments from session state
+            eco_friendly_primary = st.session_state.get("eco_friendly_primary", "Mac foam")
+            comments_text = f"""Costing is done according to primary packing. Therefore, this cost does not include any crate or palletizing charges. Please note that secondary packaging will incur an additional charge.
+            
+            The interleaving material is "{eco_friendly_primary}".
+            
+            Protective tape required to avoid rejects
+            
+            Costing is only inclusive of interleaving required & Cardboard Box/Polybag."""
+            
+            # Add comments text
+            current_row = comments_start_row + 2
+            for line in comments_text.split('\n'):
+                ws.cell(row=current_row, column=1, value=line)
+                current_row += 1
+
+
             ws.cell(row=calc_start_row, column=1).fill = heading_fill
             
             # Add Primary Packing Total Cost
