@@ -504,17 +504,14 @@ with tab1:
                     height = float(row["Height/mm"])
                     length = float(row["Length/mm"])
                     
-                    # Calculate box dimensions (round to nearest 100)
-                    def round_to_nearest_100(num):
-                        return round(num / 100) * 100
+                    # Calculate box dimensions (round UP to nearest 100)
+                    def round_up_to_nearest_100(num):
+                        return ((int(num) + 99) // 100) * 100
                     
-                    # Calculate box dimensions if they're 0 or not set
-                    if pd.isna(row["Box Width/mm"]) or float(row["Box Width/mm"]) == 0:
-                        df_copy.at[idx, "Box Width/mm"] = round_to_nearest_100(width)
-                    if pd.isna(row["Box Height/mm"]) or float(row["Box Height/mm"]) == 0:
-                        df_copy.at[idx, "Box Height/mm"] = round_to_nearest_100(height)
-                    if pd.isna(row["Box Length/mm"]) or float(row["Box Length/mm"]) == 0:
-                        df_copy.at[idx, "Box Length/mm"] = round_to_nearest_100(length)
+                    # ALWAYS calculate box dimensions from profile dimensions (rounding up)
+                    df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
+                    df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
+                    df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
                     
                     # Get box dimensions
                     box_width = float(df_copy.at[idx, "Box Width/mm"])
@@ -539,7 +536,8 @@ with tab1:
                         if width > 0 and height > 0:
                             profiles_per_box = (box_width / width) * (box_height / height)
                     
-                    df_copy.at[idx, "Number of profiles per box"] = round(profiles_per_box, 2) if profiles_per_box > 0 else 0
+                    # Use INTEGER value (floor) for number of profiles per box
+                    df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
                     
                     # Update H/mm based on W/mm selection
                     if w_direction == "Profiles are arranged in W direction":
@@ -598,18 +596,15 @@ with tab1:
                 height = float(row["Height/mm"])
                 length = float(row["Length/mm"])
                 
-                # Calculate box dimensions (round to nearest 100)
-                def round_to_nearest_100(num):
-                    """Round to nearest 100"""
-                    return round(num / 100) * 100
+                # Calculate box dimensions (round UP to nearest 100)
+                def round_up_to_nearest_100(num):
+                    """Round UP to nearest 100"""
+                    return ((int(num) + 99) // 100) * 100
                 
-                # Calculate box dimensions if they're 0 or not set
-                if pd.isna(row["Box Width/mm"]) or float(row["Box Width/mm"]) == 0:
-                    df_copy.at[idx, "Box Width/mm"] = round_to_nearest_100(width)
-                if pd.isna(row["Box Height/mm"]) or float(row["Box Height/mm"]) == 0:
-                    df_copy.at[idx, "Box Height/mm"] = round_to_nearest_100(height)
-                if pd.isna(row["Box Length/mm"]) or float(row["Box Length/mm"]) == 0:
-                    df_copy.at[idx, "Box Length/mm"] = round_to_nearest_100(length)
+                # ALWAYS calculate box dimensions from profile dimensions (rounding up)
+                df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
+                df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
+                df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
                 
                 # Get box dimensions
                 box_width = float(df_copy.at[idx, "Box Width/mm"])
@@ -634,7 +629,8 @@ with tab1:
                     if width > 0 and height > 0:
                         profiles_per_box = (box_width / width) * (box_height / height)
                 
-                df_copy.at[idx, "Number of profiles per box"] = round(profiles_per_box, 2) if profiles_per_box > 0 else 0
+                # Use INTEGER value (floor) for number of profiles per box
+                df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
                 
                 # Update H/mm based on W/mm selection
                 if w_direction == "Profiles are arranged in W direction":
@@ -686,7 +682,7 @@ with tab1:
                 "Number of profiles per box", 
                 required=True, 
                 min_value=0, 
-                format="%.2f",
+                format="%d",  # Changed from "%.2f" to "%d" for integer display
                 disabled=True
             ),
             "Comment on fabrication": st.column_config.SelectboxColumn(
@@ -881,6 +877,7 @@ with tab1:
                     # Calculate Packing Cost - UPDATED FORMULA
                     # Using box dimensions from SKU table divided by number of profiles per box
                     packing_cost = 0
+                    # In the primary calculations section where packing_cost is calculated:
                     if ref_box["Length(mm)"] > 0 and ref_box["Width (mm)"] > 0 and ref_box["Height (mm)"] > 0:
                         if profiles_per_box > 0:
                             # Calculate cost per box volume
@@ -890,11 +887,11 @@ with tab1:
                             # Total box cost = cost per volume * actual box volume
                             total_box_cost = box_volume_cost * actual_box_volume
                             # Packing cost per profile = total box cost / number of profiles per box
-                            packing_cost = total_box_cost / profiles_per_box
+                            packing_cost = total_box_cost / profiles_per_box  # This now uses integer value
                         else:
                             # Fallback to original calculation if profiles_per_box is 0
                             packing_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"])) * (width * height * length)
-                    
+                            
                     # Calculate Total Cost
                     total_cost = interleaving_cost + protective_tape_cost + packing_cost
                     
@@ -909,7 +906,7 @@ with tab1:
                         "Box width/mm": round(box_width, 0),
                         "Box height/mm": round(box_height, 0),
                         "Box length/mm": round(box_length, 0),
-                        "Profiles per box": round(profiles_per_box, 2),
+                        "Profiles per box": int(profiles_per_box),
                         "Packing Cost (LKR)": round(packing_cost, 2),
                         "Total Cost": round(total_cost, 2)
                     })
