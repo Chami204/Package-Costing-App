@@ -486,6 +486,7 @@ with tab1:
     st.header("Primary Calculations")
     
     # Function to auto-calculate all fields in SKU table
+    # Function to auto-calculate all fields in SKU table
     def auto_calculate_sku_table():
         """Auto-calculate all fields in SKU table"""
         if not st.session_state.primary_sku_data.empty:
@@ -554,6 +555,8 @@ with tab1:
             # Update session state
             st.session_state.primary_sku_data = df_copy
             st.success("Auto-calculation completed!")
+            st.rerun()  # ADD THIS LINE to force immediate refresh
+
     
     # Sub topic 1 - SKU Table with dimensions with auto-calc button
     col1, col2 = st.columns([3, 1])
@@ -586,6 +589,7 @@ with tab1:
         ])
     
     # Function to calculate box dimensions and number of profiles per box
+    # Function to calculate box dimensions and number of profiles per box
     def calculate_box_and_profiles(df):
         """Calculate box dimensions and number of profiles per box"""
         df_copy = df.copy()
@@ -602,11 +606,37 @@ with tab1:
                     return ((int(num) + 99) // 100) * 100
                 
                 # ALWAYS calculate box dimensions from profile dimensions (rounding up)
-                df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
-                df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
-                df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
+                # But only if box dimensions are 0 or not set, OR if they match the profile dimensions
+                # (this allows users to manually edit them)
+                current_box_width = float(row["Box Width/mm"]) if not pd.isna(row["Box Width/mm"]) else 0
+                current_box_height = float(row["Box Height/mm"]) if not pd.isna(row["Box Height/mm"]) else 0
+                current_box_length = float(row["Box Length/mm"]) if not pd.isna(row["Box Length/mm"]) else 0
                 
-                # Get box dimensions
+                # Auto-calculate only if box dimensions are not already manually set
+                # (assume manually set if they're not exactly the rounded up value of profile dimensions)
+                expected_box_width = round_up_to_nearest_100(width)
+                expected_box_height = round_up_to_nearest_100(height)
+                expected_box_length = round_up_to_nearest_100(length)
+                
+                if current_box_width == 0 or current_box_width == expected_box_width:
+                    df_copy.at[idx, "Box Width/mm"] = expected_box_width
+                else:
+                    # Keep user's manual entry
+                    df_copy.at[idx, "Box Width/mm"] = current_box_width
+                    
+                if current_box_height == 0 or current_box_height == expected_box_height:
+                    df_copy.at[idx, "Box Height/mm"] = expected_box_height
+                else:
+                    # Keep user's manual entry
+                    df_copy.at[idx, "Box Height/mm"] = current_box_height
+                    
+                if current_box_length == 0 or current_box_length == expected_box_length:
+                    df_copy.at[idx, "Box Length/mm"] = expected_box_length
+                else:
+                    # Keep user's manual entry
+                    df_copy.at[idx, "Box Length/mm"] = current_box_length
+                
+                # Get box dimensions (either auto-calculated or manually entered)
                 box_width = float(df_copy.at[idx, "Box Width/mm"])
                 box_height = float(df_copy.at[idx, "Box Height/mm"])
                 box_length = float(df_copy.at[idx, "Box Length/mm"])
