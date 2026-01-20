@@ -964,6 +964,9 @@ with tab1:
                             
                     # Calculate Total Cost
                     total_cost = interleaving_cost + protective_tape_cost + packing_cost
+
+                    # Calculate Cost/kg (LKR)
+                    cost_per_kg = total_cost / total_weight if total_weight > 0 else 0
                     
                     calculations_data.append({
                         "SKU": sku["SKU No"],
