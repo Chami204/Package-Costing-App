@@ -2,6 +2,28 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+# Initialize all session states for persistence
+if 'primary_sku_data' not in st.session_state:
+    st.session_state.primary_sku_data = pd.DataFrame(columns=[
+        "SKU No", "Unit weight(kg/m)", "total weight per profile (kg)", 
+        "Width/mm", "Height/mm", "Length/mm", "Box Width/mm",
+        "Box Height/mm", "Box Length/mm", "W/mm", "H/mm",
+        "Number of profiles per box", "Comment on fabrication"
+    ])
+
+if 'primary_material_costs' not in st.session_state:
+    st.session_state.primary_material_costs = pd.DataFrame({
+        "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+        "Cost/ m²": [51.00, 34.65, 100.65, 14.38]
+    })
+
+if 'primary_box_costs' not in st.session_state:
+    st.session_state.primary_box_costs = pd.DataFrame({
+        "Length(mm)": [330], "Width (mm)": [210], 
+        "Height (mm)": [135], "Cost (LKR)": [205.00]
+    })
+
+
 # Set page configuration
 st.set_page_config(
     page_title="Packing Costing Calculator",
@@ -657,6 +679,10 @@ with tab1:
         st.subheader("SKU Table with dimensions")
     with col2:
         st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Add a checkbox to control auto-calculation
+        auto_calc_enabled = st.checkbox("Enable auto-calculation", value=True, key="auto_calc_enabled")
+        
         if st.button("🔄 Auto-Calculate All Fields", 
                     help="Click to auto-calculate total weight, box dimensions, and profiles per box",
                     use_container_width=True):
@@ -834,15 +860,20 @@ with tab1:
     
     # Update the session state with calculated weights and box dimensions
     if not edited_sku_df.equals(st.session_state.primary_sku_data):
-        # First check if profile dimensions changed and auto-update box dimensions
-        edited_sku_df = auto_update_box_dimensions_on_profile_change(st.session_state.primary_sku_data, edited_sku_df)
+        # Only auto-calculate if enabled
+        if st.session_state.get("auto_calc_enabled", True):
+            # First check if profile dimensions changed and auto-update box dimensions
+            edited_sku_df = auto_update_box_dimensions_on_profile_change(st.session_state.primary_sku_data, edited_sku_df)
+            
+            # Recalculate total weights
+            edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
+            # Recalculate box dimensions and profiles
+            edited_sku_df_with_all = calculate_box_and_profiles(edited_sku_df_with_weights)
+            st.session_state.primary_sku_data = edited_sku_df_with_all
         
-        # Recalculate total weights
-        edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
-        # Recalculate box dimensions and profiles
-        edited_sku_df_with_all = calculate_box_and_profiles(edited_sku_df_with_weights)
-        st.session_state.primary_sku_data = edited_sku_df_with_all
-        st.rerun()
+        # Only rerun if auto-calc is enabled
+        if st.session_state.get("auto_calc_enabled", True):
+            st.rerun()
     
     st.divider()
     
@@ -866,9 +897,18 @@ with tab1:
         )
     
     with col3:
+        # Get current finish selection
+        finish = st.session_state.get("finish_primary", "Mill Finish")
+        
+        # Define available options based on finish
+        if finish == "Anodised":
+            eco_options = ["Mac foam", "Stretch wrap"]  # No Craft Paper for Anodised
+        else:
+            eco_options = ["Mac foam", "Stretch wrap", "Craft Paper"]
+        
         eco_friendly = st.selectbox(
             "Eco-Friendly Packing Material",
-            ["Mac foam", "Stretch wrap", "Craft Paper"],
+            options=eco_options,
             key="eco_friendly_primary"
         )
     
@@ -1023,18 +1063,12 @@ with tab1:
 
                     # Calculate Cost/kg (LKR)
                     cost_per_kg = total_cost / total_weight if total_weight > 0 else 0
-                    
+
                     calculations_data.append({
                         "SKU": sku["SKU No"],
-                        "Unit weight(kg/m)": round(unit_weight, 4),
-                        "Total weight (kg)": round(total_weight, 4),
-                        "SA(m²)": round(sa_m2, 4),
                         "Interleaving cost": round(interleaving_cost, 2),
                         "Protective tape cost": round(protective_tape_cost, 2),
                         "Packing type": "Cardboard box",
-                        "Box width/mm": round(box_width, 0),
-                        "Box height/mm": round(box_height, 0),
-                        "Box length/mm": round(box_length, 0),
                         "Profiles per box": int(profiles_per_box),
                         "Packing Cost (LKR)": round(packing_cost, 2),
                         "Total Cost per profile/LKR": round(total_cost, 2),
@@ -1058,19 +1092,13 @@ with tab1:
                     use_container_width=True,
                     column_config={
                         "SKU": st.column_config.TextColumn("SKU", required=True, disabled=True),
-                        "Unit weight(kg/m)": st.column_config.NumberColumn("Unit weight(kg/m)", required=True, min_value=0, format="%.4f", disabled=True),
-                        "Total weight (kg)": st.column_config.NumberColumn("Total weight (kg)", required=True, min_value=0, format="%.4f", disabled=True),
-                        "SA(m²)": st.column_config.NumberColumn("SA(m²)", required=True, min_value=0, format="%.4f", disabled=True),
                         "Interleaving cost": st.column_config.NumberColumn("Interleaving cost", required=True, min_value=0, format="%.2f", disabled=True),
                         "Protective tape cost": st.column_config.NumberColumn("Protective tape cost", required=True, min_value=0, format="%.2f", disabled=True),
                         "Packing type": st.column_config.TextColumn("Packing type", required=True, disabled=True),
-                        "Box width/mm": st.column_config.NumberColumn("Box width/mm", required=True, min_value=0, format="%.0f"),
-                        "Box height/mm": st.column_config.NumberColumn("Box height/mm", required=True, min_value=0, format="%.0f"),
-                        "Box length/mm": st.column_config.NumberColumn("Box length/mm", required=True, min_value=0, format="%.0f"),
                         "Profiles per box": st.column_config.NumberColumn("Profiles per box", required=True, min_value=0, format="%.2f", disabled=True),
                         "Packing Cost (LKR)": st.column_config.NumberColumn("Packing Cost (LKR)", required=True, min_value=0, format="%.2f", disabled=True),
-                        "Total Cost per profile/LKR": st.column_config.NumberColumn("Total Cost per profile/LKR", required=True, min_value=0, format="%.2f", disabled=True),  # ← CHANGED
-                        "Cost/kg (LKR)": st.column_config.NumberColumn("Cost/kg (LKR)", required=True, min_value=0, format="%.2f", disabled=True)  # ← NEW
+                        "Total Cost per profile/LKR": st.column_config.NumberColumn("Total Cost per profile/LKR", required=True, min_value=0, format="%.2f", disabled=True),
+                        "Cost/kg (LKR)": st.column_config.NumberColumn("Cost/kg (LKR)", required=True, min_value=0, format="%.2f", disabled=True)
                     },
                     key="primary_calculations_editor"
                 )
