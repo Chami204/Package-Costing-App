@@ -634,42 +634,33 @@ with tab1:
             st.success("Auto-calculation completed!")
             st.rerun()  # ADD THIS LINE to force immediate refresh
             
-    # Function to check if profile dimensions have changed and auto-update box dimensions
-    def auto_update_box_dimensions_on_profile_change(old_df, new_df):
-        """Auto-update box dimensions when profile dimensions change"""
-        if old_df.empty or new_df.empty:
-            return new_df
-        
-        df_copy = new_df.copy()
-        for idx, new_row in df_copy.iterrows():
+    
+    # Function to auto-calculate box dimensions for ALL rows (including new ones)
+    def auto_calculate_all_box_dimensions(df):
+        """Auto-calculate box dimensions for all rows in dataframe"""
+        df_copy = df.copy()
+        for idx, row in df_copy.iterrows():
             try:
-                # Check if this row exists in old_df
-                if idx < len(old_df):
-                    old_row = old_df.iloc[idx]
-                    
-                    # Check if profile dimensions have changed
-                    profile_dims_changed = False
-                    if (float(old_row["Width/mm"]) != float(new_row["Width/mm"]) or
-                        float(old_row["Height/mm"]) != float(new_row["Height/mm"]) or
-                        float(old_row["Length/mm"]) != float(new_row["Length/mm"])):
-                        profile_dims_changed = True
-                    
-                    # If profile dimensions changed, auto-update box dimensions
-                    if profile_dims_changed:
-                        width = float(new_row["Width/mm"])
-                        height = float(new_row["Height/mm"])
-                        length = float(new_row["Length/mm"])
-                        
-                        # Calculate box dimensions (round UP to nearest 100)
-                        def round_up_to_nearest_100(num):
-                            return ((int(num) + 99) // 100) * 100
-                        
-                        df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
-                        df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
-                        df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
-                        
-            except (ValueError, TypeError, IndexError):
-                continue
+                # Get profile dimensions
+                width = float(row["Width/mm"])
+                height = float(row["Height/mm"])
+                length = float(row["Length/mm"])
+                
+                # Calculate box dimensions (round UP to nearest 100)
+                def round_up_to_nearest_100(num):
+                    return ((int(num) + 99) // 100) * 100
+                
+                # ALWAYS calculate box dimensions from profile dimensions (rounding up)
+                # This ensures ALL rows get calculated
+                df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
+                df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
+                df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
+                
+            except (ValueError, TypeError, ZeroDivisionError):
+                # If there's an error, set default values
+                df_copy.at[idx, "Box Width/mm"] = 0
+                df_copy.at[idx, "Box Height/mm"] = 0
+                df_copy.at[idx, "Box Length/mm"] = 0
         
         return df_copy
     
@@ -862,17 +853,14 @@ with tab1:
     if not edited_sku_df.equals(st.session_state.primary_sku_data):
         # Only auto-calculate if enabled
         if st.session_state.get("auto_calc_enabled", True):
-            # First check if profile dimensions changed and auto-update box dimensions
-            edited_sku_df = auto_update_box_dimensions_on_profile_change(st.session_state.primary_sku_data, edited_sku_df)
+            # First, ensure ALL box dimensions are calculated (including new rows)
+            edited_sku_df = auto_calculate_all_box_dimensions(edited_sku_df)
             
             # Recalculate total weights
             edited_sku_df_with_weights = calculate_total_weight(edited_sku_df)
-            # Recalculate box dimensions and profiles
+            # Recalculate box dimensions and profiles (this includes profiles per box calculation)
             edited_sku_df_with_all = calculate_box_and_profiles(edited_sku_df_with_weights)
             st.session_state.primary_sku_data = edited_sku_df_with_all
-        
-        # Only rerun if auto-calc is enabled
-        if st.session_state.get("auto_calc_enabled", True):
             st.rerun()
     
     st.divider()
