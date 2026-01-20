@@ -145,9 +145,21 @@ def create_excel_report():
             # Add Primary Packing Total Cost heading
             calc_start_row = box_start_row + box_rows + 4
             ws.cell(row=calc_start_row, column=1, value="Table 3: Primary Packing Total Cost").font = heading_font
-
+            ws.cell(row=calc_start_row, column=1).fill = heading_fill
             
-            # Add Special Comments Section
+            # Add Primary Packing Total Cost
+            st.session_state.primary_calculations.to_excel(writer, sheet_name='Primary Calculations', index=False,
+                                                            startrow=calc_start_row + 1)
+            
+            # Apply borders to calculations table
+            calc_rows = len(st.session_state.primary_calculations)
+            calc_cols = len(st.session_state.primary_calculations.columns)
+            for row in range(calc_start_row + 2, calc_start_row + calc_rows + 3):
+                for col in range(1, calc_cols + 1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.border = thin_border
+            
+            # Add Special Comments Section (AFTER the table)
             comments_start_row = calc_start_row + calc_rows + 5
             ws.cell(row=comments_start_row, column=1, value="Special Comments Section").font = heading_font
             ws.cell(row=comments_start_row, column=1).fill = heading_fill
@@ -165,24 +177,10 @@ def create_excel_report():
             # Add comments text
             current_row = comments_start_row + 2
             for line in comments_text.split('\n'):
-                ws.cell(row=current_row, column=1, value=line)
+                ws.cell(row=current_row, column=1, value=line.strip())
                 current_row += 1
 
-
-            ws.cell(row=calc_start_row, column=1).fill = heading_fill
-            
-            # Add Primary Packing Total Cost
-            st.session_state.primary_calculations.to_excel(writer, sheet_name='Primary Calculations', index=False,
-                                                    startrow=calc_start_row + 1)
-            
-            # Apply borders to calculations table
-            calc_rows = len(st.session_state.primary_calculations)
-            calc_cols = len(st.session_state.primary_calculations.columns)
-            for row in range(calc_start_row + 2, calc_start_row + calc_rows + 3):
-                for col in range(1, calc_cols + 1):
-                    cell = ws.cell(row=row, column=col)
-                    cell.border = thin_border
-        
+    
         # Sheet 2: Secondary Calculations
         if 'secondary_calculations' in st.session_state and not st.session_state.secondary_calculations.empty:
             # Get secondary selections from session state
