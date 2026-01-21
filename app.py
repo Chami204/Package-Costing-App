@@ -1385,44 +1385,40 @@ with tab2:
         box_ply = st.selectbox(
             "Select Box Ply",
             ["2 ply", "3 ply"],
-            key="box_ply"
+            key="box_ply_secondary"  # Changed key
         )
-
-    # Initialize session state for box costs based on ply selection
-    if 'primary_box_costs' not in st.session_state:
-        # Default to 3 ply costs
-        st.session_state.primary_box_costs = pd.DataFrame({
-            "Length(mm)": [330],
-            "Width (mm)": [210],
-            "Height (mm)": [135],
-            "Cost (LKR)": [205.00]
+    
+    # Initialize secondary box costs
+    if 'secondary_box_costs' not in st.session_state:
+        st.session_state.secondary_box_costs = pd.DataFrame({
+            "Length(mm)": [330], "Width (mm)": [210], 
+            "Height (mm)": [135], "Cost (LKR)": [205.00]
         })
-
+    
     # Define box costs based on ply selection
     if box_ply == "2 ply":
-        # 2 ply box costs (you can adjust these values)
         default_box_costs = pd.DataFrame({
             "Length(mm)": [330],
             "Width (mm)": [210],
             "Height (mm)": [135],
-            "Cost (LKR)": [150.00]  # Lower cost for 2 ply
+            "Cost (LKR)": [150.00]
         })
     else:  # 3 ply
         default_box_costs = pd.DataFrame({
             "Length(mm)": [330],
             "Width (mm)": [210],
             "Height (mm)": [135],
-            "Cost (LKR)": [205.00]  # Higher cost for 3 ply
+            "Cost (LKR)": [205.00]
         })
-
+    
     # Update session state if ply selection changed
-    if 'previous_box_ply' not in st.session_state or st.session_state.get("previous_box_ply") != box_ply:
-        st.session_state.primary_box_costs = default_box_costs.copy()
-        st.session_state.previous_box_ply = box_ply
+    if 'previous_box_ply_secondary' not in st.session_state or st.session_state.get("previous_box_ply_secondary") != box_ply:
+        st.session_state.secondary_box_costs = default_box_costs.copy()
+        st.session_state.previous_box_ply_secondary = box_ply
 
     # Create editable box costs table
     edited_box_df = st.data_editor(
-        st.session_state.primary_box_costs,
+        st.session_state.secondary_box_costs,
         num_rows="dynamic",
         use_container_width=True,
         column_config={
@@ -1431,11 +1427,16 @@ with tab2:
             "Height (mm)": st.column_config.NumberColumn("Height (mm)", required=True, min_value=0),
             "Cost (LKR)": st.column_config.NumberColumn("Cost (LKR)", required=True, min_value=0, format="%.2f")
         },
-        key="box_editor_primary"
+        key="box_editor_secondary"  # Changed to unique key
     )
-
+    if 'secondary_box_costs' not in st.session_state:
+        st.session_state.secondary_box_costs = pd.DataFrame({
+            "Length(mm)": [330], "Width (mm)": [210], 
+            "Height (mm)": [135], "Cost (LKR)": [205.00]
+    })
+    
     # Update session state
-    st.session_state.primary_box_costs = edited_box_df
+    st.session_state.secondary_box_costs = edited_box_df
     
     # Table 3: Polybag Cost
     st.markdown("**Table 3: Polybag Cost**")
