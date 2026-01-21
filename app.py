@@ -957,9 +957,9 @@ with tab1:
         })
     else:  # 3 ply
         default_box_costs = pd.DataFrame({
-            "Length(mm)": [330],
-            "Width (mm)": [210],
-            "Height (mm)": [135],
+            "Length(mm)": [500],
+            "Width (mm)": [250],
+            "Height (mm)": [1000],
             "Cost (LKR)": [205.00]  # Higher cost for 3 ply
         })
     
