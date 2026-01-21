@@ -1414,7 +1414,7 @@ edited_box_df = st.data_editor(
 st.session_state.primary_box_costs = edited_box_df
     
     # Table 3: Polybag Cost
-    st.markdown("**Table 3: Polybag Cost**")
+st.markdown("**Table 3: Polybag Cost**")
     
     # Initialize polybag costs in session state
     if 'polybag_costs' not in st.session_state:
