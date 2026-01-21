@@ -937,7 +937,15 @@ with tab1:
     
     # Update session state
     st.session_state.primary_material_costs = edited_material_df
+
+    # Table 2: Cardboard Box Cost
+    st.markdown("**Table 2: Cardboard Box Cost**")
     
+    # ADD THESE 3 LINES HERE:
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        box_ply = st.selectbox("Select Box Ply", ["2 ply", "3 ply"], key="box_ply_primary")
+        
     # Table 2: Cardboard Box Cost
     if box_ply == "2 ply":
         # 2 ply box costs (you can adjust these values)
@@ -1352,6 +1360,7 @@ with tab2:
     
     # Update session state
     st.session_state.secondary_material_costs = edited_secondary_material_df
+
     
     # Table 2: Cardboard Box Cost
     st.markdown("**Table 2: Cardboard Box Cost**")
