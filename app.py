@@ -1108,82 +1108,11 @@ with tab1:
                 # Store calculations in session state
                 st.session_state.primary_calculations = pd.DataFrame(calculations_data)
                 
-                # Create editable dataframe with initial calculations
-                editable_df = st.session_state.primary_calculations.copy()
-                
-                # Create editable dataframe for calculations
-                edited_calc_df = st.data_editor(
-                    editable_df,
-                    num_rows="fixed",
-                    use_container_width=True,
-                    column_config={
-                        "SKU": st.column_config.TextColumn("SKU", required=True, disabled=True),
-                        "Interleaving cost": st.column_config.NumberColumn("Interleaving cost", required=True, min_value=0, format="%.2f", disabled=True),
-                        "Protective tape cost": st.column_config.NumberColumn("Protective tape cost", required=True, min_value=0, format="%.2f", disabled=True),
-                        "Packing type": st.column_config.TextColumn("Packing type", required=True, disabled=True),
-                        "Profiles per box": st.column_config.NumberColumn("Profiles per box", required=True, min_value=0, format="%.2f", disabled=True),
-                        "Packing Cost (LKR)": st.column_config.NumberColumn("Packing Cost (LKR)", required=True, min_value=0, format="%.2f", disabled=True),
-                        "Total Cost per profile/LKR": st.column_config.NumberColumn("Total Cost per profile/LKR", required=True, min_value=0, format="%.2f", disabled=True),
-                        "Cost/kg (LKR)": st.column_config.NumberColumn("Cost/kg (LKR)", required=True, min_value=0, format="%.2f", disabled=True)
-                    },
-                    key="primary_calculations_editor"
+                # Display the calculated results table (read-only)
+                st.dataframe(
+                    st.session_state.primary_calculations,
+                    use_container_width=True
                 )
-                
-                # Recalculate if box dimensions changed
-                if not edited_calc_df.equals(st.session_state.primary_calculations):
-                    # Recalculate packing costs based on new dimensions
-                    ref_length = ref_box["Length(mm)"]
-                    ref_width = ref_box["Width (mm)"]
-                    ref_height = ref_box["Height (mm)"]
-                    ref_cost = ref_box["Cost (LKR)"]
-                    
-                    if ref_length > 0 and ref_width > 0 and ref_height > 0:
-                        cost_per_volume = ref_cost / (ref_width * ref_height * ref_length)
-                    else:
-                        cost_per_volume = 0
-                    
-                    # Update calculations
-                    for idx, row in edited_calc_df.iterrows():
-                        try:
-                            # Get profiles per box from original SKU data
-                            sku_no = row["SKU"]
-                            sku_row = st.session_state.primary_sku_data[st.session_state.primary_sku_data["SKU No"] == sku_no]
-                            if not sku_row.empty:
-                                profiles_per_box = float(sku_row.iloc[0]["Number of profiles per box"])
-                            else:
-                                profiles_per_box = 1
-                            
-                            box_width = float(row["Box width/mm"])
-                            box_height = float(row["Box height/mm"])
-                            box_length = float(row["Box length/mm"])
-                            
-                            box_volume = box_width * box_height * box_length
-                            
-                            if cost_per_volume > 0 and profiles_per_box > 0:
-                                new_packing_cost = (cost_per_volume * box_volume) / profiles_per_box
-                            else:
-                                new_packing_cost = 0
-                            
-                            # Get original costs
-                            interleaving_cost = float(row["Interleaving cost"])
-                            protective_tape_cost = float(row["Protective tape cost"])
-                            
-                            # Calculate new total cost
-                            new_total_cost = interleaving_cost + protective_tape_cost + new_packing_cost
-                            
-                            # Update the row
-                            edited_calc_df.at[idx, "Packing Cost (LKR)"] = round(new_packing_cost, 2)
-                            edited_calc_df.at[idx, "Total Cost"] = round(new_total_cost, 2)
-                            
-                        except (ValueError, TypeError):
-                            continue
-                    
-                    # Update session state
-                    st.session_state.primary_calculations = edited_calc_df
-                    st.rerun()
-                
-                # Display the updated dataframe
-                st.dataframe(st.session_state.primary_calculations, use_container_width=True)
                 
             else:
                 st.warning("Enter valid SKU data")
