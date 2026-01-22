@@ -19,6 +19,7 @@ if 'primary_material_costs' not in st.session_state:
 
 if 'primary_box_costs' not in st.session_state:
     st.session_state.primary_box_costs = pd.DataFrame({
+        "SAP Item Code": [345],
         "Length(mm)": [330], "Width (mm)": [210], 
         "Height (mm)": [135], "Cost (LKR)": [205.00]
     })
@@ -966,6 +967,7 @@ with tab1:
     if box_ply == "2 ply":
         # 2 ply box costs (you can adjust these values)
         default_box_costs = pd.DataFrame({
+            "SAP Item Code": [123],
             "Length(mm)": [330],
             "Width (mm)": [210],
             "Height (mm)": [135],
@@ -973,6 +975,7 @@ with tab1:
         })
     else:  # 3 ply
         default_box_costs = pd.DataFrame({
+            "SAP Item Code": [345],
             "Length(mm)": [500],
             "Width (mm)": [250],
             "Height (mm)": [1000],
@@ -989,6 +992,7 @@ with tab1:
         num_rows="dynamic",
         use_container_width=True,
         column_config={
+            "SAP Item Code": st.column_config.NumberColumn("SAP Item Code", required=True, min_value=0, format="%d"),
             "Length(mm)": st.column_config.NumberColumn("Length(mm)", required=True, min_value=0),
             "Width (mm)": st.column_config.NumberColumn("Width (mm)", required=True, min_value=0),
             "Height (mm)": st.column_config.NumberColumn("Height (mm)", required=True, min_value=0),
@@ -1391,6 +1395,7 @@ with tab2:
     # Initialize secondary box costs
     if 'secondary_box_costs' not in st.session_state:
         st.session_state.secondary_box_costs = pd.DataFrame({
+            "SAP Item Code": [345],
             "Length(mm)": [330], "Width (mm)": [210], 
             "Height (mm)": [135], "Cost (LKR)": [205.00]
         })
@@ -1398,6 +1403,7 @@ with tab2:
     # Define box costs based on ply selection
     if box_ply == "2 ply":
         default_box_costs = pd.DataFrame({
+            "SAP Item Code": [345],
             "Length(mm)": [330],
             "Width (mm)": [210],
             "Height (mm)": [135],
@@ -1405,6 +1411,7 @@ with tab2:
         })
     else:  # 3 ply
         default_box_costs = pd.DataFrame({
+            "SAP Item Code": [123],
             "Length(mm)": [330],
             "Width (mm)": [210],
             "Height (mm)": [135],
@@ -1422,6 +1429,7 @@ with tab2:
         num_rows="dynamic",
         use_container_width=True,
         column_config={
+            "SAP Item Code": st.column_config.NumberColumn("SAP Item Code", required=True, min_value=0, format="%d"),
             "Length(mm)": st.column_config.NumberColumn("Length(mm)", required=True, min_value=0),
             "Width (mm)": st.column_config.NumberColumn("Width (mm)", required=True, min_value=0),
             "Height (mm)": st.column_config.NumberColumn("Height (mm)", required=True, min_value=0),
