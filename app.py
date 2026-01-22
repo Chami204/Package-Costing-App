@@ -1089,6 +1089,10 @@ with tab1:
 
                     # Calculate Cost/kg (LKR)
                     cost_per_kg = total_cost / total_weight if total_weight > 0 else 0
+                    
+                    # Calculate Cost/m (LKR) = Total Cost per profile/LKR / (Length/mm ÷ 1000)
+                    length_m = length / 1000  # Convert mm to meters
+                    cost_per_m = total_cost / length_m if length_m > 0 else 0
 
                     calculations_data.append({
                         "SKU": sku["SKU No"],
@@ -1098,7 +1102,8 @@ with tab1:
                         "Profiles per box": int(profiles_per_box),
                         "Packing Cost (LKR)": round(packing_cost, 2),
                         "Total Cost per profile/LKR": round(total_cost, 2),
-                        "Cost/kg (LKR)": round(cost_per_kg, 2)
+                        "Cost/kg (LKR)": round(cost_per_kg, 2),
+                        "Cost/m (LKR)": round(cost_per_m, 2)
                     })
                     
                 except (ValueError, TypeError, ZeroDivisionError):
@@ -1107,6 +1112,23 @@ with tab1:
             if calculations_data:
                 # Store calculations in session state
                 st.session_state.primary_calculations = pd.DataFrame(calculations_data)
+
+                # Reorder columns if needed (optional)
+                column_order = [
+                    "SKU",
+                    "Interleaving cost", 
+                    "Protective tape cost",
+                    "Packing type",
+                    "Profiles per box",
+                    "Packing Cost (LKR)",
+                    "Total Cost per profile/LKR",
+                    "Cost/kg (LKR)",
+                    "Cost/m (LKR)"
+                ]
+                
+                # Reorder the columns
+                st.session_state.primary_calculations = st.session_state.primary_calculations[column_order]
+
                 
                 # Display the calculated results table (read-only)
                 st.dataframe(
