@@ -207,6 +207,9 @@ def create_excel_report():
     
         # Sheet 2: Secondary Calculations
         if 'secondary_calculations' in st.session_state and not st.session_state.secondary_calculations.empty:
+            # Initialize sec_calc_rows
+            sec_calc_rows = 0
+            
             # Get secondary selections from session state
             finish_secondary = st.session_state.get("finish_secondary", "Mill Finish")
             interleaving_secondary = st.session_state.get("interleaving_secondary", "No")
