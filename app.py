@@ -1181,7 +1181,6 @@ with tab2:
         st.session_state.secondary_sku_data,
         num_rows="dynamic",
         use_container_width=True,
-        hide_index=False,  # Add this line
         column_config={
             "SKU No": st.column_config.TextColumn("SKU No", required=True),
             "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),
@@ -1195,23 +1194,18 @@ with tab2:
         },
         key="sku_editor_secondary"
     )
-
+    
     # Add an "Apply Changes" button
     col1, col2 = st.columns([3, 1])
     with col2:
-        if st.button("Apply SKU Changes", key="apply_sku_secondary", use_container_width=True):
-            st.session_state.secondary_sku_data = edited_sku_df_tab2
-            st.success("SKU data updated!")
+        apply_sku = st.button("Apply SKU Changes", key="apply_sku_secondary_btn", use_container_width=True)
     
-    # Only update on button click, not automatically
-    if 'apply_sku_secondary' in st.session_state and st.session_state.apply_sku_secondary:
+    # Update session state only when button is clicked
+    if apply_sku:
         st.session_state.secondary_sku_data = edited_sku_df_tab2
-        st.session_state.apply_sku_secondary = False
+        st.success("SKU data updated!")
+        st.rerun()  # Refresh to show updated data
         
-    
-    # Update session state
-    st.session_state.secondary_sku_data = edited_sku_df_tab2
-    
     st.divider()
     
     # Common packing selections
@@ -1264,6 +1258,7 @@ with tab2:
             "height prof.type"
         ])
     
+
     # Create editable bundling data table
     edited_bundling_df = st.data_editor(
         st.session_state.bundling_data,
@@ -1281,9 +1276,11 @@ with tab2:
         },
         key="bundling_editor"
     )
-
-    # Add apply button
-    if st.button("Apply Bundling Data", key="apply_bundling", use_container_width=True):
+    
+    # Add apply button - SIMPLE VERSION
+    apply_bundling = st.button("Apply Bundling Data", key="apply_bundling_btn", use_container_width=True)
+    
+    if apply_bundling:
         # Update height prof.type based on width prof.type selection
         updated_bundling_df = edited_bundling_df.copy()
         if not updated_bundling_df.empty:
@@ -1296,18 +1293,7 @@ with tab2:
         
         st.session_state.bundling_data = updated_bundling_df
         st.success("Bundling data updated!")
-    
-    # Update height prof.type based on width prof.type selection
-    updated_bundling_df = edited_bundling_df.copy()
-    if not updated_bundling_df.empty:
-        for idx in range(len(updated_bundling_df)):
-            width_prof = updated_bundling_df.iloc[idx]["width prof.type"]
-            if width_prof == "W/mm":
-                updated_bundling_df.at[idx, "height prof.type"] = "H/mm"
-            elif width_prof == "H/mm":
-                updated_bundling_df.at[idx, "height prof.type"] = "W/mm"
-    
-    st.session_state.bundling_data = updated_bundling_df
+        st.rerun()
     
     st.divider()
     
@@ -1539,16 +1525,18 @@ with tab2:
                 options=["pallet", "crate"],
                 required=True
             ),
-            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
-            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
-            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0, format="%.1f")  # Changed to allow decimals
+            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),
+            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0, format="%.1f"),
+            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0, format="%.1f")
         },
         key="crate_pallet_editor"
     )
-
-    # Add apply button
-    if st.button("Apply Crate/Pallet Data", key="apply_crate_pallet", use_container_width=True):
-            # Sync SKUs before applying
+    
+    # Add apply button - SIMPLE VERSION
+    apply_crate_pallet = st.button("Apply Crate/Pallet Data", key="apply_crate_pallet_btn", use_container_width=True)
+    
+    if apply_crate_pallet:
+        # Sync SKUs before applying
         if not st.session_state.secondary_sku_data.empty:
             # Get unique SKUs from the SKU table
             sku_list = st.session_state.secondary_sku_data["SKU No"].unique().tolist()
@@ -1575,8 +1563,8 @@ with tab2:
                     edited_crate_pallet_df = pd.concat([edited_crate_pallet_df, new_df], ignore_index=True)
         
         st.session_state.crate_pallet_data = edited_crate_pallet_df
-      
         st.success("Crate/Pallet data updated!")
+        st.rerun()
     
     # Update session state
     st.session_state.crate_pallet_data = edited_crate_pallet_df
