@@ -6,10 +6,11 @@ import time
 # Initialize all session states for persistence
 if 'primary_sku_data' not in st.session_state:
     st.session_state.primary_sku_data = pd.DataFrame(columns=[
-        "SKU No", "Unit weight(kg/m)", "total weight per profile (kg)", 
+        "SKU No", "Unit weight(kg/m)",
         "Width/mm", "Height/mm", "Length/mm", "Box Width/mm",
         "Box Height/mm", "Box Length/mm", "W/mm", "H/mm",
-        "Number of profiles per box", "Comment on fabrication"
+        "Comment on fabrication",
+        "total weight per profile (kg)","Number of profiles per box",
     ])
 
 if 'primary_material_costs' not in st.session_state:
