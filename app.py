@@ -1322,6 +1322,13 @@ with tab2:
     
     # Update session state
     st.session_state.bundle_size_data = edited_bundle_size_df
+
+    apply_bundle_size = st.button("Apply Bundle Size Data", key="apply_bundle_size_btn", use_container_width=True)
+    if apply_bundle_size:
+        st.session_state.bundle_size_data = edited_bundle_size_df
+        st.success("Bundle size data updated!")
+        st.rerun()
+
     
     st.divider()
     
