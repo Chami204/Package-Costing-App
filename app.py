@@ -1566,8 +1566,6 @@ with tab2:
         st.success("Crate/Pallet data updated!")
         st.rerun()
     
-    # Update session state
-    st.session_state.crate_pallet_data = edited_crate_pallet_df
     
     # New Section: Total crate/pallet cost
     st.subheader("Total Crate/Pallet Cost")
