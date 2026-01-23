@@ -456,37 +456,7 @@ def create_excel_report():
                 
                 current_row += pp_rows + 5
                 
-            # Add Special Comments Section for Secondary
-            comments_start_row_sec = current_row + sec_calc_rows + 5
-            ws2.cell(row=comments_start_row_sec, column=1, value="Special Comments under Secondary Packing").font = heading_font
-            ws2.cell(row=comments_start_row_sec, column=1).fill = heading_fill
             
-            # Get secondary comments from session state
-            finish_secondary = st.session_state.get("finish_secondary", "Mill Finish")
-            eco_friendly_secondary = st.session_state.get("eco_friendly_secondary", "Mac foam")
-            
-            # Determine protective tape comment
-            if finish_secondary in ["PC", "WF", "Anodised"]:
-                protective_tape_comment = "Protective tape required to avoid rejects"
-            else:
-                protective_tape_comment = "Protective tape is not mandatory"
-            
-            comments_text_sec = f"""**Packing Method Note:**
-            
-            1. Costing is done according to Secondary packing.
-            
-            2. The interleaving material is **"{eco_friendly_secondary}"**.
-            
-            3. {protective_tape_comment}
-            
-            4. Costing is inclusive of secondary packing - pallet or crate, however it is not inclusive of any labels or artwork. These will incur an additional charge."""
-            
-            # Add comments text
-            current_row_sec = comments_start_row_sec + 2
-            for line in comments_text_sec.split('\n'):
-                ws2.cell(row=current_row_sec, column=1, value=line)
-                current_row_sec += 1
-
     
             # Add Secondary Packing Cost Per Profile heading
             current_row += 2
@@ -539,6 +509,37 @@ def create_excel_report():
                     for col in range(1, cp_calc_cols + 1):
                         cell = ws2.cell(row=row, column=col)
                         cell.border = thin_border
+
+            # Add Special Comments Section for Secondary
+            comments_start_row_sec = current_row + sec_calc_rows + 5
+            ws2.cell(row=comments_start_row_sec, column=1, value="Special Comments under Secondary Packing").font = heading_font
+            ws2.cell(row=comments_start_row_sec, column=1).fill = heading_fill
+            
+            # Get secondary comments from session state
+            finish_secondary = st.session_state.get("finish_secondary", "Mill Finish")
+            eco_friendly_secondary = st.session_state.get("eco_friendly_secondary", "Mac foam")
+            
+            # Determine protective tape comment
+            if finish_secondary in ["PC", "WF", "Anodised"]:
+                protective_tape_comment = "Protective tape required to avoid rejects"
+            else:
+                protective_tape_comment = "Protective tape is not mandatory"
+            
+            comments_text_sec = f"""**Packing Method Note:**
+            
+            1. Costing is done according to Secondary packing.
+            
+            2. The interleaving material is **"{eco_friendly_secondary}"**.
+            
+            3. {protective_tape_comment}
+            
+            4. Costing is inclusive of secondary packing - pallet or crate, however it is not inclusive of any labels or artwork. These will incur an additional charge."""
+            
+            # Add comments text
+            current_row_sec = comments_start_row_sec + 2
+            for line in comments_text_sec.split('\n'):
+                ws2.cell(row=current_row_sec, column=1, value=line)
+                current_row_sec += 1
 
     
     
