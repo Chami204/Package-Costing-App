@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import time
 
 # Initialize all session states for persistence
 if 'primary_sku_data' not in st.session_state:
@@ -1610,8 +1611,16 @@ with tab2:
         key="crate_costs_editor"
     )
     
-    # Update session state
-    st.session_state.crate_costs = edited_crate_costs_df
+    # Add apply button
+    apply_crate_costs = st.button("Apply Crate Cost Changes", key="apply_crate_costs_btn", use_container_width=True)
+    
+    if apply_crate_costs:
+        st.session_state.crate_costs = edited_crate_costs_df
+        st.success("Crate costs updated!")
+        st.rerun()
+    
+    # Update session state (remove this line if you have it)
+    # st.session_state.crate_costs = edited_crate_costs_df
     
     # Table 2: Pallet Cost
     st.markdown("**Table 2: Pallet Cost**")
@@ -1637,8 +1646,16 @@ with tab2:
         key="pallet_costs_editor"
     )
     
-    # Update session state
-    st.session_state.pallet_costs = edited_pallet_costs_df
+    # Add apply button
+    apply_pallet_costs = st.button("Apply Pallet Cost Changes", key="apply_pallet_costs_btn", use_container_width=True)
+    
+    if apply_pallet_costs:
+        st.session_state.pallet_costs = edited_pallet_costs_df
+        st.success("Pallet costs updated!")
+        st.rerun()
+    
+    # Update session state (remove this line if you have it)
+    # st.session_state.pallet_costs = edited_pallet_costs_df
     
     # Table 3: Strapping clip cost
     st.markdown("**Table 3: Strapping Clip Cost**")
@@ -1662,8 +1679,16 @@ with tab2:
         key="strapping_clip_editor"
     )
     
-    # Update session state
-    st.session_state.strapping_clip_costs = edited_strapping_clip_df
+    # Add apply button
+    apply_strapping_clip = st.button("Apply Strapping Clip Changes", key="apply_strapping_clip_btn", use_container_width=True)
+    
+    if apply_strapping_clip:
+        st.session_state.strapping_clip_costs = edited_strapping_clip_df
+        st.success("Strapping clip costs updated!")
+        st.rerun()
+    
+    # Update session state (remove this line if you have it)
+    # st.session_state.strapping_clip_costs = edited_strapping_clip_df
     
     # Table 4: PP strapping cost
     st.markdown("**Table 4: PP Strapping Cost**")
@@ -1687,8 +1712,29 @@ with tab2:
         key="pp_strapping_editor"
     )
     
-    # Update session state
-    st.session_state.pp_strapping_costs = edited_pp_strapping_df
+    # Consolidated Apply All button for Secondary Packing Cost Tables
+    st.markdown("---")
+    apply_all_secondary_costs = st.button("💾 Apply All Secondary Cost Changes", 
+                                          type="primary", 
+                                          key="apply_all_secondary_costs_btn",
+                                          use_container_width=True)
+    
+    if apply_all_secondary_costs:
+        # Apply material costs
+        st.session_state.secondary_material_costs = edited_secondary_material_df
+        # Apply box costs
+        st.session_state.secondary_box_costs = edited_box_df
+        # Apply polybag costs
+        st.session_state.polybag_costs = edited_polybag_df
+        # Apply stretchwrap costs
+        st.session_state.stretchwrap_costs = edited_stretchwrap_df
+        
+        st.success("All secondary cost changes applied successfully!")
+        time.sleep(0.5)
+        st.rerun()
+    
+    # Update session state (remove this line if you have it)
+    # st.session_state.pp_strapping_costs = edited_pp_strapping_df
     
     # Add Calculate button for secondary calculations
     st.markdown("---")
