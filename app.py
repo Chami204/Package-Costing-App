@@ -1175,16 +1175,18 @@ with tab2:
     # Initialize session state for secondary SKU data
     if 'secondary_sku_data' not in st.session_state:
         st.session_state.secondary_sku_data = pd.DataFrame(columns=["SKU No", "Width/mm", "Height/mm", "Length/mm", "Comment on fabrication"])
-    
+ 
+    # Create editable dataframe for SKU input
     edited_sku_df_tab2 = st.data_editor(
         st.session_state.secondary_sku_data,
         num_rows="dynamic",
         use_container_width=True,
+        hide_index=False,  # Add this line
         column_config={
             "SKU No": st.column_config.TextColumn("SKU No", required=True),
-            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
-            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
-            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0, format="%.1f"),  # Changed to allow decimals
+            "Width/mm": st.column_config.NumberColumn("Width/mm", required=True, min_value=0, format="%.1f"),
+            "Height/mm": st.column_config.NumberColumn("Height/mm", required=True, min_value=0, format="%.1f"),
+            "Length/mm": st.column_config.NumberColumn("Length/mm", required=True, min_value=0, format="%.1f"),
             "Comment on fabrication": st.column_config.SelectboxColumn(
                 "Comment on fabrication",
                 options=["Fabricated", "Just Cutting"],
@@ -1193,6 +1195,19 @@ with tab2:
         },
         key="sku_editor_secondary"
     )
+
+    # Add an "Apply Changes" button
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        if st.button("Apply SKU Changes", key="apply_sku_secondary", use_container_width=True):
+            st.session_state.secondary_sku_data = edited_sku_df_tab2
+            st.success("SKU data updated!")
+    
+    # Only update on button click, not automatically
+    if 'apply_sku_secondary' in st.session_state and st.session_state.apply_sku_secondary:
+        st.session_state.secondary_sku_data = edited_sku_df_tab2
+        st.session_state.apply_sku_secondary = False
+        
     
     # Update session state
     st.session_state.secondary_sku_data = edited_sku_df_tab2
@@ -1266,6 +1281,21 @@ with tab2:
         },
         key="bundling_editor"
     )
+
+    # Add apply button
+    if st.button("Apply Bundling Data", key="apply_bundling", use_container_width=True):
+        # Update height prof.type based on width prof.type selection
+        updated_bundling_df = edited_bundling_df.copy()
+        if not updated_bundling_df.empty:
+            for idx in range(len(updated_bundling_df)):
+                width_prof = updated_bundling_df.iloc[idx]["width prof.type"]
+                if width_prof == "W/mm":
+                    updated_bundling_df.at[idx, "height prof.type"] = "H/mm"
+                elif width_prof == "H/mm":
+                    updated_bundling_df.at[idx, "height prof.type"] = "W/mm"
+        
+        st.session_state.bundling_data = updated_bundling_df
+        st.success("Bundling data updated!")
     
     # Update height prof.type based on width prof.type selection
     updated_bundling_df = edited_bundling_df.copy()
@@ -1515,6 +1545,38 @@ with tab2:
         },
         key="crate_pallet_editor"
     )
+
+    # Add apply button
+    if st.button("Apply Crate/Pallet Data", key="apply_crate_pallet", use_container_width=True):
+            # Sync SKUs before applying
+        if not st.session_state.secondary_sku_data.empty:
+            # Get unique SKUs from the SKU table
+            sku_list = st.session_state.secondary_sku_data["SKU No"].unique().tolist()
+            
+            # Check if crate_pallet_data needs to be updated with new SKUs
+            existing_skus = edited_crate_pallet_df["SKU"].unique().tolist() if not edited_crate_pallet_df.empty else []
+            
+            # Add new SKUs that aren't already in the crate/pallet table
+            new_skus = [sku for sku in sku_list if sku not in existing_skus]
+            
+            if new_skus:
+                new_rows = []
+                for sku in new_skus:
+                    new_rows.append({
+                        "SKU": sku,
+                        "packing method": "pallet",
+                        "Width/mm": 0,
+                        "Height/mm": 0,
+                        "Length/mm": 0
+                    })
+                
+                if new_rows:
+                    new_df = pd.DataFrame(new_rows)
+                    edited_crate_pallet_df = pd.concat([edited_crate_pallet_df, new_df], ignore_index=True)
+        
+        st.session_state.crate_pallet_data = edited_crate_pallet_df
+      
+        st.success("Crate/Pallet data updated!")
     
     # Update session state
     st.session_state.crate_pallet_data = edited_crate_pallet_df
