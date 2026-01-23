@@ -1349,9 +1349,13 @@ with tab2:
         key="secondary_material_editor"
     )
     
-    # Update session state
-    st.session_state.secondary_material_costs = edited_secondary_material_df
-
+    # Add apply button
+    apply_material_costs = st.button("Apply Material Cost Changes", key="apply_material_costs_btn", use_container_width=True)
+    
+    if apply_material_costs:
+        st.session_state.secondary_material_costs = edited_secondary_material_df
+        st.success("Material costs updated!")
+        st.rerun()
     
     # Table 2: Cardboard Box Cost
     st.markdown("**Table 2: Cardboard Box Cost**")
@@ -1406,16 +1410,16 @@ with tab2:
             "Height (mm)": st.column_config.NumberColumn("Height (mm)", required=True, min_value=0),
             "Cost (LKR)": st.column_config.NumberColumn("Cost (LKR)", required=True, min_value=0, format="%.2f")
         },
-        key="box_editor_secondary"  # Changed to unique key
+        key="box_editor_secondary"
     )
-    if 'secondary_box_costs' not in st.session_state:
-        st.session_state.secondary_box_costs = pd.DataFrame({
-            "Length(mm)": [330], "Width (mm)": [210], 
-            "Height (mm)": [135], "Cost (LKR)": [205.00]
-    })
     
-    # Update session state
-    st.session_state.secondary_box_costs = edited_box_df
+    # Add apply button for box costs
+    apply_box_costs = st.button("Apply Box Cost Changes", key="apply_box_costs_btn", use_container_width=True)
+    
+    if apply_box_costs:
+        st.session_state.secondary_box_costs = edited_box_df
+        st.success("Box costs updated!")
+        st.rerun()
     
     # Table 3: Polybag Cost
     st.markdown("**Table 3: Polybag Cost**")
@@ -1439,8 +1443,13 @@ with tab2:
         key="polybag_editor"
     )
     
-    # Update session state
-    st.session_state.polybag_costs = edited_polybag_df
+    # Add apply button
+    apply_polybag_costs = st.button("Apply Polybag Cost Changes", key="apply_polybag_costs_btn", use_container_width=True)
+    
+    if apply_polybag_costs:
+        st.session_state.polybag_costs = edited_polybag_df
+        st.success("Polybag costs updated!")
+        st.rerun()
     
     # Table 4: Stretch wrap cost
     st.markdown("**Table 4: Stretch wrap cost**")
@@ -1464,8 +1473,13 @@ with tab2:
         key="stretchwrap_editor"
     )
     
-    # Update session state
-    st.session_state.stretchwrap_costs = edited_stretchwrap_df
+    # Add apply button
+    apply_stretchwrap_costs = st.button("Apply Stretchwrap Cost Changes", key="apply_stretchwrap_costs_btn", use_container_width=True)
+    
+    if apply_stretchwrap_costs:
+        st.session_state.stretchwrap_costs = edited_stretchwrap_df
+        st.success("Stretchwrap costs updated!")
+        st.rerun()
     
     # Add packing type selection
     packing_type = st.selectbox(
