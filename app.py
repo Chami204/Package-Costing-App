@@ -624,18 +624,29 @@ with tab1:
                         df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
                         df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
                     
-                    # Calculate Number of profiles per box based on W/mm selection
+                    # Get the arrangement direction
                     w_direction = df_copy.at[idx, "W/mm"]
+                    h_direction = df_copy.at[idx, "H/mm"]
+                    
+                    # Calculate Number of profiles per box based on arrangement
                     profiles_per_box = 0
                     
+                    # Determine which direction is primary
                     if w_direction == "Profiles are arranged in height direction":
-                        # (Box Height/profile width)*(Box Width/profile Height)
+                        # When W/mm says "height direction", it means profiles are arranged by height in the width direction
+                        # So: (Box Width / profile Height) * (Box Height / profile Width)
                         if width > 0 and height > 0:
-                            profiles_per_box = (box_height / width) * (box_width / height)
+                            profiles_per_box = (box_width / height) * (box_height / width)
+                        # Update H/mm to show the complementary direction
+                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
+                    
                     else:  # "Profiles are arranged in W direction"
-                        # (Box Width/profile width)*(Box Height/profile Height)
+                        # When W/mm says "W direction", it means profiles are arranged by width in the width direction
+                        # So: (Box Width / profile Width) * (Box Height / profile Height)
                         if width > 0 and height > 0:
                             profiles_per_box = (box_width / width) * (box_height / height)
+                        # Update H/mm to show the complementary direction
+                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
                     
                     # Use INTEGER value (floor) for number of profiles per box
                     df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
