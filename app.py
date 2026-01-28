@@ -1989,6 +1989,8 @@ with tab2:
         st.session_state.polybag_costs = edited_polybag_df
         # Apply stretchwrap costs
         st.session_state.stretchwrap_costs = edited_stretchwrap_df
+        # Apply cardboard covering costs
+        st.session_state.cardboard_covering_costs = edited_cardboard_covering_df
         
         st.success("All secondary cost changes applied successfully!")
         time.sleep(0.5)
@@ -1996,6 +1998,38 @@ with tab2:
     
     # Update session state (remove this line if you have it)
     # st.session_state.pp_strapping_costs = edited_pp_strapping_df
+    st.success("PP strapping costs updated!")
+        st.rerun()
+
+    # Table 5: Cardboard covering cost
+    st.markdown("**Table 5: Cardboard Covering Cost**")
+    
+    # Initialize cardboard covering costs in session state
+    if 'cardboard_covering_costs' not in st.session_state:
+        st.session_state.cardboard_covering_costs = pd.DataFrame({
+            "Area of the pallet (m²)": [1],
+            "Price (LKR)": [512.54]
+        })
+    
+    # Create editable cardboard covering costs table
+    edited_cardboard_covering_df = st.data_editor(
+        st.session_state.cardboard_covering_costs,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Area of the pallet (m²)": st.column_config.NumberColumn("Area of the pallet (m²)", required=True, min_value=0, format="%.2f"),
+            "Price (LKR)": st.column_config.NumberColumn("Price (LKR)", required=True, min_value=0, format="%.2f")
+        },
+        key="cardboard_covering_editor"
+    )
+    
+    # Add apply button for cardboard covering costs
+    apply_cardboard_covering = st.button("Apply Cardboard Covering Changes", key="apply_cardboard_covering_btn", use_container_width=True)
+    
+    if apply_cardboard_covering:
+        st.session_state.cardboard_covering_costs = edited_cardboard_covering_df
+        st.success("Cardboard covering costs updated!")
+        st.rerun()
     
     # Add Calculate button for secondary calculations
     st.markdown("---")
@@ -2229,9 +2263,27 @@ with tab2:
                     
                     # Calculate PP strapping cost (total, not per profile - for display purposes)
                     pp_strapping_cost = pp_strapping_cost_per_profile * profiles_per_crate_pallet if profiles_per_crate_pallet > 0 else 0
+
+                    # Get cardboard covering data
+                    cardboard_covering_data = st.session_state.cardboard_covering_costs.iloc[0]
+                    
+                    # Calculate cardboard covering cost per profile
+                    cardboard_covering_cost_per_profile = 0
+                    if profiles_per_crate_pallet > 0 and cardboard_covering_data["Area of the pallet (m²)"] > 0:
+                        # Calculate total surface area of crate/pallet in m²
+                        # ((width*height)*2 + (width*length)*2 + (height*length)*2) / 1,000,000
+                        total_surface_area_m2 = ((crate_pallet_width * crate_pallet_height) * 2 + 
+                                               (crate_pallet_width * crate_pallet_length) * 2 + 
+                                               (crate_pallet_height * crate_pallet_length) * 2) / 1000000
+                        
+                        # Calculate total cardboard covering cost
+                        total_cardboard_covering_cost = (total_surface_area_m2 / cardboard_covering_data["Area of the pallet (m²)"]) * cardboard_covering_data["Price (LKR)"]
+                        
+                        # Calculate cost per profile
+                        cardboard_covering_cost_per_profile = total_cardboard_covering_cost / profiles_per_crate_pallet
                     
                     # Calculate Total cost
-                    total_cost = packing_cost_per_profile + strapping_clip_cost_per_profile + pp_strapping_cost_per_profile
+                    total_cost = packing_cost_per_profile + strapping_clip_cost_per_profile + pp_strapping_cost_per_profile + cardboard_covering_cost_per_profile
                     
                     # Add to calculations data
                     crate_pallet_calculations_data.append({
@@ -2244,6 +2296,7 @@ with tab2:
                         "strapping clip cost per profile": round(strapping_clip_cost_per_profile, 4),
                         "PP strapping cost": round(pp_strapping_cost, 4),
                         "PP strapping cost per profile": round(pp_strapping_cost_per_profile, 4),
+                        "Cardboard covering cost(LKR/profile)": round(cardboard_covering_cost_per_profile, 4),
                         "Total cost": round(total_cost, 4)
                     })
                     
