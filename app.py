@@ -1999,7 +1999,7 @@ with tab2:
     # Update session state (remove this line if you have it)
     # st.session_state.pp_strapping_costs = edited_pp_strapping_df
     st.success("PP strapping costs updated!")
-        st.rerun()
+    st.rerun()
 
     # Table 5: Cardboard covering cost
     st.markdown("**Table 5: Cardboard Covering Cost**")
