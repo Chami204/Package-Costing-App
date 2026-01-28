@@ -2325,8 +2325,6 @@ with tab2:
             
                 else:
                     st.warning("Unable to calculate costs. Please check all input data is valid.")
-        else:
-            st.info("Enter SKU data to see secondary packing cost calculations.")
         
         # Section 2: Crate/Pallet Cost Calculations
         st.divider()
