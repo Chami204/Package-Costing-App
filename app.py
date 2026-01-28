@@ -1179,8 +1179,29 @@ with tab1:
     st.info(comments_box)
 
 # Note: Secondary Calculations tab code remains unchanged from the original
+
+
 with tab2:
     st.header("Secondary Calculations")
+    
+    # ===== ADD THIS INITIALIZATION AT THE START OF THE TAB =====
+    if 'secondary_sku_data' not in st.session_state:
+        st.session_state.secondary_sku_data = pd.DataFrame(columns=[
+            "SKU No", 
+            "Unit weight(kg/m)", 
+            "total weight per profile (kg)", 
+            "Width/mm", 
+            "Height/mm", 
+            "Length/mm",
+            "Box Width/mm",
+            "Box Height/mm", 
+            "Box Length/mm",
+            "W/mm",
+            "H/mm",
+            "Number of profiles per box",
+            "Comment on fabrication"
+        ])
+
     
     # Sub topic 1 - SKU Table with dimensions with auto-calc button
     col1, col2 = st.columns([3, 1])
