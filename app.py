@@ -2223,7 +2223,7 @@ with tab2:
                     pp_strapping_cost_per_profile = 0
                     if profiles_per_crate_pallet > 0 and pp_strapping_data["Strapping Length/m"] > 0:
                         pp_strapping_cost_per_profile = (
-                            ((crate_pallet_width + crate_pallet_height) / pp_strapping_data["Strapping Length/m"]) / 
+                            (((crate_pallet_width + crate_pallet_height)/1000) / pp_strapping_data["Strapping Length/m"]) / 
                             profiles_per_crate_pallet
                         ) * (number_of_strapping_clips * 2) * pp_strapping_data["Cost (LKR/m)"]
                     
