@@ -3,6 +3,13 @@ import pandas as pd
 import numpy as np
 import time
 
+# Set page configuration FIRST
+st.set_page_config(
+    page_title="Packing Costing Calculator",
+    page_icon="📦",
+    layout="wide"
+)
+
 # Initialize all session states for persistence
 if 'primary_sku_data' not in st.session_state:
     st.session_state.primary_sku_data = pd.DataFrame(columns=[
@@ -26,13 +33,83 @@ if 'primary_box_costs' not in st.session_state:
         "Height (mm)": [135], "Cost (LKR)": [205.00]
     })
 
+# Initialize secondary session states
+if 'secondary_sku_data' not in st.session_state:
+    st.session_state.secondary_sku_data = pd.DataFrame(columns=[
+        "SKU No", "Unit weight(kg/m)", "total weight per profile (kg)", 
+        "Width/mm", "Height/mm", "Length/mm", "Box Width/mm",
+        "Box Height/mm", "Box Length/mm", "W/mm", "H/mm",
+        "Number of profiles per box", "Comment on fabrication"
+    ])
 
-# Set page configuration
-st.set_page_config(
-    page_title="Packing Costing Calculator",
-    page_icon="📦",
-    layout="wide"
-)
+if 'secondary_material_costs' not in st.session_state:
+    st.session_state.secondary_material_costs = pd.DataFrame({
+        "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
+        "Cost/ m²": [51.00, 34.65, 100.65, 14.38]
+    })
+
+if 'secondary_box_costs' not in st.session_state:
+    st.session_state.secondary_box_costs = pd.DataFrame({
+        "SAP Item Code": [345],
+        "Length(mm)": [330], "Width (mm)": [210], 
+        "Height (mm)": [135], "Cost (LKR)": [205.00]
+    })
+
+# Initialize other secondary session states
+if 'bundling_data' not in st.session_state:
+    st.session_state.bundling_data = pd.DataFrame(columns=[
+        "Number of rows/bundle", "Number of layer/bundle", 
+        "width prof.type", "height prof.type"
+    ])
+
+if 'bundle_size_data' not in st.session_state:
+    st.session_state.bundle_size_data = pd.DataFrame(columns=[
+        "Bundle width/mm", "Bundle Height/mm"
+    ])
+
+if 'polybag_costs' not in st.session_state:
+    st.session_state.polybag_costs = pd.DataFrame({
+        "Polybag size (inches)": [9],
+        "Cost/m (LKR/m)": [12.8]
+    })
+
+if 'stretchwrap_costs' not in st.session_state:
+    st.session_state.stretchwrap_costs = pd.DataFrame({
+        "Area (mm²)": [210000],
+        "Cost (LKR/mm²)": [0.00064]
+    })
+
+if 'crate_pallet_data' not in st.session_state:
+    st.session_state.crate_pallet_data = pd.DataFrame(columns=[
+        "SKU", "packing method", "Width/mm", "Height/mm", "Length/mm"
+    ])
+
+if 'crate_costs' not in st.session_state:
+    st.session_state.crate_costs = pd.DataFrame({
+        "Crate width/mm": [480], "Crate Height/mm": [590],
+        "Crate Length/mm": [2000], "Cost (LKR)": [5000.00]
+    })
+
+if 'pallet_costs' not in st.session_state:
+    st.session_state.pallet_costs = pd.DataFrame({
+        "Pallet width/mm": [2000], "Pallet Height/mm": [600],
+        "Cost (LKR)": [3000.00]
+    })
+
+if 'strapping_clip_costs' not in st.session_state:
+    st.session_state.strapping_clip_costs = pd.DataFrame({
+        "number of clips": [1], "Cost": [12.00]
+    })
+
+if 'pp_strapping_costs' not in st.session_state:
+    st.session_state.pp_strapping_costs = pd.DataFrame({
+        "Strapping Length/m": [1], "Cost (LKR/m)": [15.00]
+    })
+
+if 'cardboard_covering_costs' not in st.session_state:
+    st.session_state.cardboard_covering_costs = pd.DataFrame({
+        "Area of the pallet (m²)": [1], "Price (LKR)": [512.54]
+    })
 
 # Initialize session state for calculation triggers
 if 'calculate_primary' not in st.session_state:
@@ -601,7 +678,6 @@ with tab1:
                     current_box_length = float(row["Box Length/mm"]) if not pd.isna(row["Box Length/mm"]) else 0
                     
                     # Only calculate if current value is 0 or matches auto-calculated value
-                    # (meaning it was previously auto-calculated)
                     expected_box_width = round_up_to_nearest_100(width)
                     if current_box_width == 0 or current_box_width == expected_box_width:
                         df_copy.at[idx, "Box Width/mm"] = expected_box_width
@@ -746,7 +822,6 @@ with tab1:
         ])
     
     # Function to calculate box dimensions and number of profiles per box
-    @st.cache_data
     def calculate_box_and_profiles(df):
         """Calculate box dimensions and number of profiles per box"""
         df_copy = df.copy()
@@ -975,7 +1050,6 @@ with tab1:
     # Table 2: Cardboard Box Cost
     st.markdown("**Table 2: Cardboard Box Cost**")
     
-    # ADD THESE 3 LINES HERE:
     col1, col2 = st.columns([1, 2])
     with col1:
         box_ply = st.selectbox("Select Box Ply", ["2 ply", "3 ply"], key="box_ply_primary")
@@ -1178,30 +1252,8 @@ with tab1:
     
     st.info(comments_box)
 
-# Note: Secondary Calculations tab code remains unchanged from the original
-
-
 with tab2:
     st.header("Secondary Calculations")
-    
-    # ===== ADD THIS INITIALIZATION AT THE START OF THE TAB =====
-    if 'secondary_sku_data' not in st.session_state:
-        st.session_state.secondary_sku_data = pd.DataFrame(columns=[
-            "SKU No", 
-            "Unit weight(kg/m)", 
-            "total weight per profile (kg)", 
-            "Width/mm", 
-            "Height/mm", 
-            "Length/mm",
-            "Box Width/mm",
-            "Box Height/mm", 
-            "Box Length/mm",
-            "W/mm",
-            "H/mm",
-            "Number of profiles per box",
-            "Comment on fabrication"
-        ])
-
     
     # Sub topic 1 - SKU Table with dimensions with auto-calc button
     col1, col2 = st.columns([3, 1])
@@ -1395,7 +1447,7 @@ with tab2:
         
         return df_copy
     
-    # Calculate initial values
+    # Calculate initial values - ONLY if data exists
     if not st.session_state.secondary_sku_data.empty:
         st.session_state.secondary_sku_data = calculate_box_and_profiles_secondary(st.session_state.secondary_sku_data)
     
@@ -1493,9 +1545,15 @@ with tab2:
         )
     
     with col3:
+        # Define available options based on finish
+        if finish_tab2 == "Anodised":
+            eco_options = ["Mac foam", "Stretch wrap"]  # No Craft Paper for Anodised
+        else:
+            eco_options = ["Mac foam", "Stretch wrap", "Craft Paper"]
+        
         eco_friendly_tab2 = st.selectbox(
             "Eco-Friendly Packing Material",
-            ["Mac foam", "Stretch wrap", "Craft Paper"],
+            options=eco_options,
             key="eco_friendly_secondary"
         )
     
@@ -1514,16 +1572,6 @@ with tab2:
     # Section 1 - Number of layers (Method 1)
     st.markdown("**Section 1 - Number of layers (Method 1)**")
     
-    # Initialize bundling data in session state
-    if 'bundling_data' not in st.session_state:
-        st.session_state.bundling_data = pd.DataFrame(columns=[
-            "Number of rows/bundle", 
-            "Number of layer/bundle", 
-            "width prof.type", 
-            "height prof.type"
-        ])
-    
-
     # Create editable bundling data table
     edited_bundling_df = st.data_editor(
         st.session_state.bundling_data,
@@ -1558,19 +1606,11 @@ with tab2:
         
         st.session_state.bundling_data = updated_bundling_df
         st.success("Bundling data updated!")
-        st.rerun()
     
     st.divider()
     
     # Section 2 - Size of bundle (Method 2)
     st.markdown("**Section 2 - Size of bundle (Method 2)**")
-    
-    # Initialize bundle size data in session state
-    if 'bundle_size_data' not in st.session_state:
-        st.session_state.bundle_size_data = pd.DataFrame(columns=[
-            "Bundle width/mm", 
-            "Bundle Height/mm"
-        ])
     
     # Create editable bundle size table
     edited_bundle_size_df = st.data_editor(
@@ -1585,14 +1625,13 @@ with tab2:
     )
     
     # Update session state
-    st.session_state.bundle_size_data = edited_bundle_size_df
+    if apply_bundling:  # Only update if the button was clicked
+        st.session_state.bundle_size_data = edited_bundle_size_df
 
     apply_bundle_size = st.button("Apply Bundle Size Data", key="apply_bundle_size_btn", use_container_width=True)
     if apply_bundle_size:
         st.session_state.bundle_size_data = edited_bundle_size_df
         st.success("Bundle size data updated!")
-        st.rerun()
-
     
     st.divider()
     
@@ -1601,13 +1640,6 @@ with tab2:
     
     # Table 1: Primary Packing Material Costs
     st.markdown("**Table 1: Primary Packing Material Costs**")
-    
-    # Initialize secondary material costs in session state
-    if 'secondary_material_costs' not in st.session_state:
-        st.session_state.secondary_material_costs = pd.DataFrame({
-            "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
-            "Cost/ m²": [51.00, 34.65, 100.65, 14.38]
-        })
     
     # Create editable material costs table
     edited_secondary_material_df = st.data_editor(
@@ -1627,7 +1659,6 @@ with tab2:
     if apply_material_costs:
         st.session_state.secondary_material_costs = edited_secondary_material_df
         st.success("Material costs updated!")
-        st.rerun()
     
     # Table 2: Cardboard Box Cost
     st.markdown("**Table 2: Cardboard Box Cost**")
@@ -1638,14 +1669,6 @@ with tab2:
             ["2 ply", "3 ply"],
             key="box_ply_secondary"  # Changed key
         )
-    
-    # Initialize secondary box costs
-    if 'secondary_box_costs' not in st.session_state:
-        st.session_state.secondary_box_costs = pd.DataFrame({
-            "SAP Item Code": [345],
-            "Length(mm)": [330], "Width (mm)": [210], 
-            "Height (mm)": [135], "Cost (LKR)": [205.00]
-        })
     
     # Define box costs based on ply selection
     if box_ply == "2 ply":
@@ -1691,17 +1714,9 @@ with tab2:
     if apply_box_costs:
         st.session_state.secondary_box_costs = edited_box_df
         st.success("Box costs updated!")
-        st.rerun()
     
     # Table 3: Polybag Cost
     st.markdown("**Table 3: Polybag Cost**")
-    
-    # Initialize polybag costs in session state
-    if 'polybag_costs' not in st.session_state:
-        st.session_state.polybag_costs = pd.DataFrame({
-            "Polybag size (inches)": [9],
-            "Cost/m (LKR/m)": [12.8]
-        })
     
     # Create editable polybag costs table
     edited_polybag_df = st.data_editor(
@@ -1721,17 +1736,9 @@ with tab2:
     if apply_polybag_costs:
         st.session_state.polybag_costs = edited_polybag_df
         st.success("Polybag costs updated!")
-        st.rerun()
     
     # Table 4: Stretch wrap cost
     st.markdown("**Table 4: Stretch wrap cost**")
-    
-    # Initialize stretch wrap costs in session state
-    if 'stretchwrap_costs' not in st.session_state:
-        st.session_state.stretchwrap_costs = pd.DataFrame({
-            "Area (mm²)": [210000],
-            "Cost (LKR/mm²)": [0.00064]  # 135 / 210000 = 0.000642857
-        })
     
     # Create editable stretch wrap costs table
     edited_stretchwrap_df = st.data_editor(
@@ -1762,7 +1769,6 @@ with tab2:
     if apply_stretchwrap_costs:
         st.session_state.stretchwrap_costs = edited_stretchwrap_df
         st.success("Stretchwrap costs updated!")
-        st.rerun()
     
     # Add packing type selection
     packing_type = st.selectbox(
@@ -1773,16 +1779,6 @@ with tab2:
     
     # New Section: Crate/Pallet dimensions table
     st.subheader("Crate/Pallet Dimensions Table")
-    
-    # Initialize crate/pallet data in session state
-    if 'crate_pallet_data' not in st.session_state:
-        st.session_state.crate_pallet_data = pd.DataFrame(columns=[
-            "SKU", 
-            "packing method", 
-            "Width/mm", 
-            "Height/mm", 
-            "Length/mm"
-        ])
     
     # Create dataframe with SKUs from the SKU input table
     if not st.session_state.secondary_sku_data.empty:
@@ -1861,23 +1857,12 @@ with tab2:
         
         st.session_state.crate_pallet_data = edited_crate_pallet_df
         st.success("Crate/Pallet data updated!")
-        st.rerun()
-    
     
     # New Section: Total crate/pallet cost
     st.subheader("Total Crate/Pallet Cost")
     
     # Table 1: Crate cost
     st.markdown("**Table 1: Crate Cost**")
-    
-    # Initialize crate costs in session state
-    if 'crate_costs' not in st.session_state:
-        st.session_state.crate_costs = pd.DataFrame({
-            "Crate width/mm": [480],
-            "Crate Height/mm": [590],
-            "Crate Length/mm": [2000],
-            "Cost (LKR)": [5000.00]
-        })
     
     # Create editable crate costs table
     edited_crate_costs_df = st.data_editor(
@@ -1899,21 +1884,9 @@ with tab2:
     if apply_crate_costs:
         st.session_state.crate_costs = edited_crate_costs_df
         st.success("Crate costs updated!")
-        st.rerun()
-    
-    # Update session state (remove this line if you have it)
-    # st.session_state.crate_costs = edited_crate_costs_df
     
     # Table 2: Pallet Cost
     st.markdown("**Table 2: Pallet Cost**")
-    
-    # Initialize pallet costs in session state
-    if 'pallet_costs' not in st.session_state:
-        st.session_state.pallet_costs = pd.DataFrame({
-            "Pallet width/mm": [2000],
-            "Pallet Height/mm": [600],
-            "Cost (LKR)": [3000.00]
-        })
     
     # Create editable pallet costs table
     edited_pallet_costs_df = st.data_editor(
@@ -1934,20 +1907,9 @@ with tab2:
     if apply_pallet_costs:
         st.session_state.pallet_costs = edited_pallet_costs_df
         st.success("Pallet costs updated!")
-        st.rerun()
-    
-    # Update session state (remove this line if you have it)
-    # st.session_state.pallet_costs = edited_pallet_costs_df
     
     # Table 3: Strapping clip cost
     st.markdown("**Table 3: Strapping Clip Cost**")
-    
-    # Initialize strapping clip costs in session state
-    if 'strapping_clip_costs' not in st.session_state:
-        st.session_state.strapping_clip_costs = pd.DataFrame({
-            "number of clips": [1],
-            "Cost": [12.00]
-        })
     
     # Create editable strapping clip costs table
     edited_strapping_clip_df = st.data_editor(
@@ -1967,26 +1929,9 @@ with tab2:
     if apply_strapping_clip:
         st.session_state.strapping_clip_costs = edited_strapping_clip_df
         st.success("Strapping clip costs updated!")
-        st.rerun()
-    
-    # Update session state (remove this line if you have it)
-    # st.session_state.strapping_clip_costs = edited_strapping_clip_df
     
     # Table 4: PP strapping cost
     st.markdown("**Table 4: PP Strapping Cost**")
-    
-    # Initialize PP strapping costs in session state
-    if 'pp_strapping_costs' not in st.session_state:
-        st.session_state.pp_strapping_costs = pd.DataFrame({
-            "Strapping Length/m": [1],
-            "Cost (LKR/m)": [15.00]
-        })
-
-    if 'cardboard_covering_costs' not in st.session_state:
-        st.session_state.cardboard_covering_costs = pd.DataFrame({
-            "Area of the pallet (m²)": [1],
-            "Price (LKR)": [512.54]
-        })
     
     # Create editable PP strapping costs table
     edited_pp_strapping_df = st.data_editor(
@@ -1998,6 +1943,21 @@ with tab2:
             "Cost (LKR/m)": st.column_config.NumberColumn("Cost (LKR/m)", required=True, min_value=0, format="%.2f")
         },
         key="pp_strapping_editor"
+    )
+    
+    # Table 5: Cardboard covering cost
+    st.markdown("**Table 5: Cardboard Covering Cost**")
+    
+    # Create editable cardboard covering costs table
+    edited_cardboard_covering_df = st.data_editor(
+        st.session_state.cardboard_covering_costs,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Area of the pallet (m²)": st.column_config.NumberColumn("Area of the pallet (m²)", required=True, min_value=0, format="%.2f"),
+            "Price (LKR)": st.column_config.NumberColumn("Price (LKR)", required=True, min_value=0, format="%.2f")
+        },
+        key="cardboard_covering_editor"
     )
     
     # Consolidated Apply All button for Secondary Packing Cost Tables
@@ -2020,43 +1980,6 @@ with tab2:
         st.session_state.cardboard_covering_costs = edited_cardboard_covering_df
         
         st.success("All secondary cost changes applied successfully!")
-        time.sleep(0.5)
-        st.rerun()
-    
-    # Update session state (remove this line if you have it)
-    # st.session_state.pp_strapping_costs = edited_pp_strapping_df
-    st.success("PP strapping costs updated!")
-    st.rerun()
-
-    # Table 5: Cardboard covering cost
-    st.markdown("**Table 5: Cardboard Covering Cost**")
-    
-    # Initialize cardboard covering costs in session state
-    if 'cardboard_covering_costs' not in st.session_state:
-        st.session_state.cardboard_covering_costs = pd.DataFrame({
-            "Area of the pallet (m²)": [1],
-            "Price (LKR)": [512.54]
-        })
-    
-    # Create editable cardboard covering costs table
-    edited_cardboard_covering_df = st.data_editor(
-        st.session_state.cardboard_covering_costs,
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "Area of the pallet (m²)": st.column_config.NumberColumn("Area of the pallet (m²)", required=True, min_value=0, format="%.2f"),
-            "Price (LKR)": st.column_config.NumberColumn("Price (LKR)", required=True, min_value=0, format="%.2f")
-        },
-        key="cardboard_covering_editor"
-    )
-    
-    # Add apply button for cardboard covering costs
-    apply_cardboard_covering = st.button("Apply Cardboard Covering Changes", key="apply_cardboard_covering_btn", use_container_width=True)
-    
-    if apply_cardboard_covering:
-        st.session_state.cardboard_covering_costs = edited_cardboard_covering_df
-        st.success("Cardboard covering costs updated!")
-        st.rerun()
     
     # Add Calculate button for secondary calculations
     st.markdown("---")
@@ -2192,11 +2115,6 @@ with tab2:
                 st.warning("Enter valid SKU data")
         else:
             st.info("Enter SKU data")
-        
-        # Reset calculation flag after displaying
-        st.session_state.calculate_secondary = False
-
-
             
         # Section 2: Crate/Pallet Cost Calculations
         st.divider()
