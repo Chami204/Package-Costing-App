@@ -2322,7 +2322,7 @@ with tab2:
             
             # Reset calculation flag after displaying
             st.session_state.calculate_secondary = False
-                    )
+                )
                 else:
                     st.warning("Unable to calculate costs. Please check all input data is valid.")
         else:
