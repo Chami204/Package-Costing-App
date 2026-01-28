@@ -1962,10 +1962,10 @@ with tab2:
         })
 
     if 'cardboard_covering_costs' not in st.session_state:
-    st.session_state.cardboard_covering_costs = pd.DataFrame({
-        "Area of the pallet (m²)": [1],
-        "Price (LKR)": [512.54]
-    })
+        st.session_state.cardboard_covering_costs = pd.DataFrame({
+            "Area of the pallet (m²)": [1],
+            "Price (LKR)": [512.54]
+        })
     
     # Create editable PP strapping costs table
     edited_pp_strapping_df = st.data_editor(
