@@ -53,6 +53,99 @@ def reset_calculation_flags():
     st.session_state.calculate_primary = False
     st.session_state.calculate_secondary = False
 
+# ========== ADDED FUNCTION: calculate_box_and_profiles ==========
+def calculate_box_and_profiles(df):
+    """Calculate box dimensions and number of profiles per box"""
+    if df.empty:
+        return df
+    
+    df_copy = df.copy()
+    
+    for idx, row in df_copy.iterrows():
+        try:
+            # Get profile dimensions - with safe conversion
+            width = float(row["Width/mm"]) if not pd.isna(row["Width/mm"]) else 0
+            height = float(row["Height/mm"]) if not pd.isna(row["Height/mm"]) else 0
+            length = float(row["Length/mm"]) if not pd.isna(row["Length/mm"]) else 0
+            
+            # Helper function to round up to nearest 100
+            def round_up_to_nearest_100(num):
+                try:
+                    num_float = float(num)
+                    return ((int(num_float) + 99) // 100) * 100
+                except:
+                    return 0
+            
+            # Handle Box Width
+            box_width_val = row["Box Width/mm"]
+            if pd.isna(box_width_val) or float(box_width_val) == 0:
+                df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
+            else:
+                df_copy.at[idx, "Box Width/mm"] = float(box_width_val)
+            
+            # Handle Box Height
+            box_height_val = row["Box Height/mm"]
+            if pd.isna(box_height_val) or float(box_height_val) == 0:
+                df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
+            else:
+                df_copy.at[idx, "Box Height/mm"] = float(box_height_val)
+            
+            # Handle Box Length
+            box_length_val = row["Box Length/mm"]
+            if pd.isna(box_length_val) or float(box_length_val) == 0:
+                df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
+            else:
+                df_copy.at[idx, "Box Length/mm"] = float(box_length_val)
+            
+            # Get box dimensions for calculation
+            try:
+                box_width = float(df_copy.at[idx, "Box Width/mm"])
+                box_height = float(df_copy.at[idx, "Box Height/mm"])
+            except:
+                box_width = 0
+                box_height = 0
+            
+            # Handle W/mm and H/mm
+            w_direction = row["W/mm"]
+            if pd.isna(w_direction) or w_direction == "":
+                df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
+                df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
+                w_direction = "Profiles are arranged in W direction"
+            elif w_direction == "Profiles are arranged in W direction":
+                df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
+            elif w_direction == "Profiles are arranged in height direction":
+                df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
+            else:
+                # Default fallback
+                df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
+                df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
+                w_direction = "Profiles are arranged in W direction"
+            
+            # Calculate profiles per box
+            profiles_per_box = 0
+            if width > 0 and height > 0 and box_width > 0 and box_height > 0:
+                if w_direction == "Profiles are arranged in W direction":
+                    # (Box Width / profile width) × (Box Height / profile height)
+                    profiles_per_box = (box_width / width) * (box_height / height)
+                else:  # "Profiles are arranged in height direction"
+                    # (Box Width / profile height) × (Box Height / profile width)
+                    profiles_per_box = (box_width / height) * (box_height / width)
+            
+            # Set integer value (floor)
+            df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
+                    
+        except Exception as e:
+            # Reset values on any error
+            df_copy.at[idx, "Box Width/mm"] = 0
+            df_copy.at[idx, "Box Height/mm"] = 0
+            df_copy.at[idx, "Box Length/mm"] = 0
+            df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
+            df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
+            df_copy.at[idx, "Number of profiles per box"] = 0
+    
+    return df_copy
+# ========== END OF ADDED FUNCTION ==========
+
 # App title
 st.title("📦 Packing Costing Calculator")
 
@@ -405,7 +498,14 @@ def create_excel_report():
                 current_row += crate_rows + 5
             
             # Add Pallet Costs
-            if 'pallet_costs' in st.session_state and not st.session_state.pallet_costs.empty:
+            if 'pallet_costs' not in st.session_state:
+                st.session_state.pallet_costs = pd.DataFrame({
+                    "Pallet width/mm": [2000],
+                    "Pallet Height/mm": [600],
+                    "Cost (LKR)": [3000.00]
+                })
+                
+            if not st.session_state.pallet_costs.empty:
                 ws2.cell(row=current_row, column=1, value="Table 2: Pallet Cost").font = heading_font
                 ws2.cell(row=current_row, column=1).fill = heading_fill
                 
@@ -744,100 +844,7 @@ with tab1:
             "Comment on fabrication"
         ])
     
-    # Function to calculate box dimensions and number of profiles per box
-    @st.cache_data
-    def calculate_box_and_profiles(df):
-        """Calculate box dimensions and number of profiles per box"""
-        if df.empty:
-            return df
-        
-        df_copy = df.copy()
-        
-        for idx, row in df_copy.iterrows():
-            try:
-                # Get profile dimensions - with safe conversion
-                width = float(row["Width/mm"]) if not pd.isna(row["Width/mm"]) else 0
-                height = float(row["Height/mm"]) if not pd.isna(row["Height/mm"]) else 0
-                length = float(row["Length/mm"]) if not pd.isna(row["Length/mm"]) else 0
-                
-                # Helper function to round up to nearest 100
-                def round_up_to_nearest_100(num):
-                    try:
-                        num_float = float(num)
-                        return ((int(num_float) + 99) // 100) * 100
-                    except:
-                        return 0
-                
-                # Handle Box Width
-                box_width_val = row["Box Width/mm"]
-                if pd.isna(box_width_val) or float(box_width_val) == 0:
-                    df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
-                else:
-                    df_copy.at[idx, "Box Width/mm"] = float(box_width_val)
-                
-                # Handle Box Height
-                box_height_val = row["Box Height/mm"]
-                if pd.isna(box_height_val) or float(box_height_val) == 0:
-                    df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
-                else:
-                    df_copy.at[idx, "Box Height/mm"] = float(box_height_val)
-                
-                # Handle Box Length
-                box_length_val = row["Box Length/mm"]
-                if pd.isna(box_length_val) or float(box_length_val) == 0:
-                    df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
-                else:
-                    df_copy.at[idx, "Box Length/mm"] = float(box_length_val)
-                
-                # Get box dimensions for calculation
-                try:
-                    box_width = float(df_copy.at[idx, "Box Width/mm"])
-                    box_height = float(df_copy.at[idx, "Box Height/mm"])
-                except:
-                    box_width = 0
-                    box_height = 0
-                
-                # Handle W/mm and H/mm
-                w_direction = row["W/mm"]
-                if pd.isna(w_direction) or w_direction == "":
-                    df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
-                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                    w_direction = "Profiles are arranged in W direction"
-                elif w_direction == "Profiles are arranged in W direction":
-                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                elif w_direction == "Profiles are arranged in height direction":
-                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-                else:
-                    # Default fallback
-                    df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
-                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                    w_direction = "Profiles are arranged in W direction"
-                
-                # Calculate profiles per box
-                profiles_per_box = 0
-                if width > 0 and height > 0 and box_width > 0 and box_height > 0:
-                    if w_direction == "Profiles are arranged in W direction":
-                        # (Box Width / profile width) × (Box Height / profile height)
-                        profiles_per_box = (box_width / width) * (box_height / height)
-                    else:  # "Profiles are arranged in height direction"
-                        # (Box Width / profile height) × (Box Height / profile width)
-                        profiles_per_box = (box_width / height) * (box_height / width)
-                
-                # Set integer value (floor)
-                df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
-                        
-            except Exception as e:
-                # Reset values on any error
-                df_copy.at[idx, "Box Width/mm"] = 0
-                df_copy.at[idx, "Box Height/mm"] = 0
-                df_copy.at[idx, "Box Length/mm"] = 0
-                df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
-                df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                df_copy.at[idx, "Number of profiles per box"] = 0
-        
-        return df_copy
-    
-    # Calculate initial values
+    # Calculate initial values using the function defined at the top
     if not st.session_state.primary_sku_data.empty:
         st.session_state.primary_sku_data = calculate_box_and_profiles(st.session_state.primary_sku_data)
     
@@ -918,20 +925,9 @@ with tab1:
         except Exception as e:
             # If there's an error, just update with the edited data
             st.session_state.primary_sku_data = edited_sku_df
+            # Optionally show a warning
+            # st.warning(f"Auto-calculation skipped: {str(e)}")
 
-    # Check if W/mm values have changed and recalculate if needed
-    if not st.session_state.primary_sku_data.empty and not edited_sku_df.empty:
-        if len(st.session_state.primary_sku_data) == len(edited_sku_df):
-            for idx in range(len(edited_sku_df)):
-                # Check if W/mm has changed
-                old_w_mm = st.session_state.primary_sku_data.iloc[idx]["W/mm"] if idx < len(st.session_state.primary_sku_data) else ""
-                new_w_mm = edited_sku_df.iloc[idx]["W/mm"]
-                
-                if old_w_mm != new_w_mm:
-                    # Recalculate this row
-                    st.session_state.primary_sku_data = calculate_box_and_profiles(edited_sku_df)
-                    break
-    
     st.divider()
     
     # Section 2: Common Packing selections
