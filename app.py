@@ -1182,7 +1182,23 @@ with tab1:
 # Note: Secondary Calculations tab code remains unchanged from the original
 with tab2:
     st.header("Secondary Calculations")
-    # Function to auto-calculate all fields in SKU table for secondary
+    
+    # Sub topic 1 - SKU Table with dimensions with auto-calc button
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.subheader("SKU Table with dimensions")
+    with col2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Add a checkbox to control auto-calculation
+        auto_calc_enabled = st.checkbox("Enable auto-calculation", value=True, key="auto_calc_enabled_secondary")
+        
+        if st.button("🔄 Auto-Calculate All Fields", 
+                    help="Click to auto-calculate total weight, box dimensions, and profiles per box",
+                    use_container_width=True,
+                    key="auto_calc_btn_secondary"):
+            auto_calculate_sku_table_secondary()
+            
     def auto_calculate_sku_table_secondary():
         """Auto-calculate all fields in SKU table - preserve user inputs for secondary"""
         if not st.session_state.secondary_sku_data.empty:
@@ -1419,21 +1435,7 @@ with tab2:
             except (ValueError, TypeError):
                 df_copy.at[idx, "total weight per profile (kg)"] = 0
         return df_copy
-    # Sub topic 1 - SKU Table with dimensions with auto-calc button
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.subheader("SKU Table with dimensions")
-    with col2:
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Add a checkbox to control auto-calculation
-        auto_calc_enabled = st.checkbox("Enable auto-calculation", value=True, key="auto_calc_enabled_secondary")
-        
-        if st.button("🔄 Auto-Calculate All Fields", 
-                    help="Click to auto-calculate total weight, box dimensions, and profiles per box",
-                    use_container_width=True,
-                    key="auto_calc_btn_secondary"):
-            auto_calculate_sku_table_secondary()
+
     
     # Initialize session state for secondary SKU data with new columns
     if 'secondary_sku_data' not in st.session_state:
