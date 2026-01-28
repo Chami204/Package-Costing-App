@@ -617,46 +617,38 @@ with tab1:
                     # Get box dimensions (either auto-calculated or manually entered)
                     box_width = float(df_copy.at[idx, "Box Width/mm"])
                     box_height = float(df_copy.at[idx, "Box Height/mm"])
-                    box_length = float(df_copy.at[idx, "Box Length/mm"])
                     
-                    # Set default W/mm and H/mm if not set
-                    if pd.isna(row["W/mm"]) or row["W/mm"] == "":
+                    # Get the W/mm selection
+                    w_direction = row["W/mm"]
+                    
+                    # FIRST: Update H/mm based on W/mm selection
+                    if pd.isna(w_direction) or w_direction == "":
+                        # Default values
                         df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
                         df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                    
-                    # Get the arrangement direction
-                    w_direction = df_copy.at[idx, "W/mm"]
-                    h_direction = df_copy.at[idx, "H/mm"]
-                    
-                    # Calculate Number of profiles per box based on arrangement
-                    profiles_per_box = 0
-                    
-                    # Determine which direction is primary
-                    if w_direction == "Profiles are arranged in height direction":
-                        # When W/mm says "height direction", it means profiles are arranged by height in the width direction
-                        # So: (Box Width / profile Height) * (Box Height / profile Width)
-                        if width > 0 and height > 0:
-                            profiles_per_box = (box_width / height) * (box_height / width)
-                        # Update H/mm to show the complementary direction
-                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-                    
-                    else:  # "Profiles are arranged in W direction"
-                        # When W/mm says "W direction", it means profiles are arranged by width in the width direction
-                        # So: (Box Width / profile Width) * (Box Height / profile Height)
-                        if width > 0 and height > 0:
-                            profiles_per_box = (box_width / width) * (box_height / height)
-                        # Update H/mm to show the complementary direction
-                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                    
-                    # Use INTEGER value (floor) for number of profiles per box
-                    df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
-                    
-                    # Update H/mm based on W/mm selection
-                    if w_direction == "Profiles are arranged in W direction":
+                        w_direction = "Profiles are arranged in W direction"
+                    elif w_direction == "Profiles are arranged in W direction":
                         df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
                     elif w_direction == "Profiles are arranged in height direction":
                         df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-                        
+                    
+                    # NOW calculate profiles per box using the updated directions
+                    profiles_per_box = 0
+                    
+                    if w_direction == "Profiles are arranged in W direction":
+                        # Profiles arranged by width in width direction
+                        # (Box Width / profile width) × (Box Height / profile height)
+                        if width > 0 and height > 0:
+                            profiles_per_box = (box_width / width) * (box_height / height)
+                    else:  # "Profiles are arranged in height direction"
+                        # Profiles arranged by height in width direction
+                        # (Box Width / profile height) × (Box Height / profile width)
+                        if width > 0 and height > 0:
+                            profiles_per_box = (box_width / height) * (box_height / width)
+                    
+                    # Use INTEGER value (floor) for number of profiles per box
+                    df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
+                            
                 except (ValueError, TypeError, ZeroDivisionError):
                     # Only reset if values are 0 or empty
                     if pd.isna(row["Box Width/mm"]) or float(row["Box Width/mm"]) == 0:
@@ -666,6 +658,8 @@ with tab1:
                     if pd.isna(row["Box Length/mm"]) or float(row["Box Length/mm"]) == 0:
                         df_copy.at[idx, "Box Length/mm"] = 0
                     df_copy.at[idx, "Number of profiles per box"] = 0
+                    df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
+                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
             
             # Update session state
             st.session_state.primary_sku_data = df_copy
@@ -725,6 +719,16 @@ with tab1:
                     help="Click to auto-calculate total weight, box dimensions, and profiles per box",
                     use_container_width=True):
             auto_calculate_sku_table()
+            st.rerun()
+        
+        if st.button("🔄 Update Profiles Calculation", 
+                    help="Click to recalculate number of profiles after changing W/mm selection",
+                    use_container_width=True,
+                    type="secondary"):
+            if not st.session_state.primary_sku_data.empty:
+                st.session_state.primary_sku_data = calculate_box_and_profiles(st.session_state.primary_sku_data)
+                st.success("Profiles calculation updated!")
+                st.rerun()
         
     
     # Initialize session state for primary SKU data with new columns
@@ -786,38 +790,44 @@ with tab1:
                 box_height = float(df_copy.at[idx, "Box Height/mm"])
                 box_length = float(df_copy.at[idx, "Box Length/mm"])
                 
-                # Set default W/mm and H/mm if not set
-                if pd.isna(row["W/mm"]) or row["W/mm"] == "":
+                # Get the current W/mm selection
+                w_direction = row["W/mm"]
+                
+                # FIRST: Update H/mm based on W/mm selection
+                if pd.isna(w_direction) or w_direction == "":
+                    # Default values
                     df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
                     df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                
-                # Calculate Number of profiles per box based on W/mm selection
-                w_direction = df_copy.at[idx, "W/mm"]
-                profiles_per_box = 0
-                
-                if w_direction == "Profiles are arranged in height direction":
-                    # (Box Height/profile width)*(Box Width/profile Height)
-                    if width > 0 and height > 0:
-                        profiles_per_box = (box_height / width) * (box_width / height)
-                else:  # "Profiles are arranged in W direction"
-                    # (Box Width/profile width)*(Box Height/profile Height)
-                    if width > 0 and height > 0:
-                        profiles_per_box = (box_width / width) * (box_height / height)
-                
-                # Use INTEGER value (floor) for number of profiles per box
-                df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
-                
-                # Update H/mm based on W/mm selection
-                if w_direction == "Profiles are arranged in W direction":
+                    w_direction = "Profiles are arranged in W direction"
+                elif w_direction == "Profiles are arranged in W direction":
                     df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
                 elif w_direction == "Profiles are arranged in height direction":
                     df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-                    
+                
+                # NOW calculate profiles per box using the updated directions
+                profiles_per_box = 0
+                
+                if w_direction == "Profiles are arranged in W direction":
+                    # Profiles arranged by width in width direction
+                    # (Box Width / profile width) × (Box Height / profile height)
+                    if width > 0 and height > 0:
+                        profiles_per_box = (box_width / width) * (box_height / height)
+                else:  # "Profiles are arranged in height direction"
+                    # Profiles arranged by height in width direction
+                    # (Box Width / profile height) × (Box Height / profile width)
+                    if width > 0 and height > 0:
+                        profiles_per_box = (box_width / height) * (box_height / width)
+                
+                # Use INTEGER value (floor) for number of profiles per box
+                df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
+                        
             except (ValueError, TypeError, ZeroDivisionError):
                 # Set default values on error
                 df_copy.at[idx, "Box Width/mm"] = 0
                 df_copy.at[idx, "Box Height/mm"] = 0
                 df_copy.at[idx, "Box Length/mm"] = 0
+                df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
+                df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
                 df_copy.at[idx, "Number of profiles per box"] = 0
         
         return df_copy
@@ -897,6 +907,19 @@ with tab1:
         else:
             # Just update the data without calculations
             st.session_state.primary_sku_data = edited_sku_df
+
+    # Check if W/mm values have changed and recalculate if needed
+    if not st.session_state.primary_sku_data.empty and not edited_sku_df.empty:
+        if len(st.session_state.primary_sku_data) == len(edited_sku_df):
+            for idx in range(len(edited_sku_df)):
+                # Check if W/mm has changed
+                old_w_mm = st.session_state.primary_sku_data.iloc[idx]["W/mm"] if idx < len(st.session_state.primary_sku_data) else ""
+                new_w_mm = edited_sku_df.iloc[idx]["W/mm"]
+                
+                if old_w_mm != new_w_mm:
+                    # Recalculate this row
+                    st.session_state.primary_sku_data = calculate_box_and_profiles(edited_sku_df)
+                    break
     
     st.divider()
     
