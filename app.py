@@ -1726,7 +1726,7 @@ with tab2:
     if 'stretchwrap_costs' not in st.session_state:
         st.session_state.stretchwrap_costs = pd.DataFrame({
             "Area (mm²)": [210000],
-            "Cost (LKR/mm²)": [135]
+            "Cost (LKR/mm²)": [0.00064]  # 135 / 210000 = 0.000642857
         })
     
     # Create editable stretch wrap costs table
@@ -1735,8 +1735,19 @@ with tab2:
         num_rows="dynamic",
         use_container_width=True,
         column_config={
-            "Area (mm²)": st.column_config.NumberColumn("Area (mm²)", required=True, min_value=0),
-            "Cost (LKR/mm²)": st.column_config.NumberColumn("Cost (LKR/mm²)", required=True, min_value=0, format="%.10f")
+            "Area (mm²)": st.column_config.NumberColumn(
+                "Area (mm²)", 
+                required=True, 
+                min_value=0, 
+                format="%.0f"  # No decimals for area
+            ),
+            "Cost (LKR/mm²)": st.column_config.NumberColumn(
+                "Cost (LKR/mm²)", 
+                required=True, 
+                min_value=0, 
+                format="%.8f",  # 8 decimal places for display
+                step=0.00000001  # Allow small decimal increments
+            )
         },
         key="stretchwrap_editor"
     )
