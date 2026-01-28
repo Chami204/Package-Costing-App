@@ -2029,7 +2029,7 @@ with tab2:
     # Display secondary calculations when triggered
     if st.session_state.calculate_secondary:
         # Section 1: Secondary Packing Cost Per Profile
-        st.subheader("Total Secondary Packing Cost Per Profile")
+        st.subheader("Table 3: Secondary Packing Total Cost")
         
         if not st.session_state.secondary_sku_data.empty:
             # Check which method is used
@@ -2196,12 +2196,133 @@ with tab2:
                     except (ValueError, TypeError, ZeroDivisionError) as e:
                         continue
                 
-                if secondary_calculations_data:
-                    st.session_state.secondary_calculations = pd.DataFrame(secondary_calculations_data)
-                    st.dataframe(st.session_state.secondary_calculations, use_container_width=True)
+        if st.session_state.calculate_secondary:
+            st.markdown("**Table 3: Secondary Packing Total Cost**")
+            
+            if not st.session_state.secondary_sku_data.empty:
+                # Prepare calculations - SAME AS PRIMARY
+                calculations_data = []
+                
+                # Get material costs as dictionary
+                material_cost_dict = dict(zip(
+                    st.session_state.secondary_material_costs["Material"],
+                    st.session_state.secondary_material_costs["Cost/ m²"]
+                ))
+                
+                # Get reference box dimensions and cost
+                ref_box = st.session_state.secondary_box_costs.iloc[0]
+                
+                for _, sku in st.session_state.secondary_sku_data.iterrows():
+                    try:
+                        # Get SKU dimensions
+                        width = float(sku["Width/mm"])
+                        height = float(sku["Height/mm"])
+                        length = float(sku["Length/mm"])
+                        unit_weight = float(sku["Unit weight(kg/m)"])
+                        total_weight = float(sku["total weight per profile (kg)"])
+                        
+                        # Get box dimensions from SKU table
+                        box_width = float(sku["Box Width/mm"])
+                        box_height = float(sku["Box Height/mm"])
+                        box_length = float(sku["Box Length/mm"])
+                        profiles_per_box = float(sku["Number of profiles per box"])
+                        
+                        # Calculate Surface Area in m² (using profile dimensions)
+                        sa_m2 = (2 * ((width * height) + (width * length) + (height * length))) / (1000 * 1000)
+                        
+                        # Calculate Interleaving Cost
+                        interleaving_cost = 0
+                        if interleaving_required_tab2 == "Yes":
+                            material_map = {
+                                "Mac foam": "McFoam",
+                                "Stretch wrap": "Stretchwrap",
+                                "Craft Paper": "Craft Paper"
+                            }
+                            selected_material = material_map.get(eco_friendly_tab2, "McFoam")
+                            cost_per_m2 = material_cost_dict.get(selected_material, 0)
+                            interleaving_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
+                        
+                        # Calculate Protective Tape Cost
+                        protective_tape_cost = 0
+                        if protective_tape_tab2 == "Yes":
+                            cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
+                            protective_tape_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
+                        
+                        # Calculate Packing Cost - SAME FORMULA AS PRIMARY
+                        packing_cost = 0
+                        if ref_box["Length(mm)"] > 0 and ref_box["Width (mm)"] > 0 and ref_box["Height (mm)"] > 0:
+                            if profiles_per_box > 0:
+                                # Calculate cost per box volume
+                                box_volume_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"]))
+                                # Calculate actual box volume from SKU table
+                                actual_box_volume = box_width * box_height * box_length
+                                # Total box cost = cost per volume * actual box volume
+                                total_box_cost = box_volume_cost * actual_box_volume
+                                # Packing cost per profile = total box cost / number of profiles per box
+                                packing_cost = total_box_cost / profiles_per_box
+                            else:
+                                # Fallback to original calculation if profiles_per_box is 0
+                                packing_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"])) * (width * height * length)
+                                
+                        # Calculate Total Cost
+                        total_cost = interleaving_cost + protective_tape_cost + packing_cost
+
+                        # Calculate Cost/kg (LKR)
+                        cost_per_kg = total_cost / total_weight if total_weight > 0 else 0
+                        
+                        # Calculate Cost/m (LKR) = Total Cost per profile/LKR / (Length/mm ÷ 1000)
+                        length_m = length / 1000  # Convert mm to meters
+                        cost_per_m = total_cost / length_m if length_m > 0 else 0
+
+                        calculations_data.append({
+                            "SKU": sku["SKU No"],
+                            "Interleaving cost": round(interleaving_cost, 2),
+                            "Protective tape cost": round(protective_tape_cost, 2),
+                            "Packing type": "Cardboard box",
+                            "Profiles per box": int(profiles_per_box),
+                            "Packing Cost (LKR)": round(packing_cost, 2),
+                            "Total Cost per profile/LKR": round(total_cost, 2),
+                            "Cost/kg (LKR)": round(cost_per_kg, 2),
+                            "Cost/m (LKR)": round(cost_per_m, 2)
+                        })
+                        
+                    except (ValueError, TypeError, ZeroDivisionError):
+                        continue
+                
+                if calculations_data:
+                    # Store calculations in session state
+                    st.session_state.secondary_calculations = pd.DataFrame(calculations_data)
+
+                    # Reorder columns if needed
+                    column_order = [
+                        "SKU",
+                        "Interleaving cost", 
+                        "Protective tape cost",
+                        "Packing type",
+                        "Profiles per box",
+                        "Packing Cost (LKR)",
+                        "Total Cost per profile/LKR",
+                        "Cost/kg (LKR)",
+                        "Cost/m (LKR)"
+                    ]
                     
-                    total_cost_all = sum(item["Total cost per profile"] for item in secondary_calculations_data)
-                    st.metric("**Total Secondary Packing Cost (All SKUs)**", f"LKR {total_cost_all:,.4f}")
+                    # Reorder the columns
+                    st.session_state.secondary_calculations = st.session_state.secondary_calculations[column_order]
+                    
+                    # Display the calculated results table (read-only)
+                    st.dataframe(
+                        st.session_state.secondary_calculations,
+                        use_container_width=True
+                    )
+                    
+                else:
+                    st.warning("Enter valid SKU data")
+            else:
+                st.info("Enter SKU data")
+            
+            # Reset calculation flag after displaying
+            st.session_state.calculate_secondary = False
+                    )
                 else:
                     st.warning("Unable to calculate costs. Please check all input data is valid.")
         else:
