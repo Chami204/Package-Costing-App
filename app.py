@@ -202,6 +202,24 @@ if 'primary_sku_data' not in st.session_state:
         "total weight per profile (kg)","Number of profiles per box",
     ])
 
+# Initialize secondary_sku_data session state
+if 'secondary_sku_data' not in st.session_state:
+    st.session_state.secondary_sku_data = pd.DataFrame(columns=[
+        "SKU No", 
+        "Unit weight(kg/m)", 
+        "total weight per profile (kg)", 
+        "Width/mm", 
+        "Height/mm", 
+        "Length/mm",
+        "Box Width/mm",
+        "Box Height/mm", 
+        "Box Length/mm",
+        "W/mm",
+        "H/mm",
+        "Number of profiles per box",
+        "Comment on fabrication"
+    ])
+
 if 'primary_material_costs' not in st.session_state:
     st.session_state.primary_material_costs = pd.DataFrame({
         "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
@@ -1367,7 +1385,6 @@ with tab1:
     
     st.info(comments_box)
 
-# Note: Secondary Calculations tab code remains unchanged from the original
 with tab2:
     st.header("Secondary Calculations")
     
@@ -1386,180 +1403,6 @@ with tab2:
                     use_container_width=True,
                     key="auto_calc_btn_secondary"):
             auto_calculate_sku_table_secondary()
-            
-    def auto_calculate_sku_table_secondary():
-        """Auto-calculate all fields in SKU table - preserve user inputs for secondary"""
-        if not st.session_state.secondary_sku_data.empty:
-            df_copy = st.session_state.secondary_sku_data.copy()
-            
-            for idx, row in df_copy.iterrows():
-                try:
-                    # Calculate total weight per profile
-                    unit_weight = float(row["Unit weight(kg/m)"])
-                    length_mm = float(row["Length/mm"])
-                    total_weight = unit_weight * (length_mm / 1000)
-                    df_copy.at[idx, "total weight per profile (kg)"] = round(total_weight, 4)
-                    
-                    # Get profile dimensions
-                    width = float(row["Width/mm"])
-                    height = float(row["Height/mm"])
-                    length = float(row["Length/mm"])
-                    
-                    # Calculate box dimensions (round UP to nearest 100)
-                    def round_up_to_nearest_100(num):
-                        return ((int(num) + 99) // 100) * 100
-                    
-                    # ONLY auto-calculate if box dimensions are not manually set
-                    # Check current values
-                    current_box_width = float(row["Box Width/mm"]) if not pd.isna(row["Box Width/mm"]) else 0
-                    current_box_height = float(row["Box Height/mm"]) if not pd.isna(row["Box Height/mm"]) else 0
-                    current_box_length = float(row["Box Length/mm"]) if not pd.isna(row["Box Length/mm"]) else 0
-                    
-                    # Only calculate if current value is 0 or matches auto-calculated value
-                    expected_box_width = round_up_to_nearest_100(width)
-                    if current_box_width == 0 or current_box_width == expected_box_width:
-                        df_copy.at[idx, "Box Width/mm"] = expected_box_width
-                    
-                    expected_box_height = round_up_to_nearest_100(height)
-                    if current_box_height == 0 or current_box_height == expected_box_height:
-                        df_copy.at[idx, "Box Height/mm"] = expected_box_height
-                    
-                    expected_box_length = round_up_to_nearest_100(length)
-                    if current_box_length == 0 or current_box_length == expected_box_length:
-                        df_copy.at[idx, "Box Length/mm"] = expected_box_length
-                    
-                    # Get box dimensions (either auto-calculated or manually entered)
-                    box_width = float(df_copy.at[idx, "Box Width/mm"])
-                    box_height = float(df_copy.at[idx, "Box Height/mm"])
-                    box_length = float(df_copy.at[idx, "Box Length/mm"])
-                    
-                    # Set default W/mm and H/mm if not set
-                    if pd.isna(row["W/mm"]) or row["W/mm"] == "":
-                        df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
-                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                    
-                    # Get the arrangement direction
-                    w_direction = df_copy.at[idx, "W/mm"]
-                    h_direction = df_copy.at[idx, "H/mm"]
-                    
-                    # Calculate Number of profiles per box based on arrangement
-                    profiles_per_box = 0
-                    
-                    # Determine which direction is primary
-                    if w_direction == "Profiles are arranged in height direction":
-                        # When W/mm says "height direction", it means profiles are arranged by height in the width direction
-                        # So: (Box Width / profile Height) * (Box Height / profile Width)
-                        if width > 0 and height > 0:
-                            profiles_per_box = (box_width / height) * (box_height / width)
-                        # Update H/mm to show the complementary direction
-                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-                    
-                    else:  # "Profiles are arranged in W direction"
-                        # When W/mm says "W direction", it means profiles are arranged by width in the width direction
-                        # So: (Box Width / profile Width) * (Box Height / profile Height)
-                        if width > 0 and height > 0:
-                            profiles_per_box = (box_width / width) * (box_height / height)
-                        # Update H/mm to show the complementary direction
-                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                    
-                    # Use INTEGER value (floor) for number of profiles per box
-                    df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
-                    
-                    # Update H/mm based on W/mm selection
-                    if w_direction == "Profiles are arranged in W direction":
-                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                    elif w_direction == "Profiles are arranged in height direction":
-                        df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-                        
-                except (ValueError, TypeError, ZeroDivisionError):
-                    # Only reset if values are 0 or empty
-                    if pd.isna(row["Box Width/mm"]) or float(row["Box Width/mm"]) == 0:
-                        df_copy.at[idx, "Box Width/mm"] = 0
-                    if pd.isna(row["Box Height/mm"]) or float(row["Box Height/mm"]) == 0:
-                        df_copy.at[idx, "Box Height/mm"] = 0
-                    if pd.isna(row["Box Length/mm"]) or float(row["Box Length/mm"]) == 0:
-                        df_copy.at[idx, "Box Length/mm"] = 0
-                    df_copy.at[idx, "Number of profiles per box"] = 0
-            
-            # Update session state
-            st.session_state.secondary_sku_data = df_copy
-            st.success("Auto-calculation completed!")
-    
-    # Function to calculate box dimensions and number of profiles per box for secondary
-    def calculate_box_and_profiles_secondary(df):
-        """Calculate box dimensions and number of profiles per box for secondary"""
-        df_copy = df.copy()
-        for idx, row in df_copy.iterrows():
-            try:
-                # Get profile dimensions
-                width = float(row["Width/mm"])
-                height = float(row["Height/mm"])
-                length = float(row["Length/mm"])
-                
-                # Calculate box dimensions (round UP to nearest 100)
-                def round_up_to_nearest_100(num):
-                    """Round UP to nearest 100"""
-                    return ((int(num) + 99) // 100) * 100
-                
-                # Only auto-calculate if box dimensions are 0 or not set
-                if pd.isna(row["Box Width/mm"]) or float(row["Box Width/mm"]) == 0:
-                    df_copy.at[idx, "Box Width/mm"] = round_up_to_nearest_100(width)
-                else:
-                    # Keep existing value
-                    df_copy.at[idx, "Box Width/mm"] = row["Box Width/mm"]
-                    
-                if pd.isna(row["Box Height/mm"]) or float(row["Box Height/mm"]) == 0:
-                    df_copy.at[idx, "Box Height/mm"] = round_up_to_nearest_100(height)
-                else:
-                    # Keep existing value
-                    df_copy.at[idx, "Box Height/mm"] = row["Box Height/mm"]
-                    
-                if pd.isna(row["Box Length/mm"]) or float(row["Box Length/mm"]) == 0:
-                    df_copy.at[idx, "Box Length/mm"] = round_up_to_nearest_100(length)
-                else:
-                    # Keep existing value
-                    df_copy.at[idx, "Box Length/mm"] = row["Box Length/mm"]
-                
-                # Get box dimensions
-                box_width = float(df_copy.at[idx, "Box Width/mm"])
-                box_height = float(df_copy.at[idx, "Box Height/mm"])
-                box_length = float(df_copy.at[idx, "Box Length/mm"])
-                
-                # Set default W/mm and H/mm if not set
-                if pd.isna(row["W/mm"]) or row["W/mm"] == "":
-                    df_copy.at[idx, "W/mm"] = "Profiles are arranged in W direction"
-                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                
-                # Calculate Number of profiles per box based on W/mm selection
-                w_direction = df_copy.at[idx, "W/mm"]
-                profiles_per_box = 0
-                
-                if w_direction == "Profiles are arranged in height direction":
-                    # (Box Height/profile width)*(Box Width/profile Height)
-                    if width > 0 and height > 0:
-                        profiles_per_box = (box_height / width) * (box_width / height)
-                else:  # "Profiles are arranged in W direction"
-                    # (Box Width/profile width)*(Box Height/profile Height)
-                    if width > 0 and height > 0:
-                        profiles_per_box = (box_width / width) * (box_height / height)
-                
-                # Use INTEGER value (floor) for number of profiles per box
-                df_copy.at[idx, "Number of profiles per box"] = int(profiles_per_box) if profiles_per_box > 0 else 0
-                
-                # Update H/mm based on W/mm selection
-                if w_direction == "Profiles are arranged in W direction":
-                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in height direction"
-                elif w_direction == "Profiles are arranged in height direction":
-                    df_copy.at[idx, "H/mm"] = "Profiles are arranged in W direction"
-                    
-            except (ValueError, TypeError, ZeroDivisionError):
-                # Set default values on error
-                df_copy.at[idx, "Box Width/mm"] = 0
-                df_copy.at[idx, "Box Height/mm"] = 0
-                df_copy.at[idx, "Box Length/mm"] = 0
-                df_copy.at[idx, "Number of profiles per box"] = 0
-        
-        return df_copy
     
     # Calculate initial values
     if not st.session_state.secondary_sku_data.empty:
@@ -1608,42 +1451,6 @@ with tab2:
         },
         key="sku_editor_secondary"
     )
-    
-    # Callback function to auto-calculate total weight for secondary
-    def calculate_total_weight_secondary(df):
-        """Calculate total weight per profile based on unit weight and length for secondary"""
-        df_copy = df.copy()
-        for idx, row in df_copy.iterrows():
-            try:
-                unit_weight = float(row["Unit weight(kg/m)"])
-                length_mm = float(row["Length/mm"])
-                # Calculate: Unit weight(kg/m) * (Length(mm) / 1000)
-                total_weight = unit_weight * (length_mm / 1000)
-                df_copy.at[idx, "total weight per profile (kg)"] = round(total_weight, 4)
-            except (ValueError, TypeError):
-                df_copy.at[idx, "total weight per profile (kg)"] = 0
-        return df_copy
-
-    
-    # Initialize session state for secondary SKU data with new columns
-    if 'secondary_sku_data' not in st.session_state:
-        st.session_state.secondary_sku_data = pd.DataFrame(columns=[
-            "SKU No", 
-            "Unit weight(kg/m)", 
-            "total weight per profile (kg)", 
-            "Width/mm", 
-            "Height/mm", 
-            "Length/mm",
-            "Box Width/mm",
-            "Box Height/mm", 
-            "Box Length/mm",
-            "W/mm",
-            "H/mm",
-            "Number of profiles per box",
-            "Comment on fabrication"
-        ])
-    
-
     
     # Update the session state with calculated weights and box dimensions
     if not edited_sku_df_secondary.equals(st.session_state.secondary_sku_data):
@@ -2216,302 +2023,132 @@ with tab2:
     
     # Display secondary calculations when triggered
     if st.session_state.calculate_secondary:
-        # Section 1: Secondary Packing Cost Per Profile
-        st.subheader("Table 3: Secondary Packing Total Cost")
+        st.markdown("**Table 3: Secondary Packing Total Cost**")
         
         if not st.session_state.secondary_sku_data.empty:
-            # Check which method is used
-            use_method1 = not st.session_state.bundling_data.empty
-            use_method2 = not st.session_state.bundle_size_data.empty
+            # Prepare calculations - SAME AS PRIMARY
+            calculations_data = []
             
-            if not use_method1 and not use_method2:
-                st.warning("Please enter data in either Method 1 (Number of layers) or Method 2 (Size of bundle)")
+            # Get material costs as dictionary
+            material_cost_dict = dict(zip(
+                st.session_state.secondary_material_costs["Material"],
+                st.session_state.secondary_material_costs["Cost/ m²"]
+            ))
+            
+            # Get reference box dimensions and cost
+            ref_box = st.session_state.secondary_box_costs.iloc[0]
+            
+            for _, sku in st.session_state.secondary_sku_data.iterrows():
+                try:
+                    # Get SKU dimensions
+                    width = float(sku["Width/mm"])
+                    height = float(sku["Height/mm"])
+                    length = float(sku["Length/mm"])
+                    unit_weight = float(sku["Unit weight(kg/m)"])
+                    total_weight = float(sku["total weight per profile (kg)"])
+                    
+                    # Get box dimensions from SKU table
+                    box_width = float(sku["Box Width/mm"])
+                    box_height = float(sku["Box Height/mm"])
+                    box_length = float(sku["Box Length/mm"])
+                    profiles_per_box = float(sku["Number of profiles per box"])
+                    
+                    # Calculate Surface Area in m² (using profile dimensions)
+                    sa_m2 = (2 * ((width * height) + (width * length) + (height * length))) / (1000 * 1000)
+                    
+                    # Calculate Interleaving Cost
+                    interleaving_cost = 0
+                    if interleaving_required_tab2 == "Yes":
+                        material_map = {
+                            "Mac foam": "McFoam",
+                            "Stretch wrap": "Stretchwrap",
+                            "Craft Paper": "Craft Paper"
+                        }
+                        selected_material = material_map.get(eco_friendly_tab2, "McFoam")
+                        cost_per_m2 = material_cost_dict.get(selected_material, 0)
+                        interleaving_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
+                    
+                    # Calculate Protective Tape Cost
+                    protective_tape_cost = 0
+                    if protective_tape_tab2 == "Yes":
+                        cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
+                        protective_tape_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
+                    
+                    # Calculate Packing Cost - SAME FORMULA AS PRIMARY
+                    packing_cost = 0
+                    if ref_box["Length(mm)"] > 0 and ref_box["Width (mm)"] > 0 and ref_box["Height (mm)"] > 0:
+                        if profiles_per_box > 0:
+                            # Calculate cost per box volume
+                            box_volume_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"]))
+                            # Calculate actual box volume from SKU table
+                            actual_box_volume = box_width * box_height * box_length
+                            # Total box cost = cost per volume * actual box volume
+                            total_box_cost = box_volume_cost * actual_box_volume
+                            # Packing cost per profile = total box cost / number of profiles per box
+                            packing_cost = total_box_cost / profiles_per_box
+                        else:
+                            # Fallback to original calculation if profiles_per_box is 0
+                            packing_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"])) * (width * height * length)
+                            
+                    # Calculate Total Cost
+                    total_cost = interleaving_cost + protective_tape_cost + packing_cost
+
+                    # Calculate Cost/kg (LKR)
+                    cost_per_kg = total_cost / total_weight if total_weight > 0 else 0
+                    
+                    # Calculate Cost/m (LKR) = Total Cost per profile/LKR / (Length/mm ÷ 1000)
+                    length_m = length / 1000  # Convert mm to meters
+                    cost_per_m = total_cost / length_m if length_m > 0 else 0
+
+                    calculations_data.append({
+                        "SKU": sku["SKU No"],
+                        "Interleaving cost": round(interleaving_cost, 2),
+                        "Protective tape cost": round(protective_tape_cost, 2),
+                        "Packing type": "Cardboard box",
+                        "Profiles per box": int(profiles_per_box),
+                        "Packing Cost (LKR)": round(packing_cost, 2),
+                        "Total Cost per profile/LKR": round(total_cost, 2),
+                        "Cost/kg (LKR)": round(cost_per_kg, 2),
+                        "Cost/m (LKR)": round(cost_per_m, 2)
+                    })
+                    
+                except (ValueError, TypeError, ZeroDivisionError):
+                    continue
+            
+            if calculations_data:
+                # Store calculations in session state
+                st.session_state.secondary_calculations = pd.DataFrame(calculations_data)
+
+                # Reorder columns if needed
+                column_order = [
+                    "SKU",
+                    "Interleaving cost", 
+                    "Protective tape cost",
+                    "Packing type",
+                    "Profiles per box",
+                    "Packing Cost (LKR)",
+                    "Total Cost per profile/LKR",
+                    "Cost/kg (LKR)",
+                    "Cost/m (LKR)"
+                ]
+                
+                # Reorder the columns
+                st.session_state.secondary_calculations = st.session_state.secondary_calculations[column_order]
+                
+                # Display the calculated results table (read-only)
+                st.dataframe(
+                    st.session_state.secondary_calculations,
+                    use_container_width=True
+                )
+                
             else:
-                # Get data for calculations
-                material_cost_dict = dict(zip(
-                    st.session_state.secondary_material_costs["Material"],
-                    st.session_state.secondary_material_costs["Cost/ m²"]
-                ))
-                box_data = st.session_state.secondary_box_costs.iloc[0]
-                polybag_data = st.session_state.polybag_costs.iloc[0]
-                stretchwrap_data = st.session_state.stretchwrap_costs.iloc[0]
-                
-                # Prepare calculations data
-                secondary_calculations_data = []
-                
-                for _, sku in st.session_state.secondary_sku_data.iterrows():
-                    try:
-                        # Extract SKU dimensions
-                        profile_width = float(sku["Width/mm"])
-                        profile_height = float(sku["Height/mm"])
-                        profile_length = float(sku["Length/mm"])
-                        sku_no = sku["SKU No"]
-                        
-                        # Calculate Profiles per bundle based on selected method
-                        profiles_per_bundle = 0
-                        
-                        if use_method1:
-                            # Method 1: Number of layers method
-                            bundling_data = st.session_state.bundling_data.iloc[0]
-                            rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                            layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                            profiles_per_bundle = rows_per_bundle * layers_per_bundle
-                            
-                        elif use_method2:
-                            # Method 2: Size of bundle method
-                            bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                            bundle_width = float(bundle_size_data["Bundle width/mm"])
-                            bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                            
-                            # Check for division by zero
-                            if profile_width > 0 and profile_height > 0:
-                                profiles_per_bundle = (bundle_width / profile_width) * (bundle_height / profile_height)
-                        
-                        # Calculate Packing cost(LKR/profile)
-                        packing_cost_per_profile = 0
-                        
-                        if packing_type == "polybag":
-                            # (Polybag Cost/(polybag size*24.5* profiles per bundle))*(profile length)
-                            polybag_size_inches = polybag_data["Polybag size (inches)"]
-                            polybag_cost_per_m = polybag_data["Cost/m (LKR/m)"]
-                            
-                            if polybag_size_inches > 0 and profiles_per_bundle > 0 and 24.5 > 0:
-                                packing_cost_per_profile = (polybag_cost_per_m / 
-                                                          (polybag_size_inches * 24.5 * profiles_per_bundle)) * profile_length
-                        
-                        elif packing_type == "cardboard box":
-                            box_volume = box_data["Length(mm)"] * box_data["Width (mm)"] * box_data["Height (mm)"]
-                            
-                            # Get bundle dimensions based on method used
-                            if use_method1:
-                                bundling_data = st.session_state.bundling_data.iloc[0]
-                                rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                                layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                                
-                                width_prof_type = bundling_data["width prof.type"]
-                                if width_prof_type == "W/mm":
-                                    bundle_width = profile_width * rows_per_bundle
-                                    bundle_height = profile_height * layers_per_bundle
-                                else:
-                                    bundle_width = profile_height * rows_per_bundle
-                                    bundle_height = profile_width * layers_per_bundle
-                                
-                            else:
-                                bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                                bundle_width = float(bundle_size_data["Bundle width/mm"])
-                                bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                            
-                            if box_volume > 0 and profiles_per_bundle > 0:
-                                packing_cost_per_profile = (box_data["Cost (LKR)"] / (box_volume * profiles_per_bundle)) * \
-                                                          (bundle_height * bundle_width * profile_length)
-                        
-                        # Calculate Stretchwrap cost (LKR/prof.)
-                        stretchwrap_cost_per_profile = 0
-                        if eco_friendly_tab2 == "Stretch wrap":
-                            if stretchwrap_data["Area (mm²)"] > 0 and profiles_per_bundle > 0:
-                                # Get bundle dimensions based on method used
-                                if use_method1:
-                                    bundling_data = st.session_state.bundling_data.iloc[0]
-                                    rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                                    layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                                    
-                                    width_prof_type = bundling_data["width prof.type"]
-                                    if width_prof_type == "W/mm":
-                                        bundle_width = profile_width * rows_per_bundle
-                                        bundle_height = profile_height * layers_per_bundle
-                                    else:
-                                        bundle_width = profile_height * rows_per_bundle
-                                        bundle_height = profile_width * layers_per_bundle
-                                        
-                                else:
-                                    bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                                    bundle_width = float(bundle_size_data["Bundle width/mm"])
-                                    bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                                
-                                stretchwrap_cost_per_profile = (stretchwrap_data["Cost (LKR/mm²)"] / 
-                                                               (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) * \
-                                                              (bundle_width * bundle_height)
-                        
-                        # Calculate Protective tape cost (LKR/profile)
-                        protective_tape_cost_per_profile = 0
-                        if protective_tape_tab2 == "Yes":
-                            # Get bundle dimensions for surface area calculation
-                            if use_method1:
-                                bundling_data = st.session_state.bundling_data.iloc[0]
-                                rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                                layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                                
-                                width_prof_type = bundling_data["width prof.type"]
-                                if width_prof_type == "W/mm":
-                                    bundle_width = profile_width * rows_per_bundle
-                                    bundle_height = profile_height * layers_per_bundle
-                                else:
-                                    bundle_width = profile_height * rows_per_bundle
-                                    bundle_height = profile_width * layers_per_bundle
-                                    
-                            else:
-                                bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                                bundle_width = float(bundle_size_data["Bundle width/mm"])
-                                bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                            
-                            # Calculate bundle surface area in m²
-                            bundle_surface_area_m2 = (2 * ((bundle_width * bundle_height) + 
-                                                         (bundle_width * profile_length) + 
-                                                         (bundle_height * profile_length))) / (1000 * 1000)
-                            
-                            protective_tape_cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
-                            total_protective_tape_cost = bundle_surface_area_m2 * protective_tape_cost_per_m2
-                            
-                            if profiles_per_bundle > 0:
-                                protective_tape_cost_per_profile = total_protective_tape_cost / profiles_per_bundle
-                        
-                        # Calculate Total cost per profile
-                        total_cost_per_profile = (packing_cost_per_profile + 
-                                                stretchwrap_cost_per_profile + 
-                                                protective_tape_cost_per_profile)
-                        
-                        # Add to calculations data
-                        secondary_calculations_data.append({
-                            "SKU": sku_no,
-                            "Profiles per bundle": round(profiles_per_bundle, 2),
-                            "Packing type": packing_type,
-                            "Packing cost(LKR/profile)": round(packing_cost_per_profile, 4),
-                            "Stretchwrap cost (LKR/prof.)": round(stretchwrap_cost_per_profile, 4),
-                            "Protective tape cost (LKR/profile)": round(protective_tape_cost_per_profile, 4),
-                            "Total cost per profile": round(total_cost_per_profile, 4)
-                        })
-                        
-                    except (ValueError, TypeError, ZeroDivisionError) as e:
-                        continue
-                
-        if st.session_state.calculate_secondary:
-            st.markdown("**Table 3: Secondary Packing Total Cost**")
-            
-            if not st.session_state.secondary_sku_data.empty:
-                # Prepare calculations - SAME AS PRIMARY
-                calculations_data = []
-                
-                # Get material costs as dictionary
-                material_cost_dict = dict(zip(
-                    st.session_state.secondary_material_costs["Material"],
-                    st.session_state.secondary_material_costs["Cost/ m²"]
-                ))
-                
-                # Get reference box dimensions and cost
-                ref_box = st.session_state.secondary_box_costs.iloc[0]
-                
-                for _, sku in st.session_state.secondary_sku_data.iterrows():
-                    try:
-                        # Get SKU dimensions
-                        width = float(sku["Width/mm"])
-                        height = float(sku["Height/mm"])
-                        length = float(sku["Length/mm"])
-                        unit_weight = float(sku["Unit weight(kg/m)"])
-                        total_weight = float(sku["total weight per profile (kg)"])
-                        
-                        # Get box dimensions from SKU table
-                        box_width = float(sku["Box Width/mm"])
-                        box_height = float(sku["Box Height/mm"])
-                        box_length = float(sku["Box Length/mm"])
-                        profiles_per_box = float(sku["Number of profiles per box"])
-                        
-                        # Calculate Surface Area in m² (using profile dimensions)
-                        sa_m2 = (2 * ((width * height) + (width * length) + (height * length))) / (1000 * 1000)
-                        
-                        # Calculate Interleaving Cost
-                        interleaving_cost = 0
-                        if interleaving_required_tab2 == "Yes":
-                            material_map = {
-                                "Mac foam": "McFoam",
-                                "Stretch wrap": "Stretchwrap",
-                                "Craft Paper": "Craft Paper"
-                            }
-                            selected_material = material_map.get(eco_friendly_tab2, "McFoam")
-                            cost_per_m2 = material_cost_dict.get(selected_material, 0)
-                            interleaving_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
-                        
-                        # Calculate Protective Tape Cost
-                        protective_tape_cost = 0
-                        if protective_tape_tab2 == "Yes":
-                            cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
-                            protective_tape_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
-                        
-                        # Calculate Packing Cost - SAME FORMULA AS PRIMARY
-                        packing_cost = 0
-                        if ref_box["Length(mm)"] > 0 and ref_box["Width (mm)"] > 0 and ref_box["Height (mm)"] > 0:
-                            if profiles_per_box > 0:
-                                # Calculate cost per box volume
-                                box_volume_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"]))
-                                # Calculate actual box volume from SKU table
-                                actual_box_volume = box_width * box_height * box_length
-                                # Total box cost = cost per volume * actual box volume
-                                total_box_cost = box_volume_cost * actual_box_volume
-                                # Packing cost per profile = total box cost / number of profiles per box
-                                packing_cost = total_box_cost / profiles_per_box
-                            else:
-                                # Fallback to original calculation if profiles_per_box is 0
-                                packing_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"])) * (width * height * length)
-                                
-                        # Calculate Total Cost
-                        total_cost = interleaving_cost + protective_tape_cost + packing_cost
-
-                        # Calculate Cost/kg (LKR)
-                        cost_per_kg = total_cost / total_weight if total_weight > 0 else 0
-                        
-                        # Calculate Cost/m (LKR) = Total Cost per profile/LKR / (Length/mm ÷ 1000)
-                        length_m = length / 1000  # Convert mm to meters
-                        cost_per_m = total_cost / length_m if length_m > 0 else 0
-
-                        calculations_data.append({
-                            "SKU": sku["SKU No"],
-                            "Interleaving cost": round(interleaving_cost, 2),
-                            "Protective tape cost": round(protective_tape_cost, 2),
-                            "Packing type": "Cardboard box",
-                            "Profiles per box": int(profiles_per_box),
-                            "Packing Cost (LKR)": round(packing_cost, 2),
-                            "Total Cost per profile/LKR": round(total_cost, 2),
-                            "Cost/kg (LKR)": round(cost_per_kg, 2),
-                            "Cost/m (LKR)": round(cost_per_m, 2)
-                        })
-                        
-                    except (ValueError, TypeError, ZeroDivisionError):
-                        continue
-            
-                        
-                if calculations_data:
-                    # Store calculations in session state
-                    st.session_state.secondary_calculations = pd.DataFrame(calculations_data)
-
-                    # Reorder columns if needed
-                    column_order = [
-                        "SKU",
-                        "Interleaving cost", 
-                        "Protective tape cost",
-                        "Packing type",
-                        "Profiles per box",
-                        "Packing Cost (LKR)",
-                        "Total Cost per profile/LKR",
-                        "Cost/kg (LKR)",
-                        "Cost/m (LKR)"
-                    ]
-                    
-                    # Reorder the columns
-                    st.session_state.secondary_calculations = st.session_state.secondary_calculations[column_order]
-                    
-                    # Display the calculated results table (read-only)
-                    st.dataframe(
-                        st.session_state.secondary_calculations,
-                        use_container_width=True
-                    )
-                    
-                else:
-                    st.warning("Enter valid SKU data")
-            else:
-                st.info("Enter SKU data")
-            
-            # Reset calculation flag after displaying
-            st.session_state.calculate_secondary = False
-            
+                st.warning("Enter valid SKU data")
+        
+        else:
+            st.info("Enter SKU data")
+        
+        # Reset calculation flag after displaying
+        st.session_state.calculate_secondary = False
         
         # Section 2: Crate/Pallet Cost Calculations
         st.divider()
