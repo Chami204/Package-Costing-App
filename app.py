@@ -2288,7 +2288,8 @@ with tab2:
                         
                     except (ValueError, TypeError, ZeroDivisionError):
                         continue
-                
+            
+                        
                 if calculations_data:
                     # Store calculations in session state
                     st.session_state.secondary_calculations = pd.DataFrame(calculations_data)
@@ -2323,8 +2324,6 @@ with tab2:
             # Reset calculation flag after displaying
             st.session_state.calculate_secondary = False
             
-                else:
-                    st.warning("Unable to calculate costs. Please check all input data is valid.")
         
         # Section 2: Crate/Pallet Cost Calculations
         st.divider()
