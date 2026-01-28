@@ -1186,35 +1186,6 @@ with tab2:
     col1, col2 = st.columns([3, 1])
     with col1:
         st.subheader("SKU Table with dimensions")
-    with col2:
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Add a checkbox to control auto-calculation
-        auto_calc_enabled = st.checkbox("Enable auto-calculation", value=True, key="auto_calc_enabled_secondary")
-        
-        if st.button("🔄 Auto-Calculate All Fields", 
-                    help="Click to auto-calculate total weight, box dimensions, and profiles per box",
-                    use_container_width=True,
-                    key="auto_calc_btn_secondary"):
-            auto_calculate_sku_table_secondary()
-    
-    # Initialize session state for secondary SKU data with new columns
-    if 'secondary_sku_data' not in st.session_state:
-        st.session_state.secondary_sku_data = pd.DataFrame(columns=[
-            "SKU No", 
-            "Unit weight(kg/m)", 
-            "total weight per profile (kg)", 
-            "Width/mm", 
-            "Height/mm", 
-            "Length/mm",
-            "Box Width/mm",
-            "Box Height/mm", 
-            "Box Length/mm",
-            "W/mm",
-            "H/mm",
-            "Number of profiles per box",
-            "Comment on fabrication"
-        ])
     
     # Function to auto-calculate all fields in SKU table for secondary
     def auto_calculate_sku_table_secondary():
@@ -1314,6 +1285,18 @@ with tab2:
             # Update session state
             st.session_state.secondary_sku_data = df_copy
             st.success("Auto-calculation completed!")
+    
+    with col2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Add a checkbox to control auto-calculation
+        auto_calc_enabled = st.checkbox("Enable auto-calculation", value=True, key="auto_calc_enabled_secondary")
+        
+        if st.button("🔄 Auto-Calculate All Fields", 
+                    help="Click to auto-calculate total weight, box dimensions, and profiles per box",
+                    use_container_width=True,
+                    key="auto_calc_btn_secondary"):
+            auto_calculate_sku_table_secondary()
     
     # Function to calculate box dimensions and number of profiles per box for secondary
     def calculate_box_and_profiles_secondary(df):
