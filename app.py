@@ -2008,185 +2008,135 @@ with tab2:
     
     # Display secondary calculations when triggered
     if st.session_state.calculate_secondary:
-        # Section 1: Secondary Packing Cost Per Profile
-        st.subheader("Total Secondary Packing Cost Per Profile")
+        # Section 1: Secondary Packing Total Cost
+        st.subheader("Table 3: Secondary Packing Total Cost")
         
         if not st.session_state.secondary_sku_data.empty:
-            # Check which method is used
-            use_method1 = not st.session_state.bundling_data.empty
-            use_method2 = not st.session_state.bundle_size_data.empty
+            # Prepare calculations - SAME AS PRIMARY
+            calculations_data = []
             
-            if not use_method1 and not use_method2:
-                st.warning("Please enter data in either Method 1 (Number of layers) or Method 2 (Size of bundle)")
-            else:
-                # Get data for calculations
-                material_cost_dict = dict(zip(
-                    st.session_state.secondary_material_costs["Material"],
-                    st.session_state.secondary_material_costs["Cost/ m²"]
-                ))
-                box_data = st.session_state.secondary_box_costs.iloc[0]
-                polybag_data = st.session_state.polybag_costs.iloc[0]
-                stretchwrap_data = st.session_state.stretchwrap_costs.iloc[0]
-                
-                # Prepare calculations data
-                secondary_calculations_data = []
-                
-                for _, sku in st.session_state.secondary_sku_data.iterrows():
-                    try:
-                        # Extract SKU dimensions
-                        profile_width = float(sku["Width/mm"])
-                        profile_height = float(sku["Height/mm"])
-                        profile_length = float(sku["Length/mm"])
-                        sku_no = sku["SKU No"]
-                        
-                        # Calculate Profiles per bundle based on selected method
-                        profiles_per_bundle = 0
-                        
-                        if use_method1:
-                            # Method 1: Number of layers method
-                            bundling_data = st.session_state.bundling_data.iloc[0]
-                            rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                            layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                            profiles_per_bundle = rows_per_bundle * layers_per_bundle
-                            
-                        elif use_method2:
-                            # Method 2: Size of bundle method
-                            bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                            bundle_width = float(bundle_size_data["Bundle width/mm"])
-                            bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                            
-                            # Check for division by zero
-                            if profile_width > 0 and profile_height > 0:
-                                profiles_per_bundle = (bundle_width / profile_width) * (bundle_height / profile_height)
-                        
-                        # Calculate Packing cost(LKR/profile)
-                        packing_cost_per_profile = 0
-                        
-                        if packing_type == "polybag":
-                            # (Polybag Cost/(polybag size*24.5* profiles per bundle))*(profile length)
-                            polybag_size_inches = polybag_data["Polybag size (inches)"]
-                            polybag_cost_per_m = polybag_data["Cost/m (LKR/m)"]
-                            
-                            if polybag_size_inches > 0 and profiles_per_bundle > 0 and 24.5 > 0:
-                                packing_cost_per_profile = (polybag_cost_per_m / 
-                                                          (polybag_size_inches * 24.5 * profiles_per_bundle)) * profile_length
-                        
-                        elif packing_type == "cardboard box":
-                            box_volume = box_data["Length(mm)"] * box_data["Width (mm)"] * box_data["Height (mm)"]
-                            
-                            # Get bundle dimensions based on method used
-                            if use_method1:
-                                bundling_data = st.session_state.bundling_data.iloc[0]
-                                rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                                layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                                
-                                width_prof_type = bundling_data["width prof.type"]
-                                if width_prof_type == "W/mm":
-                                    bundle_width = profile_width * rows_per_bundle
-                                    bundle_height = profile_height * layers_per_bundle
-                                else:
-                                    bundle_width = profile_height * rows_per_bundle
-                                    bundle_height = profile_width * layers_per_bundle
-                                
-                            else:
-                                bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                                bundle_width = float(bundle_size_data["Bundle width/mm"])
-                                bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                            
-                            if box_volume > 0 and profiles_per_bundle > 0:
-                                packing_cost_per_profile = (box_data["Cost (LKR)"] / (box_volume * profiles_per_bundle)) * \
-                                                          (bundle_height * bundle_width * profile_length)
-                        
-                        # Calculate Stretchwrap cost (LKR/prof.)
-                        stretchwrap_cost_per_profile = 0
-                        if eco_friendly_tab2 == "Stretch wrap":
-                            if stretchwrap_data["Area (mm²)"] > 0 and profiles_per_bundle > 0:
-                                # Get bundle dimensions based on method used
-                                if use_method1:
-                                    bundling_data = st.session_state.bundling_data.iloc[0]
-                                    rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                                    layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                                    
-                                    width_prof_type = bundling_data["width prof.type"]
-                                    if width_prof_type == "W/mm":
-                                        bundle_width = profile_width * rows_per_bundle
-                                        bundle_height = profile_height * layers_per_bundle
-                                    else:
-                                        bundle_width = profile_height * rows_per_bundle
-                                        bundle_height = profile_width * layers_per_bundle
-                                        
-                                else:
-                                    bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                                    bundle_width = float(bundle_size_data["Bundle width/mm"])
-                                    bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                                
-                                stretchwrap_cost_per_profile = (stretchwrap_data["Cost (LKR/mm²)"] / 
-                                                               (stretchwrap_data["Area (mm²)"] * profiles_per_bundle)) * \
-                                                              (bundle_width * bundle_height)
-                        
-                        # Calculate Protective tape cost (LKR/profile)
-                        protective_tape_cost_per_profile = 0
-                        if protective_tape_tab2 == "Yes":
-                            # Get bundle dimensions for surface area calculation
-                            if use_method1:
-                                bundling_data = st.session_state.bundling_data.iloc[0]
-                                rows_per_bundle = float(bundling_data["Number of rows/bundle"])
-                                layers_per_bundle = float(bundling_data["Number of layer/bundle"])
-                                
-                                width_prof_type = bundling_data["width prof.type"]
-                                if width_prof_type == "W/mm":
-                                    bundle_width = profile_width * rows_per_bundle
-                                    bundle_height = profile_height * layers_per_bundle
-                                else:
-                                    bundle_width = profile_height * rows_per_bundle
-                                    bundle_height = profile_width * layers_per_bundle
-                                    
-                            else:
-                                bundle_size_data = st.session_state.bundle_size_data.iloc[0]
-                                bundle_width = float(bundle_size_data["Bundle width/mm"])
-                                bundle_height = float(bundle_size_data["Bundle Height/mm"])
-                            
-                            # Calculate bundle surface area in m²
-                            bundle_surface_area_m2 = (2 * ((bundle_width * bundle_height) + 
-                                                         (bundle_width * profile_length) + 
-                                                         (bundle_height * profile_length))) / (1000 * 1000)
-                            
-                            protective_tape_cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
-                            total_protective_tape_cost = bundle_surface_area_m2 * protective_tape_cost_per_m2
-                            
-                            if profiles_per_bundle > 0:
-                                protective_tape_cost_per_profile = total_protective_tape_cost / profiles_per_bundle
-                        
-                        # Calculate Total cost per profile
-                        total_cost_per_profile = (packing_cost_per_profile + 
-                                                stretchwrap_cost_per_profile + 
-                                                protective_tape_cost_per_profile)
-                        
-                        # Add to calculations data
-                        secondary_calculations_data.append({
-                            "SKU": sku_no,
-                            "Profiles per bundle": round(profiles_per_bundle, 2),
-                            "Packing type": packing_type,
-                            "Packing cost(LKR/profile)": round(packing_cost_per_profile, 4),
-                            "Stretchwrap cost (LKR/prof.)": round(stretchwrap_cost_per_profile, 4),
-                            "Protective tape cost (LKR/profile)": round(protective_tape_cost_per_profile, 4),
-                            "Total cost per profile": round(total_cost_per_profile, 4)
-                        })
-                        
-                    except (ValueError, TypeError, ZeroDivisionError) as e:
-                        continue
-                
-                if secondary_calculations_data:
-                    st.session_state.secondary_calculations = pd.DataFrame(secondary_calculations_data)
-                    st.dataframe(st.session_state.secondary_calculations, use_container_width=True)
+            # Get material costs as dictionary
+            material_cost_dict = dict(zip(
+                st.session_state.secondary_material_costs["Material"],
+                st.session_state.secondary_material_costs["Cost/ m²"]
+            ))
+            
+            # Get reference box dimensions and cost
+            ref_box = st.session_state.secondary_box_costs.iloc[0]
+            
+            for _, sku in st.session_state.secondary_sku_data.iterrows():
+                try:
+                    # Get SKU dimensions
+                    width = float(sku["Width/mm"])
+                    height = float(sku["Height/mm"])
+                    length = float(sku["Length/mm"])
+                    unit_weight = float(sku["Unit weight(kg/m)"])
+                    total_weight = float(sku["total weight per profile (kg)"])
                     
-                    total_cost_all = sum(item["Total cost per profile"] for item in secondary_calculations_data)
-                    st.metric("**Total Secondary Packing Cost (All SKUs)**", f"LKR {total_cost_all:,.4f}")
-                else:
-                    st.warning("Unable to calculate costs. Please check all input data is valid.")
+                    # Get box dimensions from SKU table
+                    box_width = float(sku["Box Width/mm"])
+                    box_height = float(sku["Box Height/mm"])
+                    box_length = float(sku["Box Length/mm"])
+                    profiles_per_box = float(sku["Number of profiles per box"])
+                    
+                    # Calculate Surface Area in m² (using profile dimensions)
+                    sa_m2 = (2 * ((width * height) + (width * length) + (height * length))) / (1000 * 1000)
+                    
+                    # Calculate Interleaving Cost
+                    interleaving_cost = 0
+                    if interleaving_required_tab2 == "Yes":
+                        material_map = {
+                            "Mac foam": "McFoam",
+                            "Stretch wrap": "Stretchwrap",
+                            "Craft Paper": "Craft Paper"
+                        }
+                        selected_material = material_map.get(eco_friendly_tab2, "McFoam")
+                        cost_per_m2 = material_cost_dict.get(selected_material, 0)
+                        interleaving_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
+                    
+                    # Calculate Protective Tape Cost
+                    protective_tape_cost = 0
+                    if protective_tape_tab2 == "Yes":
+                        cost_per_m2 = material_cost_dict.get("Protective Tape", 0)
+                        protective_tape_cost = (cost_per_m2 * sa_m2)/profiles_per_box if profiles_per_box > 0 else 0
+                    
+                    # Calculate Packing Cost - SAME FORMULA AS PRIMARY
+                    packing_cost = 0
+                    if ref_box["Length(mm)"] > 0 and ref_box["Width (mm)"] > 0 and ref_box["Height (mm)"] > 0:
+                        if profiles_per_box > 0:
+                            # Calculate cost per box volume
+                            box_volume_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"]))
+                            # Calculate actual box volume from SKU table
+                            actual_box_volume = box_width * box_height * box_length
+                            # Total box cost = cost per volume * actual box volume
+                            total_box_cost = box_volume_cost * actual_box_volume
+                            # Packing cost per profile = total box cost / number of profiles per box
+                            packing_cost = total_box_cost / profiles_per_box
+                        else:
+                            # Fallback to original calculation if profiles_per_box is 0
+                            packing_cost = (ref_box["Cost (LKR)"] / (ref_box["Width (mm)"] * ref_box["Height (mm)"] * ref_box["Length(mm)"])) * (width * height * length)
+                            
+                    # Calculate Total Cost
+                    total_cost = interleaving_cost + protective_tape_cost + packing_cost
+
+                    # Calculate Cost/kg (LKR)
+                    cost_per_kg = total_cost / total_weight if total_weight > 0 else 0
+                    
+                    # Calculate Cost/m (LKR) = Total Cost per profile/LKR / (Length/mm ÷ 1000)
+                    length_m = length / 1000  # Convert mm to meters
+                    cost_per_m = total_cost / length_m if length_m > 0 else 0
+
+                    calculations_data.append({
+                        "SKU": sku["SKU No"],
+                        "Interleaving cost": round(interleaving_cost, 2),
+                        "Protective tape cost": round(protective_tape_cost, 2),
+                        "Packing type": "Cardboard box",
+                        "Profiles per box": int(profiles_per_box),
+                        "Packing Cost (LKR)": round(packing_cost, 2),
+                        "Total Cost per profile/LKR": round(total_cost, 2),
+                        "Cost/kg (LKR)": round(cost_per_kg, 2),
+                        "Cost/m (LKR)": round(cost_per_m, 2)
+                    })
+                    
+                except (ValueError, TypeError, ZeroDivisionError):
+                    continue
+            
+            if calculations_data:
+                # Store calculations in session state
+                st.session_state.secondary_calculations = pd.DataFrame(calculations_data)
+
+                # Reorder columns if needed
+                column_order = [
+                    "SKU",
+                    "Interleaving cost", 
+                    "Protective tape cost",
+                    "Packing type",
+                    "Profiles per box",
+                    "Packing Cost (LKR)",
+                    "Total Cost per profile/LKR",
+                    "Cost/kg (LKR)",
+                    "Cost/m (LKR)"
+                ]
+                
+                # Reorder the columns
+                st.session_state.secondary_calculations = st.session_state.secondary_calculations[column_order]
+                
+                # Display the calculated results table (read-only)
+                st.dataframe(
+                    st.session_state.secondary_calculations,
+                    use_container_width=True
+                )
+                
+            else:
+                st.warning("Enter valid SKU data")
         else:
-            st.info("Enter SKU data to see secondary packing cost calculations.")
+            st.info("Enter SKU data")
         
+        # Reset calculation flag after displaying
+        st.session_state.calculate_secondary = False
+
+
+            
         # Section 2: Crate/Pallet Cost Calculations
         st.divider()
         st.markdown("**Total Crate/Pallet Cost Calculation**")
