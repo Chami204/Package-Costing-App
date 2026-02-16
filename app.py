@@ -1029,7 +1029,7 @@ with tab1:
     if 'primary_material_costs' not in st.session_state:
         st.session_state.primary_material_costs = pd.DataFrame({
             "Material": ["McFoam", "Craft Paper", "Protective Tape", "Stretchwrap"],
-            "Cost/ m²": [51.00, 34.65, 100.65, 14.38]
+            "Cost/ m²": [35.00, 34.65, 100.65, 14.38]
         })
     
     # Create editable material costs table
