@@ -2228,7 +2228,7 @@ with tab2:
                         cardboard_covering_cost_per_profile = total_cardboard_covering_cost / profiles_per_crate_pallet
                     
                     # Calculate Total cost
-                    total_cost = packing_cost_per_profile + strapping_clip_cost_per_profile + pp_strapping_cost_per_profile + cardboard_covering_cost_per_profile
+                    total_cost = packing_cost_per_profile + strapping_clip_cost_per_profile + pp_strapping_cost_per_profile + cardboard_covering_cost_per_profile + crate_pallet_cost
                     
                     # Add to calculations data
                     crate_pallet_calculations_data.append({
