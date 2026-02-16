@@ -2251,9 +2251,6 @@ with tab2:
             if crate_pallet_calculations_data:
                 st.session_state.crate_pallet_calculations = pd.DataFrame(crate_pallet_calculations_data)
                 st.dataframe(st.session_state.crate_pallet_calculations, use_container_width=True)
-                
-                total_cost_all = sum(item["Total cost"] for item in crate_pallet_calculations_data)
-                st.metric("**Total Crate/Pallet Cost (All SKUs)**", f"LKR {total_cost_all:,.4f}")
             else:
                 st.warning("Unable to calculate crate/pallet costs. Please check all input data is valid.")
         else:
